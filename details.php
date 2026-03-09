@@ -7,7 +7,7 @@ $user = [
     'balance' => ['gold' => 12, 'silver' => 50, 'bronze' => 80]
 ];
 
-// Données de l'item (Simulées) deheufhuewhuhu test
+// Données de l'item (Simulées) 
 $item = [
     'id' => 1,
     'nom' => "Lame de l'Exilé",
