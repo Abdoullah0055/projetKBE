@@ -2,7 +2,7 @@ DELIMITER //
 
 
 -- =========================
--- US-01 : Création de compte (Corrigé avec COLLATE)
+-- US-01 : Création de compte
 -- =========================
 CREATE PROCEDURE sp_RegisterUser(
     IN p_Alias VARCHAR(30),
@@ -20,7 +20,7 @@ BEGIN
 END //
 
 -- =========================
--- US-02 : Connexion (Corrigé avec COLLATE)
+-- US-02 : Connexion 
 -- =========================
 CREATE PROCEDURE sp_GetUserByAlias(
     IN p_Alias VARCHAR(30)
