@@ -1,5 +1,5 @@
 <?php
-// On garde le config de votre ami et on ajoute votre connexion BD
+// On garde le config de votre ami et on ajoute votre connexion BD test
 require_once __DIR__ . '/config/config.php';
 require_once 'AlgosBD.php';
 
