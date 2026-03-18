@@ -1,11 +1,53 @@
 <?php
-// Simulation de la session (À remplacer par session_start() et vos données réelles)
-$user = [
-    'isConnected' => true, // Changez à false pour tester le mode visiteur
-    'alias' => "Slayer99",
-    'isMage' => true,
-    'balance' => ['gold' => 12, 'silver' => 50, 'bronze' => 80]
-];
+require_once 'AlgosBD.php';
+session_start();
+$pdo = get_pdo();
+
+// 1. GESTION DE LA SESSION
+if (isset($_SESSION['user'])) {
+    $user = [
+        'isConnected' => true,
+        'alias' => $_SESSION['user']['alias'],
+        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'balance' => [
+            'gold' => $_SESSION['user']['gold'],
+            'silver' => $_SESSION['user']['silver'],
+            'bronze' => $_SESSION['user']['bronze']
+        ]
+    ];
+} else {
+    $user = ['isConnected' => false, 'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]];
+}
+
+// 2. RÉCUPÉRATION DE L'ITEM SÉLECTIONNÉ
+if (!isset($_GET['id'])) {
+    header("Location: index.php");
+    exit();
+}
+
+$stmt = $pdo->prepare("
+    SELECT 
+        i.ItemId as id, 
+        i.Name as nom, 
+        i.PriceGold as prix, 
+        i.Description as description, 
+        '⚔️' as image, -- Valeur fictive (pas de colonne image dans bd.sql)
+        i.Stock as stock, 
+        COUNT(r.ReviewId) as nb_avis
+    FROM Items i
+    LEFT JOIN Reviews r ON i.ItemId = r.ItemId
+    WHERE i.ItemId = ?
+    GROUP BY i.ItemId, i.Name, i.PriceGold, i.Description, i.Stock
+");
+$stmt->execute([$_GET['id']]);
+$item = $stmt->fetch();
+
+// Redirection si l'ID n'existe pas dans la base de données
+if (!$item) {
+    header("Location: index.php");
+    exit();
+}
+
 
 // Données de l'item (Simulées) 
 $item = [

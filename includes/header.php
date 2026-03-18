@@ -17,18 +17,30 @@
             </div>
 
             <button class="btn-outline-custom">
+<<<<<<< HEAD
                 <?= $user['alias'] ?><?= $user['isMage'] ? ' <small>(Mage)</small>' : '' ?>
+=======
+                <?= htmlspecialchars($user['alias']) ?><?= $user['isMage'] ? ' <small>(Mage)</small>' : '' ?>
+>>>>>>> 3216082bbb7b76b230f07975bc80cea55c00d40e
             </button>
 
             <button class="btn-accent" onclick="window.location.href='panier.php'">
                 <i class="fa-solid fa-cart-shopping"></i>
             </button>
 
+<<<<<<< HEAD
             <button class="btn-danger-custom">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         <?php else: ?>
             <button class="btn-outline-custom">S'inscrire</button>
+=======
+            <button class="btn-danger-custom" onclick="window.location.href='logout.php'">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+        <?php else: ?>
+            <button class="btn-outline-custom" onclick="window.location.href='login.php'">S'inscrire</button>
+>>>>>>> 3216082bbb7b76b230f07975bc80cea55c00d40e
             <button class="btn-accent" onclick="window.location.href='login.php'">Connexion</button>
         <?php endif; ?>
     </div>

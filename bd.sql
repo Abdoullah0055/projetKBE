@@ -1,7 +1,10 @@
 CREATE TABLE Users (
   UserId   INT AUTO_INCREMENT PRIMARY KEY,
   Alias    VARCHAR(30)  NOT NULL,
+<<<<<<< HEAD
   Email    VARCHAR(254) NULL,
+=======
+>>>>>>> 3216082bbb7b76b230f07975bc80cea55c00d40e
   Password VARCHAR(255) NOT NULL,
   Role     VARCHAR(20)  NOT NULL,
   Gold     INT NOT NULL DEFAULT 1000,
@@ -9,7 +12,6 @@ CREATE TABLE Users (
   Bronze   INT NOT NULL DEFAULT 1000,
 
   CONSTRAINT UQ_Users_Alias UNIQUE (Alias),
-  CONSTRAINT UQ_Users_Email UNIQUE (Email),
 
   CONSTRAINT CHK_Users_Gold   CHECK (Gold   >= 0),
   CONSTRAINT CHK_Users_Silver CHECK (Silver >= 0),
