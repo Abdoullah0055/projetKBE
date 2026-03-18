@@ -1,15 +1,12 @@
--- =========================
--- 1) Users
--- =========================
 CREATE TABLE Users (
   UserId   INT AUTO_INCREMENT PRIMARY KEY,
   Alias    VARCHAR(30)  NOT NULL,
-  Email    VARCHAR(254) NOT NULL,
+  Email    VARCHAR(254) NULL,
   Password VARCHAR(255) NOT NULL,
   Role     VARCHAR(20)  NOT NULL,
-  Gold     INT NOT NULL DEFAULT 0,
-  Silver   INT NOT NULL DEFAULT 0,
-  Bronze   INT NOT NULL DEFAULT 0,
+  Gold     INT NOT NULL DEFAULT 1000,
+  Silver   INT NOT NULL DEFAULT 1000,
+  Bronze   INT NOT NULL DEFAULT 1000,
 
   CONSTRAINT UQ_Users_Alias UNIQUE (Alias),
   CONSTRAINT UQ_Users_Email UNIQUE (Email),
@@ -19,9 +16,6 @@ CREATE TABLE Users (
   CONSTRAINT CHK_Users_Bronze CHECK (Bronze >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 2) ItemTypes
--- =========================
 CREATE TABLE ItemTypes (
   ItemTypeId INT AUTO_INCREMENT PRIMARY KEY,
   Name       VARCHAR(50) NOT NULL,
@@ -29,9 +23,6 @@ CREATE TABLE ItemTypes (
   CONSTRAINT UQ_ItemTypes_Name UNIQUE (Name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 3) Items
--- =========================
 CREATE TABLE Items (
   ItemId       INT AUTO_INCREMENT PRIMARY KEY,
   Name         VARCHAR(80) NOT NULL,
@@ -54,9 +45,6 @@ CREATE TABLE Items (
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 4) Orders
--- =========================
 CREATE TABLE Orders (
   OrderId      INT AUTO_INCREMENT PRIMARY KEY,
   UserId       INT NOT NULL,
@@ -75,9 +63,6 @@ CREATE TABLE Orders (
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 5) Inventory
--- =========================
 CREATE TABLE Inventory (
   InventoryId INT AUTO_INCREMENT PRIMARY KEY,
   UserId      INT NOT NULL,
@@ -99,9 +84,6 @@ CREATE TABLE Inventory (
     ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 6) Reviews
--- =========================
 CREATE TABLE Reviews (
   ReviewId   INT AUTO_INCREMENT PRIMARY KEY,
   UserId     INT NOT NULL,
@@ -125,13 +107,10 @@ CREATE TABLE Reviews (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 7) Carts
--- =========================
 CREATE TABLE Carts (
   CartId    INT AUTO_INCREMENT PRIMARY KEY,
   UserId    INT NOT NULL,
-  CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, --On pourrait enlever
+  CreatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   CONSTRAINT FK_Carts_Users
     FOREIGN KEY (UserId) REFERENCES Users(UserId)
@@ -139,9 +118,6 @@ CREATE TABLE Carts (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- =========================
--- 8) CartItems
--- =========================
 CREATE TABLE CartItems (
   CartItemId INT AUTO_INCREMENT PRIMARY KEY,
   CartId     INT NOT NULL,
