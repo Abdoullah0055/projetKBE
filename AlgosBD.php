@@ -2,10 +2,10 @@
 function get_pdo()
 {
     $host = '127.0.0.1'; // 127.0.0.1 si la BD et l'application sont sur le même serveur
-    $db = 'usager20'; // nom de la base de données
-    $user = 'usager20';
-    $pass = '4AgGNTNs783E';
-    $charset = 'utf8';
+    $db = 'projetKBE'; // nom de la base de données
+    $user = 'root';
+    $pass = '';
+    $charset = 'utf8mb4';
 
     $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 

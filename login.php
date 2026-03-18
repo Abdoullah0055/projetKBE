@@ -1,3 +1,62 @@
+<?php
+require_once 'AlgosBD.php'; 
+session_start();
+
+$pdo = get_pdo(); 
+
+if (!$pdo) {
+    die("Erreur critique : Impossible de se connecter à la base de données.");
+}
+
+$error = "";
+$success = "";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $alias = trim($_POST['alias']);
+    $password = $_POST['password'];
+    $mode = $_POST['mode']; // 'login' ou 'register'
+
+    if ($mode === 'register') {
+        // --- US-01 : INSCRIPTION ---
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT); // Hachage sécurisé
+
+        try {
+            $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
+            $stmt->execute([$alias, $hashedPassword]);
+            $success = "Compte forgé avec succès ! Vous pouvez maintenant vous connecter.";
+        } catch (PDOException $e) {
+            // Si l'alias existe déjà (géré par la BD)
+            $error = "Erreur : " . $e->getMessage();
+        }
+    } else {
+        // --- US-02 : CONNEXION ---
+        try {
+            $stmt = $pdo->prepare("CALL sp_GetUserByAlias(?)");
+            $stmt->execute([$alias]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['Password'])) {
+                // Stockage en session
+                $_SESSION['user'] = [
+                    'id' => $user['UserId'],
+                    'alias' => $user['Alias'],
+                    'role' => $user['Role'],
+                    'gold' => $user['Gold'],
+                    'silver' => $user['Silver'],
+                    'bronze' => $user['Bronze']
+                ];
+                header("Location: index.php");
+                exit();
+            } else {
+                $error = "Alias ou mot de passe incorrect.";
+            }
+        } catch (PDOException $e) {
+            $error = "Erreur système : " . $e->getMessage();
+        }
+    }
+}
+?>
+
 <!DOCTYPE html>
 <html lang="fr">
 
@@ -105,11 +164,24 @@
             font-weight: bold;
         }
 
-        .error-msg {
+        .alert-msg {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .alert-error {
+            background-color: rgba(231, 76, 60, 0.2);
             color: var(--error);
-            font-size: 0.8rem;
-            margin-top: 5px;
-            display: none;
+            border: 1px solid var(--error);
+        }
+
+        .alert-success {
+            background-color: rgba(46, 204, 113, 0.2);
+            color: var(--success);
+            border: 1px solid var(--success);
         }
 
         /* Animation de transition */
@@ -140,23 +212,32 @@
             <p id="form-subtitle" style="font-size: 0.8rem; color: #5C5F66;">Entrez dans l'Arsenal de Sombre-Donjon</p>
         </div>
 
-        <form id="auth-form" onsubmit="handleAuth(event)">
+        <?php if (!empty($error)): ?>
+            <div class="alert-msg alert-error"><?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
+        <?php if (!empty($success)): ?>
+            <div class="alert-msg alert-success"><?= htmlspecialchars($success) ?></div>
+        <?php endif; ?>
+
+        <form id="auth-form" method="POST" action="login.php" onsubmit="return validateForm()">
+            <input type="hidden" name="mode" id="auth-mode" value="login">
+
             <div class="form-group">
                 <label for="alias">Alias de l'Aventurier</label>
-                <input type="text" id="alias" placeholder="Ex: Slayer99" required minlength="3">
-                <div id="alias-error" class="error-msg">L'alias doit contenir au moins 3 caractères.</div>
+                <input type="text" id="alias" name="alias" placeholder="Ex: Slayer99" required minlength="3">
             </div>
+
+            
 
             <div class="form-group">
                 <label for="password">Mot de passe</label>
-                <input type="password" id="password" placeholder="••••••••" required minlength="6">
-                <div id="pw-error" class="error-msg">Le mot de passe est trop court.</div>
+                <input type="password" id="password" name="password" placeholder="••••••••" required minlength="6">
             </div>
 
             <div class="form-group" id="confirm-group" style="display: none;">
                 <label for="confirm-password">Confirmer le mot de passe</label>
                 <input type="password" id="confirm-password" placeholder="••••••••">
-                <div id="confirm-error" class="error-msg">Les mots de passe ne correspondent pas.</div>
+                <div id="confirm-error" style="color:var(--error); font-size:0.8rem; display:none; margin-top:5px;">Les mots de passe ne correspondent pas.</div>
             </div>
 
             <button type="submit" class="btn-primary" id="submit-btn">Se connecter</button>
@@ -181,45 +262,41 @@
             const switchText = document.getElementById('switch-text');
             const switchLink = document.getElementById('switch-link');
             const aliasLabel = document.querySelector('label[for="alias"]');
+            const authMode = document.getElementById('auth-mode');
 
             if (isLoginMode) {
+                // Mode Connexion
                 title.innerText = "Connexion";
                 submitBtn.innerText = "Se connecter";
                 confirmGroup.style.display = "none";
                 switchText.innerText = "Nouveau ici ?";
                 switchLink.innerText = "Créer un compte";
                 aliasLabel.innerText = "Alias de l'Aventurier";
+                authMode.value = "login";
             } else {
+                // Mode Inscription
                 title.innerText = "Inscription";
                 submitBtn.innerText = "Forger mon compte";
                 confirmGroup.style.display = "block";
                 switchText.innerText = "Déjà membre ?";
                 switchLink.innerText = "Se connecter";
                 aliasLabel.innerText = "Choisir un Alias Unique";
+                authMode.value = "register";
             }
         }
 
-        function handleAuth(e) {
-            e.preventDefault();
-            const alias = document.getElementById('alias').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
+        // Remplace l'ancienne simulation par une vraie validation avant envoi au serveur
+        function validateForm() {
+            if (!isLoginMode) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
 
-            // Reset errors
-            document.querySelectorAll('.error-msg').forEach(el => el.style.display = 'none');
-
-            // Validation simple (US-01 / US-02)
-            if (!isLoginMode && password !== confirmPassword) {
-                document.getElementById('confirm-error').style.display = 'block';
-                return;
+                if (password !== confirmPassword) {
+                    document.getElementById('confirm-error').style.display = 'block';
+                    return false; // Bloque l'envoi du formulaire
+                }
             }
-
-            // Simulation Backend
-            console.log(`Tentative de ${isLoginMode ? 'connexion' : 'inscription'} pour : ${alias}`);
-
-            // Redirection vers l'index si "succès"
-            alert(isLoginMode ? "Accès autorisé !" : "Compte créé avec succès ! Bienvenue Mage en devenir.");
-            window.location.href = "index.html";
+            return true; // Laisse le formulaire s'envoyer vers le PHP
         }
     </script>
 

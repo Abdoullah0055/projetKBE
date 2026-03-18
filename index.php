@@ -1,16 +1,44 @@
 <?php
-// 1. SIMULATION DE LA SESSION (À remplacer plus tard par session_start())
-// Changez 'isConnected' à false pour tester le mode visiteur
-$user = [
-    'isConnected' => true,
-    'alias' => "Slayer99",
-    'isMage' => true,
-    'balance' => [
-        'gold' => 12,
-        'silver' => 50,
-        'bronze' => 80
-    ]
-];
+require_once 'AlgosBD.php';
+session_start();
+$pdo = get_pdo();
+
+// 1. GESTION DE LA SESSION
+if (isset($_SESSION['user'])) {
+    $user = [
+        'isConnected' => true,
+        'alias' => $_SESSION['user']['alias'],
+        'isMage' => ($_SESSION['user']['role'] === 'Mage'), 
+        'balance' => [
+            'gold' => $_SESSION['user']['gold'],
+            'silver' => $_SESSION['user']['silver'],
+            'bronze' => $_SESSION['user']['bronze']
+        ]
+    ];
+} else {
+    $user = ['isConnected' => false, 'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]];
+}
+
+// 2. RÉCUPÉRATION DES ITEMS DEPUIS LA BD
+// Utilisation d'une requête préparée pour rejoindre les tables Items, ItemTypes et Reviews
+$stmt = $pdo->query("
+    SELECT 
+        i.ItemId as id, 
+        i.Name as nom, 
+        t.Name as type, 
+        'Commun' as rarete, -- Valeur fictive car non présente dans le schéma actuel
+        i.PriceGold as prix, 
+        i.Stock as stock, 
+        IFNULL(AVG(r.Rating), 0) as rating, 
+        COUNT(r.ReviewId) as reviews
+    FROM Items i
+    JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
+    LEFT JOIN Reviews r ON i.ItemId = r.ItemId
+    WHERE i.IsActive = TRUE
+    GROUP BY i.ItemId, i.Name, t.Name, i.PriceGold, i.Stock
+");
+$items = $stmt->fetchAll();
+
 
 // 2. SIMULATION DES ITEMS (Pour rendre la boucle propre)
 $items = [

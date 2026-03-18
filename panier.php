@@ -1,11 +1,50 @@
 <?php
-// 1. SIMULATION DE LA SESSION
-$user = [
-    'isConnected' => true,
-    'alias' => "Slayer99",
-    'isMage' => true,
-    'balance' => ['gold' => 12, 'silver' => 50, 'bronze' => 80]
-];
+require_once 'AlgosBD.php';
+session_start();
+$pdo = get_pdo();
+
+// 1. GESTION DE LA SESSION & SÉCURITÉ
+if (isset($_SESSION['user'])) {
+    $user = [
+        'isConnected' => true,
+        'id' => $_SESSION['user']['id'],
+        'alias' => $_SESSION['user']['alias'],
+        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'balance' => [
+            'gold' => $_SESSION['user']['gold'],
+            'silver' => $_SESSION['user']['silver'],
+            'bronze' => $_SESSION['user']['bronze']
+        ]
+    ];
+} else {
+    // Si un visiteur tente d'accéder au panier, on le redirige vers la connexion
+    header("Location: login.php");
+    exit();
+}
+
+// 2. RÉCUPÉRATION DU PANIER DEPUIS LA BD
+$stmt = $pdo->prepare("
+    SELECT 
+        ci.ItemId as id, 
+        i.Name as nom, 
+        i.PriceGold as prix, 
+        ci.Quantity as quantite, 
+        i.Stock as stock_max, 
+        '📦' as image
+    FROM CartItems ci
+    JOIN Carts c ON ci.CartId = c.CartId
+    JOIN Items i ON ci.ItemId = i.ItemId
+    WHERE c.UserId = ?
+");
+$stmt->execute([$user['id']]);
+$cartItems = $stmt->fetchAll();
+
+// 3. CALCUL DU TOTAL
+$totalGeneral = 0;
+foreach ($cartItems as $item) {
+    $totalGeneral += ($item['prix'] * $item['quantite']);
+}
+
 
 // 2. CONTENU DU PANIER
 $cartItems = [
