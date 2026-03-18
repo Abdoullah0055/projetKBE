@@ -1,14 +1,15 @@
 <?php
 require_once 'AlgosBD.php';
 session_start();
+
 $pdo = get_pdo();
 
-// 1. GESTION DE LA SESSION
+// 1. VRAIE GESTION DE LA SESSION (US-02)
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'), 
+        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
@@ -16,17 +17,21 @@ if (isset($_SESSION['user'])) {
         ]
     ];
 } else {
-    $user = ['isConnected' => false, 'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]];
+    $user = [
+        'isConnected' => false,
+        'alias' => '',
+        'isMage' => false,
+        'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]
+    ];
 }
 
-// 2. RÉCUPÉRATION DES ITEMS DEPUIS LA BD
-// Utilisation d'une requête préparée pour rejoindre les tables Items, ItemTypes et Reviews
+// 2. RÉCUPÉRATION DES ITEMS DEPUIS LA BD (PDO)
 $stmt = $pdo->query("
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
         t.Name as type, 
-        'Commun' as rarete, -- Valeur fictive car non présente dans le schéma actuel
+        'Commun' as rarete, 
         i.PriceGold as prix, 
         i.Stock as stock, 
         IFNULL(AVG(r.Rating), 0) as rating, 
@@ -38,13 +43,6 @@ $stmt = $pdo->query("
     GROUP BY i.ItemId, i.Name, t.Name, i.PriceGold, i.Stock
 ");
 $items = $stmt->fetchAll();
-
-
-// 2. SIMULATION DES ITEMS (Pour rendre la boucle propre)
-$items = [
-    ['id' => 1, 'nom' => "Lame de l'Exilé", 'type' => 'arme', 'rarete' => 'Rare', 'prix' => 1200, 'stock' => 3, 'rating' => 4, 'reviews' => 12],
-    ['id' => 2, 'nom' => "Potion de Hâte", 'type' => 'potion', 'rarete' => 'Commun', 'prix' => 150, 'stock' => 0, 'rating' => 2, 'reviews' => 45],
-];
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -328,8 +326,7 @@ $items = [
                     <?= $user['alias'] ?> <?= $user['isMage'] ? ' <small>(Mage)</small>' : '' ?>
                 </button>
                 <button onclick="window.location.href='panier.php'">Panier (0)</button>
-                <button style="background:#c0392b; margin-left:10px;">Déconnexion</button>
-            <?php else: ?>
+<button onclick="window.location.href='logout.php'" style="background:#c0392b; margin-left:10px;">Déconnexion</button>            <?php else: ?>
                 <button style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">S'inscrire</button>
                 <button onclick="window.location.href='login.php'">Connexion</button>
             <?php endif; ?>
