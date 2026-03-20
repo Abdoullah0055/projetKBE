@@ -1,11 +1,12 @@
 <header>
     <div class="logo-area">
-        <img src="<?= IMG ?>/logo.png" class="logo-circle" alt="Logo">
+        <a href="../index.php"> <img src="../img/logo.png" class="logo-circle" alt="Logo">
+        </a>
         <h1>L'Arsenal</h1>
     </div>
 
-    <form class="search-container" action="<?= Page::Products->url() ?>">
-        <input type="text" name="search" placeholder="Rechercher une arme, un sort...">
+    <form class="search-container" ">
+        <input type=" text" name="search" placeholder="Rechercher une arme, un sort...">
     </form>
 
     <div class="header-actions">
@@ -28,8 +29,8 @@
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         <?php else: ?>
-            <button class="btn-outline-custom" onclick="window.location.href='login.php'">S'inscrire</button>
-            <button class="btn-accent" onclick="window.location.href='login.php'">Connexion</button>
+            <button class="btn-outline-custom" onclick="window.location.href='../login.php'">Inscription</button>
+            <button class=" btn-accent" onclick="window.location.href='../login.php'">Connexion</button>
         <?php endif; ?>
     </div>
 </header>
