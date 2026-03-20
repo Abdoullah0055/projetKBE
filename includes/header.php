@@ -1,11 +1,11 @@
 <header>
     <div class="logo-area">
-        <a href="../index.php"> <img src="../img/logo.png" class="logo-circle" alt="Logo">
+        <a href="index.php"> <img src="img/logo.png" class="logo-circle" alt="Logo">
         </a>
         <h1>L'Arsenal</h1>
     </div>
 
-    <form class="search-container" ">
+    <form class="search-container">
         <input type=" text" name="search" placeholder="Rechercher une arme, un sort...">
     </form>
 
@@ -17,14 +17,9 @@
                 <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
             </div>
 
-            <button class="btn-outline-custom">
-                <?= htmlspecialchars($user['alias']) ?><?= $user['isMage'] ? ' <small>(Mage)</small>' : '' ?>
-            </button>
-
             <button class="btn-accent" onclick="window.location.href='panier.php'">
                 <i class="fa-solid fa-cart-shopping"></i>
             </button>
-
             <button class="btn-danger-custom" onclick="window.location.href='logout.php'">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
