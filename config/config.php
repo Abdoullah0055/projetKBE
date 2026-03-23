@@ -28,4 +28,21 @@ if (isset($_SESSION['user'])) {
         'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]
     ];
 }
+
+
+function getItemImage($type)
+{
+    switch (strtolower($type)) {
+        case 'arme':
+            return '⚔️';
+        case 'armure':
+            return '🛡️';
+        case 'potion':
+            return '🧪';
+        case 'sort':
+            return '✨';
+        default:
+            return '❓';
+    }
+}
 ?>

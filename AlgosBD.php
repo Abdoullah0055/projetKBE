@@ -1,30 +1,27 @@
 <?php
 function get_pdo()
 {
-    $host = '127.0.0.1'; // 127.0.0.1 si la BD et l'application sont sur le même serveur
-    $db = 'projetKBE'; // nom de la base de données
+    $host = 'localhost';
+    $port = 8889;
+    $db = 'projetKBE';
     $user = 'root';
-    $pass = '';
+    $pass = 'root';
     $charset = 'utf8mb4';
 
-    $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-
-    $options = [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ];
+    $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=$charset";
 
     try {
-        $pdo = new PDO($dsn, $user, $pass, $options);
-        // echo "Connexion établie";
+        return new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]);
     } catch (\PDOException $e) {
-        $pdo = false;
-        die("ERREUR PAS REUSSI A SE CONNECTER AU PDO");
-        //throw new \PDOException($e->getMessage(), (int)$e->getCode());
+        die("Erreur PDO : " . $e->getMessage());
     }
-    return $pdo;
 }
+
+//Faire un console.log en PHP 
 function consoleLog($message)
 {
     echo "<script>console.log('PHP: " . $message . "');</script>";

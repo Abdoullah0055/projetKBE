@@ -1,6 +1,9 @@
 <?php
 require_once 'AlgosBD.php';
-session_start();
+require_once __DIR__ . '/config/config.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $pdo = get_pdo();
 
 // 1. GESTION DE LA SESSION
@@ -16,7 +19,10 @@ if (isset($_SESSION['user'])) {
         ]
     ];
 } else {
-    $user = ['isConnected' => false, 'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]];
+    $user = [
+        'isConnected' => false,
+        'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]
+    ];
 }
 
 // 2. RÉCUPÉRATION DE L'ITEM SÉLECTIONNÉ
@@ -31,34 +37,39 @@ $stmt = $pdo->prepare("
         i.Name as nom, 
         i.PriceGold as prix, 
         i.Description as description, 
-        '⚔️' as image, -- Valeur fictive (pas de colonne image dans bd.sql)
+        t.Name as type,
         i.Stock as stock, 
         COUNT(r.ReviewId) as nb_avis
     FROM Items i
+    JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.ItemId = ?
-    GROUP BY i.ItemId, i.Name, i.PriceGold, i.Description, i.Stock
+    GROUP BY i.ItemId, i.Name, i.PriceGold, i.Description, i.Stock, t.Name
 ");
 $stmt->execute([$_GET['id']]);
 $item = $stmt->fetch();
+switch (strtolower($item['type'])) {
+    case 'arme':
+        $item['image'] = '⚔️';
+        break;
+    case 'armure':
+        $item['image'] = '🛡️';
+        break;
+    case 'potion':
+        $item['image'] = '🧪';
+        break;
+    case 'sort':
+        $item['image'] = '✨';
+        break;
+    default:
+        $item['image'] = '❓';
+        break;
+}
 
-// Redirection si l'ID n'existe pas dans la base de données
 if (!$item) {
     header("Location: index.php");
     exit();
 }
-
-
-// Données de l'item (Simulées) 
-$item = [
-    'id' => 1,
-    'nom' => "Lame de l'Exilé",
-    'prix' => 1200,
-    'description' => "Forgée dans les tréfonds d'un volcan oublié, cette lame vibre d'une énergie sombre. Elle n'est pas seulement une arme, mais une extension de la volonté de son porteur. Les gravures sur le plat de la lame brillent d'un éclat bleuté à l'approche du danger.",
-    'image' => "⚔️",
-    'stock' => 3,
-    'nb_avis' => 12
-];
 ?>
 
 <!DOCTYPE html>
