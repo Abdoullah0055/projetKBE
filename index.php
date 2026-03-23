@@ -103,7 +103,7 @@ $title = "L'Arsenal - Marché Noir";
         </div>
     </aside>
 
-    <main>
+    <main class="catalog-main">
         <div class="catalog-banner">
             <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
                 <?= $user['isConnected'] ? "Content de vous revoir, " . $user['alias'] : "Catalogue des Reliques" ?>

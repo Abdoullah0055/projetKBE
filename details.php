@@ -1,31 +1,145 @@
 <?php
 require_once 'AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 $pdo = get_pdo();
 
-// 1. GESTION DE LA SESSION
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = [
-        'isConnected' => false,
-        'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]
-    ];
+function getItemProperties(PDO $pdo, int $itemId, string $type)
+{
+    switch (strtolower($type)) {
+        case 'weapon':
+            $stmt = $pdo->prepare("SELECT * FROM WeaponProperties WHERE ItemId = ?");
+            break;
+
+        case 'armor':
+            $stmt = $pdo->prepare("SELECT * FROM ArmorProperties WHERE ItemId = ?");
+            break;
+
+        case 'potion':
+            $stmt = $pdo->prepare("SELECT * FROM PotionProperties WHERE ItemId = ?");
+            break;
+
+        case 'magicspell':
+            $stmt = $pdo->prepare("SELECT * FROM MagicSpellProperties WHERE ItemId = ?");
+            break;
+
+        default:
+            return [];
+    }
+
+    $stmt->execute([$itemId]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return $result ?: [];
 }
 
-// 2. RÉCUPÉRATION DE L'ITEM SÉLECTIONNÉ
+function renderItemProperties(array $item, array $properties): string
+{
+    $type = strtolower($item['type']);
+
+    if (empty($properties)) {
+        return '<div class="property-empty">Aucune propriété disponible pour cet objet.</div>';
+    }
+
+    $html = '<div class="stats-grid">';
+
+    switch ($type) {
+        case 'weapon':
+            $html .= '
+                <div class="stat-box">
+                    <span class="stat-label">Dégâts</span>
+                    <span class="stat-value">' . (int)$properties['DamageMin'] . ' - ' . (int)$properties['DamageMax'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Durabilité</span>
+                    <span class="stat-value">' . (int)$properties['Durability'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Niveau requis</span>
+                    <span class="stat-value">' . (int)$properties['RequiredLevel'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Vitesse d\'attaque</span>
+                    <span class="stat-value">' . htmlspecialchars((string)$properties['AttackSpeed']) . '</span>
+                </div>
+            ';
+            break;
+
+        case 'armor':
+            $html .= '
+                <div class="stat-box">
+                    <span class="stat-label">Défense</span>
+                    <span class="stat-value">' . (int)$properties['Defense'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Durabilité</span>
+                    <span class="stat-value">' . (int)$properties['Durability'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Niveau requis</span>
+                    <span class="stat-value">' . (int)$properties['RequiredLevel'] . '</span>
+                </div>
+            ';
+            break;
+
+        case 'potion':
+            $html .= '
+                <div class="stat-box">
+                    <span class="stat-label">Effet</span>
+                    <span class="stat-value">' . htmlspecialchars((string)$properties['EffectType']) . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Valeur</span>
+                    <span class="stat-value">' . (int)$properties['EffectValue'] . '</span>
+                </div>
+            ';
+
+            if (!is_null($properties['DurationSeconds'])) {
+                $html .= '
+                    <div class="stat-box">
+                        <span class="stat-label">Durée</span>
+                        <span class="stat-value">' . (int)$properties['DurationSeconds'] . ' sec</span>
+                    </div>
+                ';
+            }
+            break;
+
+        case 'magicspell':
+            $html .= '
+                <div class="stat-box">
+                    <span class="stat-label">Dégâts magiques</span>
+                    <span class="stat-value">' . (int)$properties['SpellDamage'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Coût en mana</span>
+                    <span class="stat-value">' . (int)$properties['ManaCost'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Élément</span>
+                    <span class="stat-value">' . htmlspecialchars((string)$properties['ElementType']) . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Niveau requis</span>
+                    <span class="stat-value">' . (int)$properties['RequiredLevel'] . '</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Recharge</span>
+                    <span class="stat-value">' . (int)$properties['CooldownSeconds'] . ' sec</span>
+                </div>
+            ';
+            break;
+    }
+
+    $html .= '</div>';
+
+    return $html;
+}
+
+// 1. RÉCUPÉRATION DE L'ITEM
 if (!isset($_GET['id'])) {
     header("Location: index.php");
     exit();
@@ -35,7 +149,9 @@ $stmt = $pdo->prepare("
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
-        i.PriceGold as prix, 
+        i.PriceGold as prix_gold,
+        i.PriceSilver as prix_silver,
+        i.PriceBronze as prix_bronze,
         i.Description as description, 
         t.Name as type,
         i.Stock as stock, 
@@ -44,32 +160,19 @@ $stmt = $pdo->prepare("
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.ItemId = ?
-    GROUP BY i.ItemId, i.Name, i.PriceGold, i.Description, i.Stock, t.Name
+    GROUP BY i.ItemId, i.Name, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
 ");
+
 $stmt->execute([$_GET['id']]);
-$item = $stmt->fetch();
-switch (strtolower($item['type'])) {
-    case 'arme':
-        $item['image'] = '⚔️';
-        break;
-    case 'armure':
-        $item['image'] = '🛡️';
-        break;
-    case 'potion':
-        $item['image'] = '🧪';
-        break;
-    case 'sort':
-        $item['image'] = '✨';
-        break;
-    default:
-        $item['image'] = '❓';
-        break;
-}
+$item = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$item) {
     header("Location: index.php");
     exit();
 }
+
+$item['image'] = getItemImage($item['type']);
+$properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
 ?>
 
 <!DOCTYPE html>
@@ -78,9 +181,8 @@ if (!$item) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>L'Arsenal - <?= $item['nom'] ?></title>
+    <title>L'Arsenal - <?= htmlspecialchars($item['nom']) ?></title>
     <style>
-        /* 1. VARIABLES & RESET (Identiques à l'index) */
         :root {
             --bg-dark: #46494C;
             --bg-sidebar: #4C5C68;
@@ -89,6 +191,8 @@ if (!$item) {
             --text-silver: #C5C3C6;
             --gold: #F1C40F;
             --header-height: 70px;
+            --danger: #c0392b;
+            --panel-dark: rgba(0, 0, 0, 0.18);
         }
 
         * {
@@ -105,7 +209,6 @@ if (!$item) {
             min-height: 100vh;
         }
 
-        /* 2. HEADER DYNAMIQUE (Copié de l'index) */
         header {
             height: var(--header-height);
             display: flex;
@@ -161,10 +264,9 @@ if (!$item) {
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* 3. STRUCTURE DÉTAILS */
         main {
             flex: 1;
-            max-width: 1100px;
+            max-width: 1150px;
             margin: 40px auto;
             padding: 0 20px;
             display: grid;
@@ -179,62 +281,158 @@ if (!$item) {
         }
 
         .item-card-main {
-            background: var(--bg-sidebar);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
+            background: linear-gradient(145deg, #566773, #42505a);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
             height: 380px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 7rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 16px 35px rgba(0, 0, 0, 0.35);
+            position: relative;
         }
 
-        /* Style "Nuage" pour éléments connectés */
-        .cloud-info {
-            background: rgba(0, 0, 0, 0.2);
-            border: 2px dashed var(--accent);
-            border-radius: 15px;
+        .item-type-badge {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            background: rgba(0, 0, 0, 0.35);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 999px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .cloud-info,
+        .type-panel,
+        .comments-box,
+        .properties-panel {
+            background: var(--panel-dark);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             padding: 20px;
+        }
+
+        .cloud-info {
+            border: 2px dashed var(--accent);
             text-align: center;
+        }
+
+        .type-panel-title,
+        .section-title {
+            color: var(--accent);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0 0 15px 0;
+        }
+
+        .type-panel p {
+            margin: 0;
+            color: var(--text-silver);
+            line-height: 1.6;
         }
 
         .info-column {
             display: flex;
             flex-direction: column;
+            gap: 20px;
         }
 
         .item-header {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+            background: var(--panel-dark);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
+            gap: 20px;
+        }
+
+        .item-name {
+            margin: 0;
+            font-size: 2.2rem;
         }
 
         .item-price {
+            text-align: right;
+            min-width: 160px;
+        }
+
+        .price-main {
             font-size: 1.8rem;
             color: var(--gold);
             font-weight: bold;
         }
 
+        .price-secondary {
+            font-size: 0.9rem;
+            color: var(--text-silver);
+            margin-top: 6px;
+        }
+
         .stock-indicator {
             display: inline-block;
-            margin-top: 10px;
-            padding: 4px 12px;
+            margin-top: 12px;
+            padding: 5px 12px;
             background: rgba(25, 133, 161, 0.2);
             border: 1px solid var(--accent);
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 0.85rem;
             color: var(--accent);
             font-weight: bold;
         }
 
+        .properties-panel p.description {
+            color: var(--text-silver);
+            line-height: 1.7;
+            margin-top: 0;
+            margin-bottom: 18px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-label {
+            font-size: 0.78rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 700;
+        }
+
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-light);
+        }
+
+        .property-empty {
+            color: #aaa;
+            font-style: italic;
+        }
+
         .comments-box {
-            background: var(--bg-sidebar);
-            border-radius: 8px;
-            padding: 20px;
             border-left: 4px solid var(--accent);
         }
 
@@ -243,7 +441,8 @@ if (!$item) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 30px;
+            gap: 20px;
+            padding-top: 10px;
         }
 
         .btn-add {
@@ -251,10 +450,15 @@ if (!$item) {
             color: white;
             border: none;
             padding: 15px 35px;
-            border-radius: 4px;
+            border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
+        }
+
+        .btn-add:hover,
+        .header-actions button:hover {
+            opacity: 0.9;
         }
 
         footer {
@@ -265,6 +469,30 @@ if (!$item) {
             justify-content: center;
             border-top: 1px solid var(--accent);
             font-size: 0.8rem;
+        }
+
+        @media (max-width: 900px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+
+            .item-header {
+                flex-direction: column;
+            }
+
+            .item-price {
+                text-align: left;
+                min-width: auto;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-add {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -280,15 +508,15 @@ if (!$item) {
         <div class="header-actions">
             <?php if ($user['isConnected']): ?>
                 <div class="user-wallet">
-                    <span title="Or" style="color:var(--gold)"><?= $user['balance']['gold'] ?> G</span>
-                    <span title="Argent" style="color:var(--text-silver)"><?= $user['balance']['silver'] ?> S</span>
-                    <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
+                    <span title="Or" style="color:var(--gold)"><?= (int)$user['balance']['gold'] ?> G</span>
+                    <span title="Argent" style="color:var(--text-silver)"><?= (int)$user['balance']['silver'] ?> S</span>
+                    <span title="Bronze" style="color:#CD7F32"><?= (int)$user['balance']['bronze'] ?> B</span>
                 </div>
                 <button style="background:transparent; border:1px solid var(--accent); color:var(--accent);">
-                    <?= $user['alias'] ?> <?= $user['isMage'] ? ' <small>(Mage)</small>' : '' ?>
+                    <?= htmlspecialchars($user['alias']) ?><?= $user['isMage'] ? ' <small>(Mage)</small>' : '' ?>
                 </button>
                 <button onclick="window.location.href='panier.php'">Panier (0)</button>
-                <button style="background:#c0392b;">Déconnexion</button>
+                <button style="background:<?= 'var(--danger)' ?>;">Déconnexion</button>
             <?php else: ?>
                 <button style="background: transparent; border: 1px solid var(--accent); color: var(--accent);">S'inscrire</button>
                 <button>Connexion</button>
@@ -298,12 +526,23 @@ if (!$item) {
 
     <main>
         <div class="visual-column">
-            <div class="item-card-main"><?= $item['image'] ?></div>
+            <div class="item-card-main">
+                <div class="item-type-badge"><?= htmlspecialchars($item['type']) ?></div>
+                <?= $item['image'] ?>
+            </div>
+
+            <div class="type-panel">
+                <h3 class="type-panel-title">Classe d'objet</h3>
+                <p>
+                    Cet objet appartient à la catégorie
+                    <strong><?= htmlspecialchars($item['type']) ?></strong>.
+                </p>
+            </div>
 
             <?php if ($user['isConnected']): ?>
                 <div class="cloud-info">
                     <div style="color: var(--gold); font-size: 1.3rem; margin-bottom: 5px;">★ ★ ★ ★ ☆</div>
-                    <div style="font-size: 0.9rem;"><?= $item['nb_avis'] ?> aventuriers (US-42)</div>
+                    <div style="font-size: 0.9rem;"><?= (int)$item['nb_avis'] ?> aventuriers ont laissé un avis</div>
                 </div>
             <?php endif; ?>
         </div>
@@ -311,29 +550,36 @@ if (!$item) {
         <div class="info-column">
             <div class="item-header">
                 <div>
-                    <h2 style="margin:0; font-size: 2.2rem;"><?= $item['nom'] ?></h2>
-                    <?php if ($user['isConnected']): ?>
-                        <div class="stock-indicator">En stock : <?= $item['stock'] ?> (US-18)</div>
-                    <?php endif; ?>
+                    <h2 class="item-name"><?= htmlspecialchars($item['nom']) ?></h2>
+                    <div class="stock-indicator">En stock : <?= (int)$item['stock'] ?></div>
                 </div>
-                <div class="item-price"><?= number_format($item['prix'], 0) ?> GP</div>
+
+                <div class="item-price">
+                    <div class="price-main"><?= (int)$item['prix_gold'] ?> GP</div>
+                    <div class="price-secondary">
+                        <?= (int)$item['prix_silver'] ?> SP • <?= (int)$item['prix_bronze'] ?> BP
+                    </div>
+                </div>
             </div>
 
-            <div style="margin-bottom: 30px;">
-                <h3 style="color: var(--accent); font-size: 1rem; text-transform: uppercase;">Propriétés (US-14)</h3>
-                <p style="color: var(--text-silver); line-height: 1.7;"><?= $item['description'] ?></p>
+            <div class="properties-panel">
+                <h3 class="section-title">Description & propriétés</h3>
+                <p class="description"><?= htmlspecialchars($item['description']) ?></p>
+                <?= renderItemProperties($item, $properties) ?>
             </div>
 
             <?php if ($user['isConnected']): ?>
                 <div class="comments-box">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--accent);">Dernier avis (US-24)</h4>
-                    <p style="margin: 0; font-style: italic; font-size: 0.95rem;">"Une qualité de forge exceptionnelle."</p>
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.9rem; color: var(--accent);">Dernier avis</h4>
+                    <p style="margin: 0; font-style: italic; font-size: 0.95rem;">
+                        "Une qualité de forge exceptionnelle."
+                    </p>
                 </div>
             <?php endif; ?>
 
             <div class="action-bar">
                 <a href="index.php" style="color: var(--text-silver); text-decoration:none;">← Retour au catalogue</a>
-                <button class="btn-add">Ajouter au panier (US-15)</button>
+                <button class="btn-add">Ajouter au panier</button>
             </div>
         </div>
     </main>

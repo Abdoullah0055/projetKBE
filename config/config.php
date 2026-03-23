@@ -33,13 +33,13 @@ if (isset($_SESSION['user'])) {
 function getItemImage($type)
 {
     switch (strtolower($type)) {
-        case 'arme':
+        case 'weapon':
             return '⚔️';
-        case 'armure':
+        case 'armor':
             return '🛡️';
         case 'potion':
             return '🧪';
-        case 'sort':
+        case 'magicspell':
             return '✨';
         default:
             return '❓';
