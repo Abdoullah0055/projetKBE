@@ -1,10 +1,9 @@
 <?php
-require_once __DIR__ . '/AlgosBD.php';
-
+require_once 'AlgosBD.php';
+require_once __DIR__ . '/config/config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
 $pdo = get_pdo();
 
 if (isset($_SESSION['user'])) {
@@ -54,15 +53,28 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$_GET['id']]);
 $item = $stmt->fetch();
+switch (strtolower($item['type'])) {
+    case 'arme':
+        $item['image'] = '⚔️';
+        break;
+    case 'armure':
+        $item['image'] = '🛡️';
+        break;
+    case 'potion':
+        $item['image'] = '🧪';
+        break;
+    case 'sort':
+        $item['image'] = '✨';
+        break;
+    default:
+        $item['image'] = '❓';
+        break;
+}
 
 if (!$item) {
     header("Location: index.php");
     exit();
 }
-
-$item['image'] = '⚔️';
-
-$title = "L'Arsenal - " . $item['nom'];
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>

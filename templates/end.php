@@ -1,3 +1,3 @@
-<script src="<?= JS ?>/script.js"></script>
+<script src="<?= JS ?>/scripts.js"></script>
 </body>
 </html>
