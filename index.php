@@ -54,7 +54,8 @@ $title = "L'Arsenal - Marché Noir";
 
 // Gestion du thème via Cookie (30 jours)
 $currentTheme = $_COOKIE['theme'] ?? 'light';
-$bgImage = ($currentTheme === 'dark') ? 'img/darktheme/dark1.png' : 'img/lighttheme/light1.png';
+$bgNum = $_COOKIE['bgNumber'] ?? '1'; // On récupère le numéro sauvegardé
+$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 ?>
