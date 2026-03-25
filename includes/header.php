@@ -6,10 +6,14 @@
     </div>
 
     <form class="search-container">
-        <input type=" text" name="search" placeholder="Rechercher une arme, un sort...">
+        <input type="text" name="search" placeholder="Rechercher une arme, un sort...">
     </form>
 
     <div class="header-actions">
+        <button id="theme-toggle" class="btn-outline-custom" title="Changer le mode">
+            <i id="theme-icon" class="fa-solid <?= $iconClass ?>"></i>
+        </button>
+
         <?php if ($user['isConnected']): ?>
             <div class="user-wallet">
                 <span title="Or" style="color:var(--gold)"><?= $user['balance']['gold'] ?> G</span>
@@ -25,7 +29,7 @@
             </button>
         <?php else: ?>
             <button class="btn-outline-custom" onclick="window.location.href='../login.php'">Inscription</button>
-            <button class=" btn-accent" onclick="window.location.href='../login.php'">Connexion</button>
+            <button class="btn-accent" onclick="window.location.href='../login.php'">Connexion</button>
         <?php endif; ?>
     </div>
 </header>

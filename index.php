@@ -51,8 +51,31 @@ $stmt = $pdo->query("
 $items = $stmt->fetchAll();
 
 $title = "L'Arsenal - Marché Noir";
+
+// Gestion du thème via Cookie (30 jours)
+$currentTheme = $_COOKIE['theme'] ?? 'light';
+$bgImage = ($currentTheme === 'dark') ? 'img/darktheme/dark1.png' : 'img/lighttheme/light1.png';
+$iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
+
 ?>
 
+<style>
+    :root {
+        /* On initialise la variable avec la valeur PHP */
+        --main-bg: url('<?= $bgImage ?>');
+    }
+
+    /* On applique l'image au body, pas au main */
+    body {
+        background-image: var(--main-bg) !important;
+    }
+
+    /* On s'assure que le wrapper et le main ne cachent pas le body */
+    .wrapper,
+    main {
+        background: transparent !important;
+    }
+</style>
 <?php include __DIR__ . '/templates/head.php'; ?>
 
 <?php include __DIR__ . '/includes/header.php'; ?>
@@ -113,7 +136,7 @@ $title = "L'Arsenal - Marché Noir";
 
         <div class="product-list">
             <?php foreach ($items as $item): ?>
-             
+
                 <div class="item-row" onclick="window.location.href='<?= BASE_URL ?>/details.php?id=<?= $item['id'] ?>'"
                     style="cursor:pointer; <?= ($item['stock'] == 0) ? 'opacity:0.7;' : '' ?>">>
                     <div class="item-icon"><?= getItemImage($item['type']) ?></div>
