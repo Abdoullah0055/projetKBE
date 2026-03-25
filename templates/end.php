@@ -1,5 +1,6 @@
-<script src="<?= JS ?>/scripts.js"></script>
-<script src="assets/js/script.js"></script>
+<script src="/assets/js/scripts.js"></script>
+<script src="/assets/js/auth.js"></script>
+
 </body>
 
 </html>

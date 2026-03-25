@@ -11,7 +11,7 @@
 
     <div class="header-actions">
         <button id="theme-toggle" class="btn-outline-custom" title="Changer le mode">
-            <i id="theme-icon" class="fa-solid <?= $iconClass ?>"></i>
+            <i id="theme-icon" class="fa-solid <?= $iconClass ?? 'fa-moon' ?>"></i>
         </button>
 
         <?php if ($user['isConnected']): ?>

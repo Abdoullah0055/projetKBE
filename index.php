@@ -62,16 +62,32 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 <style>
     :root {
-        /* On initialise la variable avec la valeur PHP */
         --main-bg: url('<?= $bgImage ?>');
     }
 
-    /* On applique l'image au body, pas au main */
     body {
+        /* On force l'image ici pour qu'elle passe au-dessus du gris du fichier CSS */
         background-image: var(--main-bg) !important;
+        background-color: #1a1b1e;
+        /* Fond de secours si l'image rate */
+        position: relative;
+        z-index: 0;
     }
 
-    /* On s'assure que le wrapper et le main ne cachent pas le body */
+    /* On s'assure que le dégradé sombre ne cache pas l'image */
+    body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        /* Ajuste l'obscurité du fond ici */
+        z-index: -1;
+        pointer-events: none;
+    }
+
     .wrapper,
     main {
         background: transparent !important;

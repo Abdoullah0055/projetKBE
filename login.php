@@ -11,6 +11,7 @@ if (!$pdo) {
     die("Erreur critique : Impossible de se connecter à la base de données.");
 }
 
+// --- TON CODE PHP DE SESSION ET TRAITEMENT (GARDÉ TEL QUEL) ---
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
@@ -45,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($mode === 'register') {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-
         try {
             $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
             $stmt->execute([$alias, $hashedPassword]);
@@ -68,7 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'silver' => $foundUser['Silver'],
                     'bronze' => $foundUser['Bronze']
                 ];
-
                 header("Location: index.php");
                 exit();
             } else {
@@ -84,15 +83,14 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
-<link rel="stylesheet" href="css/login.css">
-<?php include __DIR__ . '/includes/header.php'; ?>
+<link rel="stylesheet" href="assets/css/login.css">
 
 <main class="auth-page">
     <div class="auth-container fade-in" id="auth-card">
         <div class="auth-header">
-            <div class="auth-icon">🗝️</div>
+            <div style="font-size: 3rem; margin-bottom: 10px;">🗝️</div>
             <h2 id="form-title">Connexion</h2>
-            <p id="form-subtitle">Entrez dans l'Arsenal de Sombre-Donjon</p>
+            <p id="form-subtitle" style="font-size: 0.8rem; color: #5C5F66;">Entrez dans l'Arsenal de Sombre-Donjon</p>
         </div>
 
         <?php if (!empty($error)): ?>
@@ -103,11 +101,11 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
             <div class="alert-msg alert-success"><?= htmlspecialchars($success) ?></div>
         <?php endif; ?>
 
-        <form id="auth-form" method="POST" action="login.php" onsubmit="return validateForm()">
+        <form id="auth-form" method="POST" action="login.php">
             <input type="hidden" name="mode" id="auth-mode" value="login">
 
             <div class="form-group">
-                <label for="alias">Alias de l'Aventurier</label>
+                <label for="alias" id="label-alias">Alias de l'Aventurier</label>
                 <input type="text" id="alias" name="alias" placeholder="Ex: Slayer99" required minlength="3">
             </div>
 
@@ -116,10 +114,12 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
                 <input type="password" id="password" name="password" placeholder="••••••••" required minlength="6">
             </div>
 
-            <div class="form-group" id="confirm-group">
+            <div class="form-group" id="confirm-group" style="display: none;">
                 <label for="confirm-password">Confirmer le mot de passe</label>
-                <input type="password" id="confirm-password" placeholder="••••••••">
-                <div id="confirm-error" class="confirm-error">Les mots de passe ne correspondent pas.</div>
+                <input type="password" id="confirm-password" name="confirm_password" placeholder="••••••••">
+                <div id="confirm-error" style="display:none; color: var(--error); font-size: 0.8rem; margin-top:5px;">
+                    Les mots de passe ne correspondent pas.
+                </div>
             </div>
 
             <button type="submit" class="btn-primary" id="submit-btn">Se connecter</button>
@@ -127,64 +127,9 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 
         <div class="switch-mode">
             <span id="switch-text">Nouveau ici ?</span>
-            <a href="#" onclick="toggleMode(event)" id="switch-link">Créer un compte</a>
+            <a href="#" id="switch-link">Créer un compte</a>
         </div>
     </div>
 </main>
-
-<?php include __DIR__ . '/includes/footer.php'; ?>
+<script src="assets/js/auth.js"></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
-<script>
-    let isLoginMode = true;
-
-    function toggleMode(e) {
-        e.preventDefault();
-        isLoginMode = !isLoginMode;
-
-        const title = document.getElementById('form-title');
-        const submitBtn = document.getElementById('submit-btn');
-        const confirmGroup = document.getElementById('confirm-group');
-        const switchText = document.getElementById('switch-text');
-        const switchLink = document.getElementById('switch-link');
-        const aliasLabel = document.querySelector('label[for="alias"]');
-        const authMode = document.getElementById('auth-mode');
-        const confirmError = document.getElementById('confirm-error');
-
-        confirmError.style.display = 'none';
-
-        if (isLoginMode) {
-            title.innerText = "Connexion";
-            submitBtn.innerText = "Se connecter";
-            confirmGroup.style.display = "none";
-            switchText.innerText = "Nouveau ici ?";
-            switchLink.innerText = "Créer un compte";
-            aliasLabel.innerText = "Alias de l'Aventurier";
-            authMode.value = "login";
-        } else {
-            title.innerText = "Inscription";
-            submitBtn.innerText = "Forger mon compte";
-            confirmGroup.style.display = "block";
-            switchText.innerText = "Déjà membre ?";
-            switchLink.innerText = "Se connecter";
-            aliasLabel.innerText = "Choisir un Alias Unique";
-            authMode.value = "register";
-        }
-    }
-
-    function validateForm() {
-        if (!isLoginMode) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            if (password !== confirmPassword) {
-                document.getElementById('confirm-error').style.display = 'block';
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    document.getElementById('confirm-group').style.display = 'none';
-</script>

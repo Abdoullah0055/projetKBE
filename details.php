@@ -78,7 +78,7 @@ if (!$item) {
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
-<link rel="stylesheet" href="css/details.css">
+<link rel="stylesheet" href="assets/css/details.css">
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="details-page">

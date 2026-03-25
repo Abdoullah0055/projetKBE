@@ -18,32 +18,45 @@
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  /* On ajoute un dégradé avant l'image pour garantir la lisibilité */
-  background:
-    linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), var(--main-bg);
+  /* On utilise directement la variable ici */
+  background-image: var(--main-bg);
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
   background-repeat: no-repeat;
-
   color: var(--text-light);
   display: flex;
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
   transition: background 0.4s ease;
+  position: relative;
 }
 
+/* Le dégradé sombre est déplacé ici pour ne pas gêner le JS */
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: -1;
+}
+
+/* --- HEADER --- */
 header {
   height: var(--header-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(20, 21, 23, 0.85); /* Plus opaque */
   border-bottom: 2px solid var(--accent);
   flex-shrink: 0;
   z-index: 1000;
+  backdrop-filter: blur(10px);
 }
 
 .logo-area {
@@ -56,7 +69,6 @@ header {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  background: var(--text-silver);
   border: 2px solid var(--accent);
   object-fit: cover;
 }
@@ -71,7 +83,7 @@ header {
   padding: 10px 18px;
   border-radius: 25px;
   border: 1px solid var(--accent);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.4);
   color: white;
   outline: none;
 }
@@ -88,19 +100,18 @@ header {
   cursor: pointer;
   font-weight: 600;
   margin-left: 10px;
+  transition: 0.2s;
 }
 
 .btn-accent {
   background: var(--accent);
   color: white;
 }
-
 .btn-outline-custom {
   background: transparent;
   border: 1px solid var(--accent) !important;
   color: var(--accent);
 }
-
 .btn-danger-custom {
   background: #c0392b;
   color: white;
@@ -112,30 +123,27 @@ header {
   margin-right: 20px;
   font-size: 0.9rem;
   font-weight: bold;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.5);
   padding: 5px 15px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* --- STRUCTURE --- */
 .wrapper {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
+/* --- SIDEBAR --- */
 aside {
   width: var(--sidebar-width);
-  background-color: rgba(
-    76,
-    92,
-    104,
-    0.85
-  ); /* Ton --bg-sidebar avec de l'opacité */
-  backdrop-filter: blur(5px); /* Optionnel : petit effet de flou stylé */
+  background-color: rgba(30, 35, 40, 0.9); /* Plus sombre et opaque */
+  backdrop-filter: blur(8px);
   transition: width var(--transition);
   position: relative;
-  border-right: 1px solid rgba(0, 0, 0, 0.3);
+  border-right: 1px solid rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -155,7 +163,7 @@ aside.collapsed {
   border-radius: 50%;
   background-color: var(--accent);
   color: white;
-  border: 4px solid rgba(0, 0, 0, 0.2);
+  border: 4px solid #1a1b1e;
   cursor: pointer;
   z-index: 1100;
   display: flex;
@@ -169,11 +177,6 @@ aside.collapsed {
   flex-direction: column;
   height: 100%;
   overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.filter-group {
-  margin-bottom: 25px;
 }
 
 .filter-group label {
@@ -185,46 +188,22 @@ aside.collapsed {
   margin-bottom: 8px;
 }
 
-.filter-group select,
-.filter-group input {
+.filter-group select {
   width: 100%;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: white;
   padding: 10px;
   border-radius: 5px;
 }
 
-.cta-box {
-  margin-top: auto;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  border-radius: 8px;
-  border-left: 3px solid var(--accent);
-}
-
-.collapsed .hide-text {
-  display: none;
-}
-
-.show-icon {
-  display: none;
-  font-size: 1.6rem;
-  text-align: center;
-  margin-bottom: 30px;
-}
-
-.collapsed .show-icon {
-  display: block;
-}
-
+/* --- MAIN CONTENT & ITEMS --- */
 main {
   flex: 1;
   padding: 40px;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  background: transparent;
 }
 
 .catalog-banner {
@@ -234,54 +213,89 @@ main {
   margin-bottom: 30px;
 }
 
+.product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* --- ESPACEMENT VERTICAL ACCRU --- */
+}
+
 .item-row {
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(3px);
+  /* On descend de 0.85 à 0.65 pour plus de transparence */
+  background: rgba(20, 22, 25, 0.65);
+
+  /* On augmente le flou pour que le texte reste lisible sur l'image */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* Support Safari */
+
   padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  border: 1px solid transparent;
-  transition: 0.3s;
+  border-radius: 10px;
+
+  /* On rend la bordure un peu plus visible pour définir la forme */
+  border: 1px solid rgba(25, 133, 161, 0.2);
+
+  transition:
+    transform 0.3s,
+    background 0.3s,
+    border-color 0.3s,
+    box-shadow 0.3s;
 }
 
 .item-row:hover {
+  transform: translateX(8px);
+  /* Au survol, on remonte un peu l'opacité pour l'effet interactif */
+  background: rgba(25, 28, 32, 0.8);
   border-color: var(--accent);
-  background: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
 }
+
 .item-icon {
-  font-size: 3rem;
-  width: 50px; /* 🔥 clé pour alignement */
+  font-size: 2.5rem;
+  width: 60px;
   flex-shrink: 0;
   display: flex;
-  align-items: left;
-  justify-content: left;
-  line-height: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+.item-info h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--text-light);
 }
 
 .item-price {
   font-weight: bold;
   color: var(--accent);
-  font-size: 1.3rem;
+  font-size: 1.4rem;
 }
 
+/* --- FOOTER & PAGINATION --- */
 .pagination {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 30px;
-  padding: 20px;
+  padding: 30px 0;
+  margin-top: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pagination a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: bold;
 }
 
 footer {
   height: 50px;
-  background: #232527;
+  background: rgba(15, 16, 18, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
   border-top: 1px solid var(--accent);
   font-size: 0.8rem;
+  flex-shrink: 0;
 }

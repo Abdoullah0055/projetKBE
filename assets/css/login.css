@@ -1,141 +1,203 @@
-.auth-page {
-    min-height: calc(100vh - 120px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 40px 20px;
-    background-color: var(--bg-dark);
-    background-image: radial-gradient(circle at center, #2c3e50 0%, #1a1b1e 100%);
+/* --- VARIABLES --- */
+:root {
+  --bg-dark: #1a1b1e;
+  --card-bg: #25262b;
+  --accent: #1985a1;
+  --error: #e74c3c;
+  --success: #2ecc71;
+  --text-light: #dcdcdd;
 }
 
+/* --- STRUCTURE GLOBALE --- */
+html {
+  height: auto;
+  min-height: 100%;
+  overflow-y: auto; /* Autorise le scroll du navigateur uniquement */
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-dark);
+  background-image: radial-gradient(circle at center, #2c3e50 0%, #1a1b1e 100%);
+  background-attachment: fixed;
+  color: var(--text-light);
+
+  /* Centrage Flexbox */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Gestion du Scroll & Zoom */
+  min-height: 100vh;
+  height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 40px 20px;
+}
+
+/* Neutralisation du main pour éviter les scrolls internes */
+main.auth-page,
+.auth-page {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible !important;
+}
+
+/* --- CARTE DE FORMULAIRE --- */
 .auth-container {
-    background: #25262b;
-    width: 100%;
-    max-width: 420px;
-    padding: 40px;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(25, 133, 161, 0.2);
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 550px; /* Largeur augmentée pour l'inscription */
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(25, 133, 161, 0.2);
+  margin: auto;
+  flex-shrink: 0; /* Empêche l'écrasement au zoom */
+  transition: max-width 0.3s ease;
 }
 
 .auth-header {
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-.auth-icon {
-    font-size: 3rem;
-    margin-bottom: 10px;
+  text-align: center;
+  margin-bottom: 30px;
 }
 
 .auth-header h2 {
-    margin: 0;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 2px;
+  margin: 0;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 1.8rem;
 }
 
-.auth-header p {
-    font-size: 0.8rem;
-    color: #5C5F66;
-    margin-top: 10px;
-}
-
+/* --- GROUPES DE CHAMPS --- */
 .form-group {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    color: #A6A7AB;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #a6a7ab;
 }
 
 .form-group input {
-    width: 100%;
-    padding: 12px;
-    border-radius: 6px;
-    border: 1px solid #373A40;
-    background: #1A1B1E;
-    color: white;
-    box-sizing: border-box;
-    outline: none;
-    transition: border 0.3s;
+  width: 100%;
+  padding: 14px;
+  border-radius: 6px;
+  border: 1px solid #373a40;
+  background: #1a1b1e;
+  color: white;
+  box-sizing: border-box;
+  outline: none;
+  font-size: 1rem;
+  transition:
+    border 0.3s,
+    box-shadow 0.3s;
 }
 
 .form-group input:focus {
-    border-color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(25, 133, 161, 0.2);
 }
 
-.btn-primary {
-    width: 100%;
-    padding: 12px;
-    background: var(--accent);
-    border: none;
-    color: white;
-    font-weight: bold;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: transform 0.2s, background 0.3s;
+/* --- BOUTONS --- */
+button.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  font-weight: bold;
+  font-size: 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition:
+    transform 0.2s,
+    background 0.3s,
+    box-shadow 0.2s;
 }
 
-.btn-primary:hover {
-    background: #146c82;
-    transform: translateY(-2px);
+button.btn-primary:hover {
+  background: #146c82;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
+button.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* --- LIEN DE BASCULE --- */
 .switch-mode {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.85rem;
+  text-align: center;
+  margin-top: 25px;
+  font-size: 0.9rem;
 }
 
 .switch-mode a {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: bold;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: bold;
+  margin-left: 5px;
 }
 
+.switch-mode a:hover {
+  text-decoration: underline;
+}
+
+/* --- MESSAGES D'ALERTE --- */
 .alert-msg {
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-    text-align: center;
-    font-weight: bold;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  text-align: center;
+  border: 1px solid transparent;
 }
 
 .alert-error {
-    background-color: rgba(231, 76, 60, 0.2);
-    color: #e74c3c;
-    border: 1px solid #e74c3c;
+  background: rgba(231, 76, 60, 0.15);
+  color: #ff6b6b;
+  border-color: var(--error);
 }
 
 .alert-success {
-    background-color: rgba(46, 204, 113, 0.2);
-    color: #2ecc71;
-    border: 1px solid #2ecc71;
+  background: rgba(46, 204, 113, 0.15);
+  color: #2ecc71;
+  border-color: var(--success);
 }
 
-.confirm-error {
-    color: #e74c3c;
-    font-size: 0.8rem;
-    display: none;
-    margin-top: 5px;
-}
-
+/* --- ANIMATIONS --- */
 .fade-in {
-    animation: fadeIn 0.5s ease-in;
+  animation: fadeIn 0.5s ease-out forwards;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* --- RESPONSIVITÉ MOBILE --- */
+@media (max-width: 480px) {
+  .auth-container {
+    padding: 25px 20px;
+    border-radius: 8px;
+  }
+
+  .auth-header h2 {
+    font-size: 1.5rem;
+  }
 }
