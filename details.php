@@ -173,6 +173,18 @@ $title = "Détails - " . $item['nom'];
     document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
         e.preventDefault(); // Empêche le rechargement de la page
 
+        // --- NOUVEAU : VÉRIFICATION CONNEXION ---
+        // On récupère la variable PHP dans le JS
+        const isConnected = <?= json_encode($user['isConnected']) ?>;
+
+        if (!isConnected) {
+            // On récupère l'ID de l'item actuel pour revenir ici
+            const itemId = document.querySelector('input[name="item_id"]').value;
+            // On redirige vers login.php avec le paramètre de retour
+            window.location.href = `login.php?return_to=details.php?id=${itemId}`;
+            return; // On arrête tout le reste
+        }
+
         const form = this;
         const formData = new FormData(form);
         const cartBtn = document.getElementById('cart-btn');
