@@ -154,8 +154,9 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
         <div class="product-list">
             <?php foreach ($items as $item): ?>
 
-                <div class="item-row" onclick="window.location.href='<?= BASE_URL ?>/details.php?id=<?= $item['id'] ?>'"
-                    style="cursor:pointer; <?= ($item['stock'] == 0) ? 'opacity:0.7;' : '' ?>">>
+                <div class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?>"
+                    onclick="window.location.href='<?= BASE_URL ?>/details.php?id=<?= $item['id'] ?>'"
+                    style="cursor:pointer;">
                     <div class="item-icon"><?= getItemImage($item['type']) ?></div>
                     <div class="item-info">
                         <div style="display: flex; align-items: center; gap: 10px;">

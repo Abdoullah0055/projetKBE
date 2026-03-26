@@ -1,3 +1,4 @@
+/* --- VARIABLES GLOBALES --- */
 :root {
   --bg-dark: #46494c;
   --bg-sidebar: #4c5c68;
@@ -15,10 +16,10 @@
   box-sizing: border-box;
 }
 
+/* --- BASE & BACKGROUND --- */
 body {
   margin: 0;
   font-family: "Segoe UI", sans-serif;
-  /* On utilise directement la variable ici */
   background-image: var(--main-bg);
   background-size: cover;
   background-attachment: fixed;
@@ -33,7 +34,6 @@ body {
   position: relative;
 }
 
-/* Le dégradé sombre est déplacé ici pour ne pas gêner le JS */
 body::before {
   content: "";
   position: absolute;
@@ -45,18 +45,21 @@ body::before {
   z-index: -1;
 }
 
-/* --- HEADER --- */
+/* --- HEADER (GLASSMORPHISM) --- */
 header {
   height: var(--header-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
-  background-color: rgba(20, 21, 23, 0.85); /* Plus opaque */
-  border-bottom: 2px solid var(--accent);
+  /* Effet de verre : sombre et translucide */
+  background: rgba(20, 21, 23, 0.45) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  /* Bordure fine pour l'effet de relief */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
   flex-shrink: 0;
   z-index: 1000;
-  backdrop-filter: blur(10px);
 }
 
 .logo-area {
@@ -69,7 +72,7 @@ header {
   width: 45px;
   height: 45px;
   border-radius: 50%;
-  border: 2px solid var(--accent);
+  border: 1px solid var(--accent);
   object-fit: cover;
 }
 
@@ -82,10 +85,16 @@ header {
   width: 100%;
   padding: 10px 18px;
   border-radius: 25px;
-  border: 1px solid var(--accent);
+  border: 1px solid rgba(25, 133, 161, 0.3);
   background: rgba(0, 0, 0, 0.4);
   color: white;
   outline: none;
+  backdrop-filter: blur(5px);
+  transition: border-color 0.3s;
+}
+
+.search-container input:focus {
+  border-color: var(--accent);
 }
 
 .header-actions {
@@ -107,13 +116,16 @@ header {
   background: var(--accent);
   color: white;
 }
+
 .btn-outline-custom {
-  background: transparent;
-  border: 1px solid var(--accent) !important;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(25, 133, 161, 0.4) !important;
   color: var(--accent);
+  backdrop-filter: blur(5px);
 }
+
 .btn-danger-custom {
-  background: #c0392b;
+  background: rgba(192, 57, 43, 0.8);
   color: white;
 }
 
@@ -123,10 +135,10 @@ header {
   margin-right: 20px;
   font-size: 0.9rem;
   font-weight: bold;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.4);
   padding: 5px 15px;
   border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* --- STRUCTURE --- */
@@ -136,17 +148,19 @@ header {
   overflow: hidden;
 }
 
-/* --- SIDEBAR --- */
+/* --- SIDEBAR (GLASSMORPHISM) --- */
 aside {
   width: var(--sidebar-width);
-  background-color: rgba(30, 35, 40, 0.9); /* Plus sombre et opaque */
-  backdrop-filter: blur(8px);
+  background: rgba(20, 22, 25, 0.4) !important;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
   transition: width var(--transition);
   position: relative;
-  border-right: 1px solid rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  z-index: 100;
 }
 
 aside.collapsed {
@@ -216,26 +230,19 @@ main {
 .product-list {
   display: flex;
   flex-direction: column;
-  gap: 20px; /* --- ESPACEMENT VERTICAL ACCRU --- */
+  gap: 20px;
 }
 
 .item-row {
-  /* On descend de 0.85 à 0.65 pour plus de transparence */
   background: rgba(20, 22, 25, 0.65);
-
-  /* On augmente le flou pour que le texte reste lisible sur l'image */
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px); /* Support Safari */
-
+  -webkit-backdrop-filter: blur(12px);
   padding: 20px 30px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-radius: 10px;
-
-  /* On rend la bordure un peu plus visible pour définir la forme */
   border: 1px solid rgba(25, 133, 161, 0.2);
-
   transition:
     transform 0.3s,
     background 0.3s,
@@ -245,7 +252,6 @@ main {
 
 .item-row:hover {
   transform: translateX(8px);
-  /* Au survol, on remonte un peu l'opacité pour l'effet interactif */
   background: rgba(25, 28, 32, 0.8);
   border-color: var(--accent);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
@@ -270,6 +276,30 @@ main {
   font-weight: bold;
   color: var(--accent);
   font-size: 1.4rem;
+}
+
+/* --- ÉTAT ÉPUISÉ (BOURGOGNE) --- */
+.item-out-of-stock {
+  /* Fond bourgogne foncé avec transparence pour garder l'effet glassmorphism */
+  background: rgba(74, 4, 4, 0.5) !important;
+
+  /* Bordure assortie pour bien marquer l'état épuisé */
+  border-color: rgba(139, 0, 0, 0.3) !important;
+
+  /* On garde une légère transparence globale */
+  opacity: 0.8;
+}
+
+/* Optionnel : changer la couleur du texte du prix quand c'est épuisé */
+.item-out-of-stock .item-price {
+  color: var(--text-silver);
+}
+
+/* Désactiver l'effet de translation au survol pour les items épuisés */
+.item-out-of-stock:hover {
+  transform: none;
+  box-shadow: none;
+  background: rgba(74, 4, 4, 0.6) !important;
 }
 
 /* --- FOOTER & PAGINATION --- */
@@ -298,4 +328,23 @@ footer {
   border-top: 1px solid var(--accent);
   font-size: 0.8rem;
   flex-shrink: 0;
+}
+
+/* --- LOGIQUE DE REPLI (RETOURS VISUELS) --- */
+.hide-text {
+  transition: opacity 0.3s;
+}
+
+aside.collapsed .hide-text {
+  display: none;
+}
+
+aside.collapsed .show-icon {
+  display: block;
+  text-align: center;
+  font-size: 1.5rem;
+}
+
+.show-icon {
+  display: none;
 }
