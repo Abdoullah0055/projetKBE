@@ -298,3 +298,69 @@
 .text-success {
   color: #2ecc71;
 }
+
+.alert-box {
+  /* Change 'absolute' par 'fixed' ou 'margin-bottom' selon ta préférence */
+  /* Voici une version "Flottante en haut" qui ne casse pas ton design : */
+  position: fixed;
+  top: 90px; /* Juste sous ton header */
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px 25px;
+  border-radius: 10px;
+  backdrop-filter: blur(15px);
+  font-weight: bold;
+  z-index: 9999; /* Pour passer par-dessus TOUT */
+  animation: slideInDown 0.5s ease-out;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.alert-box.succes {
+  background: rgba(46, 204, 113, 0.2);
+  color: #2ecc71;
+  border-left: 5px solid #2ecc71;
+}
+
+.alert-box.erreur {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border-left: 5px solid #e74c3c;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translate(-50%, -100px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+/* La copie qui vole */
+.flying-item {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none; /* Ne bloque pas les clics */
+  font-size: 4rem; /* Taille initiale */
+  transition: all 0.8s cubic-bezier(0.42, 0, 0.58, 1); /* Courbe de mouvement fluide */
+  opacity: 0.9;
+}
+
+/* Petit effet de secousse sur le panier quand il reçoit l'objet */
+.cart-shake {
+  animation: cartBounce 0.4s ease;
+}
+
+@keyframes cartBounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+    color: var(--gold);
+  }
+}

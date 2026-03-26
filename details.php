@@ -68,6 +68,14 @@ $title = "Détails - " . $item['nom'];
 
 <?php include __DIR__ . '/includes/header.php'; ?>
 
+<?php if (isset($_SESSION['alerte'])): ?>
+    <div class="alert-box <?= $_SESSION['alerte']['type'] ?>">
+        <i class="fa-solid <?= $_SESSION['alerte']['type'] === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
+        <?= $_SESSION['alerte']['message'] ?>
+    </div>
+    <?php unset($_SESSION['alerte']); ?>
+<?php endif; ?>
+
 <div class="details-wrapper">
     <main class="details-glass-card">
 
@@ -118,27 +126,34 @@ $title = "Détails - " . $item['nom'];
 
             <div class="purchase-section">
                 <?php if ($item['stock'] > 0): ?>
-                    <div class="purchase-controls">
-                        <div class="quantity-wrapper">
-                            <label>Quantité :</label>
-                            <select id="qty" class="qty-select">
-                                <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
-                                    <option value="<?= $i ?>"><?= $i ?></option>
-                                <?php endfor; ?>
-                            </select>
+                    <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
+
+                        <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+
+                        <div class="purchase-controls">
+                            <div class="quantity-wrapper">
+                                <label for="qty">Quantité :</label>
+                                <select name="quantity" id="qty" class="qty-select">
+                                    <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
+                                        <option value="<?= $i ?>"><?= $i ?></option>
+                                    <?php endfor; ?>
+                                </select>
+                            </div>
+
+                            <?php if ($item['stock'] < 5): ?>
+                                <div class="urgency-badge">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    Plus que <?= $item['stock'] ?> restant !
+                                </div>
+                            <?php endif; ?>
                         </div>
 
-                        <?php if ($item['stock'] < 5): ?>
-                            <div class="urgency-badge">
-                                <i class="fa-solid fa-bolt"></i>
-                                Plus que <?= $item['stock'] ?> exemplaire<?= ($item['stock'] > 1) ? 's' : '' ?> restant<?= ($item['stock'] > 1) ? 's' : '' ?> !
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                    <button class="btn-buy-large">Ajouter au Panier</button>
+                        <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
+                    </form>
                 <?php else: ?>
                     <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
                 <?php endif; ?>
+
                 <a href="index.php" class="back-link">Retour au catalogue</a>
             </div>
         </div>
@@ -146,12 +161,70 @@ $title = "Détails - " . $item['nom'];
 </div>
 
 <script>
+    // 1. Animation de secousse au clic sur l'icône
     function triggerMagic() {
         const icon = document.getElementById('target-icon');
         icon.classList.remove('magic-shake');
         void icon.offsetWidth;
         icon.classList.add('magic-shake');
     }
+
+    // 2. Logique "Fly to Cart" et Ajout AJAX
+    document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
+        e.preventDefault(); // Empêche le rechargement de la page
+
+        const form = this;
+        const formData = new FormData(form);
+        const cartBtn = document.getElementById('cart-btn');
+        const targetIcon = document.getElementById('target-icon');
+
+        // --- PARTIE ANIMATION ---
+        // Création du clone
+        const clone = document.createElement('div');
+        clone.innerHTML = targetIcon.innerHTML; // On prend l'émoji/icône
+        clone.className = 'flying-item';
+
+        // Position de départ (l'item au centre)
+        const startRect = targetIcon.getBoundingClientRect();
+        clone.style.left = startRect.left + 'px';
+        clone.style.top = startRect.top + 'px';
+        document.body.appendChild(clone);
+
+        // Position d'arrivée (le panier dans le header)
+        const endRect = cartBtn.getBoundingClientRect();
+
+        // On lance le mouvement au prochain frame
+        requestAnimationFrame(() => {
+            clone.style.left = endRect.left + 'px';
+            clone.style.top = endRect.top + 'px';
+            clone.style.transform = 'scale(0.1) rotate(360deg)'; // Réduit et tourne
+            clone.style.opacity = '0';
+        });
+
+        // Nettoyage après l'animation
+        setTimeout(() => {
+            clone.remove();
+            cartBtn.classList.add('cart-shake');
+            setTimeout(() => cartBtn.classList.remove('cart-shake'), 400);
+        }, 800);
+
+        // --- PARTIE ENVOI DES DONNÉES ---
+        try {
+            const response = await fetch('backend/ajouter_au_panier.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            // On recharge juste pour voir l'alerte PHP ou on peut l'afficher en JS
+            // Pour rester simple avec ta version 4.2, on simule le succès :
+            if (response.ok) {
+                console.log("Ajouté avec succès");
+                // Optionnel : afficher une petite alerte personnalisée ici
+            }
+        } catch (error) {
+            console.error("Erreur:", error);
+        }
+    });
 </script>
 
 <?php
