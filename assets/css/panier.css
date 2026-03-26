@@ -29,9 +29,13 @@ body::before {
 .cart-page {
   flex: 1;
   padding: 40px;
-  max-width: 1000px;
+  max-width: 800px; /* Aligné avec le calcul des bannières */
   margin: 0 auto;
   width: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 15px;
+  position: relative;
+  z-index: 10;
 }
 
 .cart-title-box {
@@ -138,6 +142,7 @@ body::before {
   align-items: center;
   border-top: 2px solid var(--accent);
   backdrop-filter: blur(10px);
+  z-index: 110;
 }
 
 .total-summary {
@@ -230,382 +235,213 @@ body::before {
   }
 }
 
-
 .modal-overlay {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(30, 30, 46, 0.7); /* Couleur Mocha sombre */
-    backdrop-filter: blur(8px);
-    display: none; /* Masqué par défaut */
-    align-items: center;
-    justify-content: center;
-    z-index: 9999;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(30, 30, 46, 0.7); /* Couleur Mocha sombre */
+  backdrop-filter: blur(8px);
+  display: none; /* Masqué par défaut */
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 }
 
 .modal-content {
-    background: rgba(69, 71, 90, 0.4); /* Glassmorphism */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 25px;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    text-align: center;
-    color: #cdd6f4; /* Texte clair */
+  background: rgba(69, 71, 90, 0.4); /* Glassmorphism */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 15px;
+  padding: 25px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  text-align: center;
+  color: #cdd6f4; /* Texte clair */
 }
 
 .modal-header i {
-    font-size: 2rem;
-    color: var(--accent); /* Ton accent (ex: jaune/or) */
-    margin-bottom: 10px;
+  font-size: 2rem;
+  color: var(--accent); /* Ton accent (ex: jaune/or) */
+  margin-bottom: 10px;
 }
 
 .modal-footer {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    margin-top: 20px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .btn-secondary {
-    background: transparent;
-    border: 1px solid #6c7086;
-    color: #cdd6f4;
-    padding: 10px 20px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: 0.3s;
+  background: transparent;
+  border: 1px solid #6c7086;
+  color: #cdd6f4;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.3s;
 }
 
 .btn-secondary:hover {
-    background: rgba(108, 112, 134, 0.2);
+  background: rgba(108, 112, 134, 0.2);
 }
-
+/* --- CONFIGURATION DES BANNIÈRES (STRUCTURE FIXE) --- */
 .page-banner {
-    position: fixed;
-    top: 80px;
-    width: clamp(140px, 11vw, 200px);
-    aspect-ratio: 240 / 750;
-    height: auto;
-    z-index: 100;
+  position: fixed;
+  top: 50%;
+  width: clamp(160px, 13vw, 240px);
+  aspect-ratio: 240 / 750;
+  z-index: 100;
+  perspective: 2000px;
 }
 
 .banner-left {
-    left: clamp(60px, 2vw, 30px);
+  left: calc((50% - 480px) / 2);
+  transform: translate(-50%, -50%);
 }
 
 .banner-right {
-    right: clamp(60px, 2vw, 30px);
+  right: calc((50% - 480px) / 2);
+  transform: translate(50%, -50%);
 }
 
+/* --- LE CONTENEUR DE ROTATION (SUPPORT 3D) --- */
 .banner-scroll {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-
-    background: #e3bc8d;
-    background-image: radial-gradient(circle, #f2d9b1 0%, #dcb07b 70%, #8b6b45 110%);
-
-    border: 6px solid #1a1a1a;
-    border-bottom: none;
-    box-shadow: 10px 20px 40px rgba(0,0,0,0.8);
-
-    clip-path: polygon(0% 0%, 100% 0%, 100% 88%, 50% 100%, 0% 88%);
+  /* On passe à 1.2s avec un easing plus lent au début pour laisser charger */
+  transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
+.banner-scroll.is-flipped {
+  transform: rotateY(180deg);
+}
+
+/* --- LES FACES (PARCHEMINS) --- */
+.banner-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: #e3bc8d;
+  border: 5px solid #1a1a1a;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  clip-path: polygon(0% 0%, 100% 0%, 100% 88%, 50% 100%, 0% 88%);
+  box-shadow: 10px 20px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.face-back {
+  transform: rotateY(180deg);
+}
+
+/* --- IMAGES & ANIMATIONS (CORRIGÉ POUR ÉVITER LE BUG) --- */
+.banner-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  will-change: transform, filter;
+}
+
+/* L'image ne flotte que si sa face est visible pour éviter le "flash" au changement */
+.banner-scroll:not(.is-flipped) .face-front img {
+  animation: subtleFloatFront 8s ease-in-out infinite;
+}
+
+.banner-scroll.is-flipped .face-back img {
+  animation: subtleFloatBack 8s ease-in-out infinite;
+}
+
+@keyframes subtleFloatFront {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1.05) translateY(0);
+  }
+  50% {
+    filter: brightness(1.15);
+    transform: scale(1.1) translateY(-8px);
+  }
+}
+
+@keyframes subtleFloatBack {
+  0%,
+  100% {
+    filter: brightness(1);
+    transform: scale(1.05) translateY(0);
+  }
+  50% {
+    filter: brightness(1.15);
+    transform: scale(1.1) translateY(8px);
+  }
+}
+
+/* --- DÉCORATION : L'EMBOUT SUPÉRIEUR --- */
 .banner-scroll::before {
-    content: "";
-    position: absolute;
-    top: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 110%;
-    height: 20px;
-    background: linear-gradient(to bottom, #333, #000);
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.7);
-    z-index: 2;
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%) translateZ(25px);
+  width: 110%;
+  height: 22px;
+  background: linear-gradient(to bottom, #444, #111, #000);
+  border-radius: 12px;
+  z-index: 20;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
 }
 
-.banner-scroll img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-}
-
-.cart-page {
-    max-width: 800px;
-    margin: 0 auto;
-    background: rgba(0,0,0,0.4);
-    padding: 20px;
-    border-radius: 15px;
-}
-
-@media (max-width: 1600px) {
-    .page-banner {
-        width: clamp(120px, 10vw, 170px);
-    }
-}
-
-@media (max-width: 1400px) {
-    .page-banner {
-        width: clamp(100px, 9vw, 150px);
-    }
-}
-
-@media (max-width: 1200px) {
-    .page-banner {
-        display: none;
-    }
-}
-
-.banner-clickable {
-    cursor: pointer;
-    pointer-events: auto;
-}
-
-.banner-scroll {
-    cursor: pointer;
-    pointer-events: auto;
-    isolation: isolate;
-}
-
-.banner-scroll img {
-    z-index: 1;
-}
-
+/* --- EFFET LIGHT SWEEP (REFLET MAGIQUE) --- */
 .banner-scroll::after {
-    content: "";
-    position: absolute;
-    inset: -12%;
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transform: skewX(-20deg) translateZ(40px);
+  pointer-events: none;
+  z-index: 30;
+  opacity: 0;
+}
+
+.banner-scroll.is-flipped::after,
+.banner-scroll:not(.is-flipped):active::after {
+  /* On synchronise la durée avec la rotation (1.2s) */
+  animation: lightSweep 1.2s ease-in-out;
+}
+
+@keyframes lightSweep {
+  0% {
+    left: -150%;
     opacity: 0;
-    pointer-events: none;
-    z-index: 3;
-    mix-blend-mode: screen;
-    transform: translateX(-120%) scale(0.9);
-    filter: blur(14px);
-
-    background:
-        radial-gradient(circle at 15% 50%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.45) 14%, transparent 34%),
-        radial-gradient(circle at 35% 35%, rgba(190,220,255,0.70) 0%, rgba(190,220,255,0.25) 16%, transparent 36%),
-        radial-gradient(circle at 55% 60%, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.20) 18%, transparent 38%),
-        radial-gradient(circle at 78% 42%, rgba(160,200,255,0.55) 0%, rgba(160,200,255,0.16) 16%, transparent 34%);
-}
-
-.banner-scroll.cloud-animate::after {
-    animation: cloudPass 0.9s ease-out;
-}
-
-.banner-scroll.cloud-animate img {
-    animation: bannerPulse 0.45s ease;
-}
-
-@keyframes cloudPass {
-    0% {
-        opacity: 0;
-        transform: translateX(-120%) scale(0.9);
-    }
-    15% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.85;
-        transform: translateX(0%) scale(1.03);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(120%) scale(1.08);
-    }
-}
-
-@keyframes bannerPulse {
-    0% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-    }
-    50% {
-        transform: scale(1.03);
-        filter: drop-shadow(0 0 22px rgba(255,255,255,0.35));
-    }
-    100% {
-        transform: scale(1);
-        filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-    }
-}
-
-.banner-scroll {
-    cursor: pointer;
-    pointer-events: auto;
-    isolation: isolate;
-}
-
-.banner-scroll img {
-    z-index: 1;
-}
-
-.banner-left .banner-scroll,
-.banner-right .banner-scroll {
-    transition: box-shadow 0.25s ease, filter 0.25s ease;
-}
-
-.banner-left .banner-scroll::after,
-.banner-right .banner-scroll::after {
-    content: "";
-    position: absolute;
-    inset: -8px;
-    pointer-events: none;
-    z-index: 4;
-    clip-path: polygon(0% 0%, 100% 0%, 100% 88%, 50% 100%, 0% 88%);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    left: 150%;
     opacity: 0;
+  }
 }
 
-/* FEU - bannière gauche */
-.banner-left .banner-scroll::after {
-    background:
-        radial-gradient(circle at 20% 15%, rgba(255,255,255,0.95) 0%, transparent 18%),
-        radial-gradient(circle at 35% 10%, var(--banner-left-color) 0%, transparent 22%),
-        radial-gradient(circle at 50% 8%, rgba(255,255,255,0.9) 0%, transparent 16%),
-        radial-gradient(circle at 65% 12%, var(--banner-left-color) 0%, transparent 22%),
-        radial-gradient(circle at 80% 15%, rgba(255,255,255,0.95) 0%, transparent 18%),
-        linear-gradient(to bottom, var(--banner-left-color), transparent 30%),
-        linear-gradient(to top, var(--banner-left-color), transparent 22%),
-        linear-gradient(to right, var(--banner-left-color), transparent 18%),
-        linear-gradient(to left, var(--banner-left-color), transparent 18%);
-    filter: blur(6px) saturate(1.4);
-}
-
-.banner-left .banner-scroll.fire-animate::after {
-    animation: fireBorderPulse 0.7s ease;
-}
-
-.banner-left .banner-scroll.fire-animate {
-    box-shadow:
-        0 0 12px var(--banner-left-color),
-        0 0 24px color-mix(in srgb, var(--banner-left-color) 70%, white 30%),
-        10px 20px 40px rgba(0,0,0,0.8);
-}
-
-/* ÉLECTRICITÉ - bannière droite */
-.banner-right .banner-scroll::after {
-    background:
-        linear-gradient(115deg,
-            transparent 0%,
-            transparent 20%,
-            rgba(255,255,255,0.95) 24%,
-            transparent 28%,
-            transparent 42%,
-            var(--banner-right-color) 47%,
-            rgba(255,255,255,0.95) 50%,
-            var(--banner-right-color) 53%,
-            transparent 58%,
-            transparent 100%
-        ),
-        linear-gradient(-105deg,
-            transparent 0%,
-            transparent 30%,
-            var(--banner-right-color) 36%,
-            rgba(255,255,255,0.9) 40%,
-            transparent 44%,
-            transparent 100%
-        );
-    filter: blur(2px) brightness(1.25);
-}
-
-.banner-right .banner-scroll.electric-animate::after {
-    animation: electricBorderFlash 0.45s ease 2;
-}
-
-.banner-right .banner-scroll.electric-animate {
-    box-shadow:
-        0 0 10px var(--banner-right-color),
-        0 0 22px color-mix(in srgb, var(--banner-right-color) 72%, white 28%),
-        0 0 34px color-mix(in srgb, var(--banner-right-color) 45%, white 55%),
-        10px 20px 40px rgba(0,0,0,0.8);
-}
-
-@keyframes fireBorderPulse {
-    0% {
-        opacity: 0;
-        transform: scale(0.985);
-    }
-    20% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.9;
-        transform: scale(1.01);
-    }
-    100% {
-        opacity: 0;
-        transform: scale(1.02);
-    }
-}
-
-@keyframes electricBorderFlash {
-    0% {
-        opacity: 0;
-        transform: scale(1);
-    }
-    20% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.35;
-    }
-    100% {
-        opacity: 0;
-        transform: scale(1.01);
-    }
-}
-
-:root {
-    --banner-left-color: #ff5a1f;
-    --banner-right-color: #00cfff;
-}
-
-
-.banner-scroll {
-    position: relative;
-    overflow: hidden;
-}
-
-.banner-scroll img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-
-    animation: bannerFloat 6s ease-in-out infinite;
-    transform-origin: center center;
-    will-change: transform, filter;
-}
-
-/* Animation vivante subtile */
-@keyframes bannerFloat {
-    0% {
-        transform: scale(1.03) translateY(0px) rotate(0deg);
-        filter: brightness(1) contrast(1.02);
-    }
-    25% {
-        transform: scale(1.045) translateY(-4px) rotate(-0.4deg);
-        filter: brightness(1.03) contrast(1.04);
-    }
-    50% {
-        transform: scale(1.06) translateY(-8px) rotate(0.3deg);
-        filter: brightness(1.05) contrast(1.05);
-    }
-    75% {
-        transform: scale(1.045) translateY(-4px) rotate(-0.2deg);
-        filter: brightness(1.02) contrast(1.03);
-    }
-    100% {
-        transform: scale(1.03) translateY(0px) rotate(0deg);
-        filter: brightness(1) contrast(1.02);
-    }
+/* --- RESPONSIVE --- */
+@media (max-width: 1400px) {
+  .page-banner {
+    display: none;
+  }
 }
