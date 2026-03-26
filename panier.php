@@ -55,6 +55,15 @@ foreach ($cartItems as $item) {
     $totalGeneral += ($item['prix'] * $item['quantite']);
 }
 
+// En haut de panier.php, après avoir récupéré $cartItems
+$hasStockError = false;
+foreach ($cartItems as $item) {
+    if ($item['quantite'] > $item['stock_max']) {
+        $hasStockError = true;
+        break;
+    }
+}
+
 $title = "L'Arsenal - Ma Besace";
 
 // --- DÉBUT DU RENDU HTML ---
@@ -87,8 +96,11 @@ include __DIR__ . '/templates/head.php';
             <h2 style="margin:0;">Contenu de votre besace</h2>
         </div>
 
-        <?php foreach ($cartItems as $item): ?>
-            <div class="cart-row">
+        <?php foreach ($cartItems as $item):
+            // Vérification du stock
+            $isOverstock = $item['quantite'] > $item['stock_max'];
+        ?>
+            <div class="cart-row <?= $isOverstock ? 'row-overstock' : '' ?>">
                 <button class="btn-corbeille" title="Retirer l'objet">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
@@ -99,11 +111,19 @@ include __DIR__ . '/templates/head.php';
 
                 <div class="item-name-box">
                     <?= htmlspecialchars($item['nom']) ?>
+                    <?php if ($isOverstock): ?>
+                        <div class="stock-alert">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            Quantité max : <?= $item['stock_max'] ?>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="qty-controls">
                     <button class="btn-qty">-</button>
-                    <div class="qty-val"><?= $item['quantite'] ?></div>
+                    <div class="qty-val <?= $isOverstock ? 'text-danger-pulse' : '' ?>">
+                        <?= $item['quantite'] ?>
+                    </div>
                     <button class="btn-qty">+</button>
                 </div>
 
@@ -125,8 +145,10 @@ include __DIR__ . '/templates/head.php';
             TOTAL : <?= number_format($totalGeneral, 0) ?> GP
         </div>
 
-        <button class="btn-confirm" onclick="alert('L\'échange est conclu ! Vos pièces d\'or ont été prélevées.')">
-            Confirmer l'achat
+        <button class="btn-confirm"
+            <?= $hasStockError ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '' ?>
+            onclick="alert('L\'échange est conclu !')">
+            <?= $hasStockError ? 'Stock insuffisant' : 'Confirmer l\'achat' ?>
         </button>
     </div>
 <?php endif; ?>

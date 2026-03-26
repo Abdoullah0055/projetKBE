@@ -179,3 +179,53 @@ body::before {
   text-align: center;
   padding: 100px 20px;
 }
+
+/* Style de la ligne en erreur */
+.row-overstock {
+  border-left: 4px solid #e74c3c !important;
+  background: rgba(231, 76, 60, 0.05) !important;
+}
+
+/* Le petit badge d'alerte sous le nom */
+.stock-alert {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #ff7675;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-top: 5px;
+  background: rgba(231, 76, 60, 0.15);
+  padding: 2px 8px;
+  border-radius: 5px;
+  animation: shake 0.5s ease-in-out;
+}
+
+/* Animation de pulsation sur le chiffre */
+.text-danger-pulse {
+  color: #ff7675 !important;
+  animation: pulseDanger 1.5s infinite;
+}
+
+@keyframes pulseDanger {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
