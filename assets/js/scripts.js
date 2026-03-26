@@ -61,9 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     easterEgg.addEventListener("click", () => {
       const currentTheme = getCookie("theme") || "light";
 
-      // On boucle sur 3 images uniquement (1 -> 2 -> 3 -> 1)
-      // Si tu as 4 images, change le 3 par 4.
-      let nextNum = (currentImgNum % 4) + 1;
+      let nextNum = (currentImgNum % 5) + 1;
 
       applyChanges(currentTheme, nextNum);
     });

@@ -7,7 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $pdo = get_pdo();
 
-// 1. RÉCUPÉRATION DU THÈME POUR LA CONTINUITÉ
+// 1. RÉCUPÉRATION DU THÈME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
@@ -17,15 +17,10 @@ if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
+        'balance' => ['gold' => $_SESSION['user']['gold'], 'silver' => $_SESSION['user']['silver'], 'bronze' => $_SESSION['user']['bronze']]
     ];
 } else {
-    $user = ['isConnected' => false, 'alias' => '', 'isMage' => false, 'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]];
+    $user = ['isConnected' => false];
 }
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -33,7 +28,6 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
-// Récupération de l'item
 $stmt = $pdo->prepare("
     SELECT i.ItemId AS id, i.Name AS nom, i.PriceGold AS prix, i.Description AS description,
            i.Stock AS stock, t.Name AS type, IFNULL(AVG(r.Rating), 0) AS rating, COUNT(r.ReviewId) AS nb_avis
@@ -51,14 +45,13 @@ if (!$item) {
     exit();
 }
 
-// Mapping des icônes
 $icons = ['arme' => '⚔️', 'armure' => '🛡️', 'potion' => '🧪', 'sort' => '✨'];
 $item['image'] = $icons[strtolower($item['type'])] ?? '❓';
-
 $title = "Détails - " . $item['nom'];
 ?>
 
-<?php /* 2. INJECTION DU STYLE AVANT LE HEAD POUR ÉCRASER LES CSS EXTERNES */ ?>
+<?php include __DIR__ . '/templates/head.php'; ?>
+
 <style>
     :root {
         --main-bg: url('<?= $bgImage ?>');
@@ -67,65 +60,99 @@ $title = "Détails - " . $item['nom'];
     body {
         background-image: var(--main-bg) !important;
         background-color: #1a1b1e !important;
-        /* On évite le gris de details.css */
+        overflow-y: auto !important;
     }
 </style>
 
-<?php include __DIR__ . '/templates/head.php'; ?>
 <link rel="stylesheet" href="assets/css/details.css">
 
 <?php include __DIR__ . '/includes/header.php'; ?>
 
-<main class="details-page">
-    <div class="visual-column">
-        <div class="item-card-main" style="background: rgba(20, 22, 25, 0.65); backdrop-filter: blur(12px);">
-            <?= $item['image'] ?>
+<div class="details-wrapper">
+    <main class="details-glass-card">
+
+        <div class="visual-column">
+            <div class="item-display-box" onclick="triggerMagic()">
+                <div class="rarity-tag"><?= htmlspecialchars($item['type']) ?></div>
+
+                <div class="floating-wrapper">
+                    <div class="main-icon" id="target-icon"><?= $item['image'] ?></div>
+                </div>
+
+                <div class="glow-shadow"></div>
+                <span class="click-hint">Touchez l'artefact</span>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Avis</span>
+                    <span class="stat-value">★ <?= number_format($item['rating'], 1) ?></span>
+                    <span class="stat-sub"><?= $item['nb_avis'] ?> avis</span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Stock</span>
+                    <span class="stat-value <?= ($item['stock'] == 0) ? 'text-danger' : 'text-success' ?>">
+                        <?= $item['stock'] ?>
+                    </span>
+                    <span class="stat-sub">unités</span>
+                </div>
+            </div>
         </div>
 
-        <?php if ($user['isConnected']): ?>
-            <div class="cloud-info" style="background: rgba(20, 22, 25, 0.65); backdrop-filter: blur(12px);">
-                <div class="stars">★ ★ ★ ★ ☆</div>
-                <div class="reviews-text"><?= $item['nb_avis'] ?> aventuriers</div>
+        <div class="info-column">
+            <div class="item-title-section">
+                <h1><?= htmlspecialchars($item['nom']) ?></h1>
+                <div class="price-tag"><?= number_format($item['prix'], 0) ?> <span class="gp">GP</span></div>
             </div>
-        <?php endif; ?>
-    </div>
 
-    <div class="info-column">
-        <div class="item-header">
-            <div>
-                <h2><?= htmlspecialchars($item['nom']) ?></h2>
+            <div class="description-section">
+                <h3><i class="fa-solid fa-scroll"></i> Lore & Propriétés</h3>
+                <p><?= nl2br(htmlspecialchars($item['description'])) ?></p>
+            </div>
+
+            <div class="spec-grid">
+                <div class="spec-item"><span>Catégorie</span><strong><?= ucfirst($item['type']) ?></strong></div>
+                <div class="spec-item"><span>Authenticité</span><strong>Certifiée</strong></div>
+                <div class="spec-item"><span>Origine</span><strong>Inconnue</strong></div>
+            </div>
+
+            <div class="purchase-section">
                 <?php if ($item['stock'] > 0): ?>
-                    <div class="stock-indicator">En stock : <?= $item['stock'] ?></div>
+                    <div class="purchase-controls">
+                        <div class="quantity-wrapper">
+                            <label>Quantité :</label>
+                            <select id="qty" class="qty-select">
+                                <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
+                                    <option value="<?= $i ?>"><?= $i ?></option>
+                                <?php endfor; ?>
+                            </select>
+                        </div>
+
+                        <?php if ($item['stock'] < 5): ?>
+                            <div class="urgency-badge">
+                                <i class="fa-solid fa-bolt"></i>
+                                Plus que <?= $item['stock'] ?> exemplaire<?= ($item['stock'] > 1) ? 's' : '' ?> restant<?= ($item['stock'] > 1) ? 's' : '' ?> !
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <button class="btn-buy-large">Ajouter au Panier</button>
                 <?php else: ?>
-                    <div class="stock-indicator stock-empty">Rupture de stock</div>
+                    <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
                 <?php endif; ?>
+                <a href="index.php" class="back-link">Retour au catalogue</a>
             </div>
-            <div class="item-price"><?= number_format($item['prix'], 0) ?> GP</div>
         </div>
+    </main>
+</div>
 
-        <div class="item-section">
-            <h3>Propriétés</h3>
-            <p><?= nl2br(htmlspecialchars($item['description'])) ?></p>
-        </div>
-
-        <?php if ($user['isConnected']): ?>
-            <div class="comments-box" style="background: rgba(20, 22, 25, 0.65); backdrop-filter: blur(12px);">
-                <h4>Informations</h4>
-                <p>Type : <?= htmlspecialchars($item['type']) ?></p>
-                <p>Nombre d'avis : <?= $item['nb_avis'] ?></p>
-            </div>
-        <?php endif; ?>
-
-        <div class="action-bar">
-            <a href="index.php">← Retour au catalogue</a>
-            <?php if ($item['stock'] > 0): ?>
-                <button class="btn-add">Ajouter au panier</button>
-            <?php else: ?>
-                <button class="btn-disabled" disabled>Épuisé</button>
-            <?php endif; ?>
-        </div>
-    </div>
-</main>
+<script>
+    function triggerMagic() {
+        const icon = document.getElementById('target-icon');
+        icon.classList.remove('magic-shake');
+        void icon.offsetWidth;
+        icon.classList.add('magic-shake');
+    }
+</script>
 
 <?php
 include __DIR__ . '/includes/footer.php';
