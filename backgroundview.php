@@ -63,6 +63,7 @@ $title = "Vue d'Ambiance - L'Arsenal";
         text-transform: uppercase;
         font-size: 0.9rem;
         user-select: none;
+        opacity: 0.6;
     }
 </style>
 
