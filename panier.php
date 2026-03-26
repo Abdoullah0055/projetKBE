@@ -101,7 +101,7 @@ include __DIR__ . '/templates/head.php';
             $isOverstock = $item['quantite'] > $item['stock_max'];
         ?>
             <div class="cart-row <?= $isOverstock ? 'row-overstock' : '' ?>">
-                <button class="btn-corbeille" title="Retirer l'objet">
+                <button class="btn-corbeille" title="Retirer l'objet" onclick="deleteItemFromCart(<?= $item['id'] ?>, this)">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
 
@@ -138,6 +138,21 @@ include __DIR__ . '/templates/head.php';
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
+    <div id="custom-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fa-solid fa-scroll"></i>
+                <h3 id="modal-title">Message de l'Arsenal</h3>
+            </div>
+            <div class="modal-body">
+                <p id="modal-message">Voulez-vous vraiment faire cela ?</p>
+            </div>
+            <div class="modal-footer">
+                <button id="modal-btn-cancel" class="btn-secondary">Annuler</button>
+                <button id="modal-btn-confirm" class="btn-confirm">Confirmer</button>
+            </div>
+        </div>
+    </div>
 </main>
 
 <?php if (!empty($cartItems)): ?>
@@ -151,9 +166,10 @@ include __DIR__ . '/templates/head.php';
         </div>
 
         <button class="btn-confirm"
+            id="btn-confirm-purchase"
             <?= $hasStockError ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '' ?>
-            onclick="alert('L\'échange est conclu !')">
-            <?= $hasStockError ? 'Stock insuffisant' : 'Confirmer l\'achat' ?>
+            onclick="processPurchase()">
+            <?= $hasStockError ? 'Stock insuffisant' : "Confirmer l'achat" ?>
         </button>
     </div>
 <?php endif; ?>
@@ -256,6 +272,103 @@ include __DIR__ . '/templates/head.php';
             confirmBtn.disabled = false;
             confirmBtn.style.opacity = "1";
             confirmBtn.style.cursor = "pointer";
+            confirmBtn.innerText = "Confirmer l'achat";
+        }
+    }
+
+    /**
+     * Affiche une modale de confirmation personnalisée
+     */
+    function showCustomConfirm(message, title = "Confirmation") {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('custom-modal');
+            const msgPara = document.getElementById('modal-message');
+            const titleH3 = document.getElementById('modal-title');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            const btnCancel = document.getElementById('modal-btn-cancel');
+
+            msgPara.innerText = message;
+            titleH3.innerText = title;
+            modal.style.display = 'flex';
+
+            const close = (result) => {
+                modal.style.display = 'none';
+                btnConfirm.onclick = null;
+                btnCancel.onclick = null;
+                resolve(result);
+            };
+
+            btnConfirm.onclick = () => close(true);
+            btnCancel.onclick = () => close(false);
+
+            // Fermer si on clique en dehors de la modale
+            modal.onclick = (e) => {
+                if (e.target === modal) close(false);
+            };
+        });
+    }
+
+    // MISE À JOUR de ta fonction de suppression
+    async function deleteItemFromCart(itemId, button) {
+        // ON REMPLACE LE confirm() PAR NOTRE MODALE
+        const confirmed = await showCustomConfirm("Voulez-vous retirer cet objet de votre besace ?", "Retirer l'objet");
+
+        if (!confirmed) return;
+
+        // ... reste du code fetch inchangé ...
+        const row = button.closest('.cart-row');
+        const formData = new FormData();
+        formData.append('item_id', itemId);
+
+        try {
+            const response = await fetch('backend/supprimer_item_panier.php', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                row.style.transform = "translateX(-100px)";
+                row.style.opacity = "0";
+                setTimeout(() => {
+                    row.remove();
+                    if (document.querySelectorAll('.cart-row').length === 0) location.reload();
+                    else updateCartState();
+                }, 400);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    async function processPurchase() {
+        const confirmBtn = document.getElementById('btn-confirm-purchase');
+
+        if (confirmBtn.disabled) return;
+
+        // Utilisation de TA modale personnalisée ici
+        const confirmed = await showCustomConfirm(
+            "Voulez-vous sceller cet échange et dépenser vos pièces d'or ?",
+            "Sceller l'échange"
+        );
+
+        if (!confirmed) return;
+
+        confirmBtn.disabled = true;
+        confirmBtn.innerText = "Traitement...";
+
+        try {
+            // Simulation d'appel backend
+            // const response = await fetch('backend/confirmer_achat.php', { method: 'POST' });
+
+            // On remplace aussi l'alert() final par un petit message temporaire sur le bouton
+            confirmBtn.innerText = "Échange conclu !";
+
+            setTimeout(() => {
+                window.location.href = 'index.php';
+            }, 1500);
+
+        } catch (error) {
+            console.error("Erreur transaction:", error);
+            confirmBtn.disabled = false;
             confirmBtn.innerText = "Confirmer l'achat";
         }
     }

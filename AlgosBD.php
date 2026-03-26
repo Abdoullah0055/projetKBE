@@ -187,3 +187,28 @@ function modify_item_quantity_cart($userId, $itemId, $newQuantity)
         return false;
     }
 }
+
+function remove_from_cart($userId, $itemId)
+{
+    $pdo = get_pdo();
+    try {
+        $pdo->beginTransaction();
+
+        $cartId = get_or_create_cart_id($userId);
+
+        $sql = "DELETE FROM cartItems WHERE CartId = :cartId AND ItemId = :itemId";
+        $stmt = $pdo->prepare($sql);
+        $result = $stmt->execute([
+            ':cartId' => $cartId,
+            ':itemId' => $itemId
+        ]);
+
+        $pdo->commit();
+        return $result;
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        return false;
+    }
+}
