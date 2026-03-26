@@ -83,6 +83,136 @@ include __DIR__ . '/templates/head.php';
 
 <?php include __DIR__ . '/includes/header.php'; ?>
 
+<?php
+$leftImages = [
+    'archer.png',
+    'chevalier2.png',
+    'kratos.png',
+    'mage.png',
+    'samurai.png',
+    'viking.png'
+];
+
+$rightImages = [
+    'bull.png',
+    'dragon_slayer.png',
+    'elf.png',
+    'sparta.png',
+    'sultan.png',
+    'orc.png'
+];
+?>
+
+
+<div class="page-banner banner-left">
+    <div class="banner-scroll banner-clickable" id="leftBanner">
+        <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
+    </div>
+</div>
+
+<div class="page-banner banner-right">
+    <div class="banner-scroll banner-clickable" id="rightBanner">
+        <img src="assets/img/mage.png" alt="Déco Droite" id="rightBannerImg">
+    </div>
+</div>
+
+<script>
+    const leftImages = [
+        "assets/img/archer.png",
+        "assets/img/chevalier2.png",
+        "assets/img/kratos.png",
+        "assets/img/mage.png",
+        "assets/img/samurai.png",
+        "assets/img/viking.png"
+    ];
+
+    const rightImages = [
+        "assets/img/bull.png",
+        "assets/img/dragon_slayer.png",
+        "assets/img/elf.png",
+        "assets/img/sparta.png",
+        "assets/img/sultan.png",
+        "assets/img/orc.png"
+    ];
+
+    const leftColors = [
+        "#ff5a1f",
+        "#ff7b00",
+        "#ff2d55",
+        "#ffd000",
+        "#ff3c00",
+        "#ff00a8"
+    ];
+
+    const rightColors = [
+        "#00cfff",
+        "#1e90ff",
+        "#7b2cff",
+        "#00ffea",
+        "#8a7dff",
+        "#4dd2ff"
+    ];
+
+    let leftIndex = 0;
+    let rightIndex = 0;
+
+    const leftBanner = document.getElementById("leftBanner");
+    const rightBanner = document.getElementById("rightBanner");
+    const leftBannerImg = document.getElementById("leftBannerImg");
+    const rightBannerImg = document.getElementById("rightBannerImg");
+
+    function setLeftColor(color) {
+        document.documentElement.style.setProperty("--banner-left-color", color);
+    }
+
+    function setRightColor(color) {
+        document.documentElement.style.setProperty("--banner-right-color", color);
+    }
+
+    function playFireEffect() {
+        leftBanner.classList.remove("fire-animate");
+        void leftBanner.offsetWidth;
+        leftBanner.classList.add("fire-animate");
+    }
+
+    function playElectricEffect() {
+        rightBanner.classList.remove("electric-animate");
+        void rightBanner.offsetWidth;
+        rightBanner.classList.add("electric-animate");
+    }
+
+    leftBanner.addEventListener("click", () => {
+        leftIndex++;
+        if (leftIndex >= leftImages.length) {
+            leftIndex = 0;
+        }
+
+        setLeftColor(leftColors[leftIndex]);
+        playFireEffect();
+
+        setTimeout(() => {
+            leftBannerImg.src = leftImages[leftIndex];
+        }, 120);
+    });
+
+    rightBanner.addEventListener("click", () => {
+        rightIndex++;
+        if (rightIndex >= rightImages.length) {
+            rightIndex = 0;
+        }
+
+        setRightColor(rightColors[rightIndex]);
+        playElectricEffect();
+
+        setTimeout(() => {
+            rightBannerImg.src = rightImages[rightIndex];
+        }, 120);
+    });
+
+    setLeftColor(leftColors[0]);
+    setRightColor(rightColors[0]);
+</script>
+
 <main class="cart-page">
     <?php if (empty($cartItems)): ?>
         <div class="empty-cart-box">
