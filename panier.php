@@ -111,20 +111,25 @@ include __DIR__ . '/templates/head.php';
 
                 <div class="item-name-box">
                     <?= htmlspecialchars($item['nom']) ?>
-                    <?php if ($isOverstock): ?>
-                        <div class="stock-alert">
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            Quantité max : <?= $item['stock_max'] ?>
-                        </div>
-                    <?php endif; ?>
+                    <div class="stock-alert-wrapper">
+                        <?php if ($isOverstock): ?>
+                            <div class="stock-alert">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                Quantité max : <?= $item['stock_max'] ?>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
-                <div class="qty-controls">
-                    <button class="btn-qty">-</button>
+                <div class="qty-controls"
+                    data-item-id="<?= $item['id'] ?>"
+                    data-prix="<?= $item['prix'] ?>"
+                    data-stock-max="<?= $item['stock_max'] ?>">
+                    <button class="btn-qty btn-minus">-</button>
                     <div class="qty-val <?= $isOverstock ? 'text-danger-pulse' : '' ?>">
                         <?= $item['quantite'] ?>
                     </div>
-                    <button class="btn-qty">+</button>
+                    <button class="btn-qty btn-plus">+</button>
                 </div>
 
                 <div class="item-total-box">
@@ -152,6 +157,109 @@ include __DIR__ . '/templates/head.php';
         </button>
     </div>
 <?php endif; ?>
+
+<script>
+    document.querySelectorAll('.qty-controls').forEach(control => {
+        const itemId = control.dataset.itemId;
+        const prix = parseFloat(control.dataset.prix);
+        const stockMax = parseInt(control.dataset.stockMax);
+
+        const qtyValDiv = control.querySelector('.qty-val');
+        const row = control.closest('.cart-row');
+        const totalItemBox = row.querySelector('.item-total-box');
+        const alertWrapper = row.querySelector('.stock-alert-wrapper');
+
+        control.addEventListener('click', async (e) => {
+            const isPlus = e.target.classList.contains('btn-plus');
+            const isMinus = e.target.classList.contains('btn-minus');
+            if (!isPlus && !isMinus) return;
+
+            let currentQty = parseInt(qtyValDiv.innerText);
+            let newQty = isPlus ? currentQty + 1 : currentQty - 1;
+            if (newQty < 0) return;
+
+            const formData = new FormData();
+            formData.append('item_id', itemId);
+            formData.append('new_qty', newQty);
+
+            try {
+                const response = await fetch('backend/modifier_quantite.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    if (newQty === 0) {
+                        row.style.transform = "translateX(100px)";
+                        row.style.opacity = "0";
+                        setTimeout(() => {
+                            row.remove();
+                            if (document.querySelectorAll('.cart-row').length === 0) location.reload();
+                            updateCartState();
+                        }, 300);
+                    } else {
+                        // 1. Mise à jour des chiffres
+                        qtyValDiv.innerText = newQty;
+                        totalItemBox.innerText = (newQty * prix).toLocaleString() + " GP";
+
+                        // 2. GESTION DYNAMIQUE DE L'ERREUR DE STOCK
+                        if (newQty > stockMax) {
+                            row.classList.add('row-overstock');
+                            qtyValDiv.classList.add('text-danger-pulse');
+                            // On ajoute l'alerte si elle n'existe pas déjà
+                            alertWrapper.innerHTML = `
+                            <div class="stock-alert">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                Quantité max : ${stockMax}
+                            </div>`;
+                        } else {
+                            row.classList.remove('row-overstock');
+                            qtyValDiv.classList.remove('text-danger-pulse');
+                            alertWrapper.innerHTML = ""; // On efface l'erreur instantanément
+                        }
+
+                        updateCartState();
+                    }
+                }
+            } catch (error) {
+                console.error("Erreur:", error);
+            }
+        });
+    });
+
+    function updateCartState() {
+        let grandTotal = 0;
+        let hasGlobalError = false;
+        const confirmBtn = document.querySelector('.btn-confirm');
+
+        document.querySelectorAll('.cart-row').forEach(row => {
+            // Recalcul du Total
+            const priceText = row.querySelector('.item-total-box').innerText;
+            grandTotal += parseFloat(priceText.replace(/[^0-9.-]+/g, ""));
+
+            // Vérification si au moins une ligne est en erreur
+            if (row.classList.contains('row-overstock')) {
+                hasGlobalError = true;
+            }
+        });
+
+        document.querySelector('.total-summary').innerText = `TOTAL : ${grandTotal.toLocaleString()} GP`;
+
+        // Activation/Désactivation du bouton
+        if (hasGlobalError) {
+            confirmBtn.disabled = true;
+            confirmBtn.style.opacity = "0.5";
+            confirmBtn.style.cursor = "not-allowed";
+            confirmBtn.innerText = "Stock insuffisant";
+        } else {
+            confirmBtn.disabled = false;
+            confirmBtn.style.opacity = "1";
+            confirmBtn.style.cursor = "pointer";
+            confirmBtn.innerText = "Confirmer l'achat";
+        }
+    }
+</script>
 
 <?php
 include __DIR__ . '/includes/footer.php';

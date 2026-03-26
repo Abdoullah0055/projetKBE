@@ -142,3 +142,48 @@ function add_item($name, $description, $gold, $silver, $bronze, $amount, $itemTy
         return false;
     }
 }
+
+/**
+ * Modifie la quantité d'un item spécifique dans le panier.
+ * Si la nouvelle quantité est <= 0, l'item est retiré du panier.
+ */
+function modify_item_quantity_cart($userId, $itemId, $newQuantity)
+{
+    $pdo = get_pdo();
+
+    try {
+        $pdo->beginTransaction();
+
+        // 1. Récupérer le CartId de l'utilisateur
+        $cartId = get_or_create_cart_id($userId);
+
+        if ($newQuantity <= 0) {
+            // Si la quantité est nulle ou négative, on supprime l'entrée
+            $sql = "DELETE FROM cartItems WHERE CartId = :cartId AND ItemId = :itemId";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':cartId' => $cartId,
+                ':itemId' => $itemId
+            ]);
+        } else {
+            // Sinon, on met à jour avec la valeur exacte fournie
+            $sql = "UPDATE cartItems 
+                    SET Quantity = :quantity 
+                    WHERE CartId = :cartId AND ItemId = :itemId";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':quantity' => $newQuantity,
+                ':cartId'   => $cartId,
+                ':itemId'   => $itemId
+            ]);
+        }
+
+        $pdo->commit();
+        return true;
+    } catch (PDOException $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        return false;
+    }
+}
