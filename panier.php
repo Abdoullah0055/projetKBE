@@ -105,14 +105,18 @@ $rightImages = [
 
 
 <div class="page-banner banner-left">
-    <div class="banner-scroll banner-clickable" id="leftBanner">
-        <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
+    <div class="banner-flip" id="leftFlip">
+        <div class="banner-scroll banner-clickable" id="leftBanner">
+            <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
+        </div>
     </div>
 </div>
 
 <div class="page-banner banner-right">
-    <div class="banner-scroll banner-clickable" id="rightBanner">
-        <img src="assets/img/mage.png" alt="Déco Droite" id="rightBannerImg">
+    <div class="banner-flip" id="rightFlip">
+        <div class="banner-scroll banner-clickable" id="rightBanner">
+            <img src="assets/img/bull.png" alt="Déco Droite" id="rightBannerImg">
+        </div>
     </div>
 </div>
 
@@ -160,6 +164,8 @@ $rightImages = [
     const rightBanner = document.getElementById("rightBanner");
     const leftBannerImg = document.getElementById("leftBannerImg");
     const rightBannerImg = document.getElementById("rightBannerImg");
+    const leftFlip = document.getElementById("leftFlip");
+    const rightFlip = document.getElementById("rightFlip");
 
     function setLeftColor(color) {
         document.documentElement.style.setProperty("--banner-left-color", color);
@@ -181,18 +187,31 @@ $rightImages = [
         rightBanner.classList.add("electric-animate");
     }
 
+    function playLeftTurn() {
+        leftFlip.classList.remove("turn-left");
+        void leftFlip.offsetWidth;
+        leftFlip.classList.add("turn-left");
+    }
+
+    function playRightTurn() {
+        rightFlip.classList.remove("turn-right");
+        void rightFlip.offsetWidth;
+        rightFlip.classList.add("turn-right");
+    }
+
     leftBanner.addEventListener("click", () => {
         leftIndex++;
         if (leftIndex >= leftImages.length) {
             leftIndex = 0;
         }
 
-        setLeftColor(leftColors[leftIndex]);
+        playLeftTurn();
         playFireEffect();
+        setLeftColor(leftColors[leftIndex]);
 
         setTimeout(() => {
             leftBannerImg.src = leftImages[leftIndex];
-        }, 120);
+        }, 350);
     });
 
     rightBanner.addEventListener("click", () => {
@@ -201,12 +220,13 @@ $rightImages = [
             rightIndex = 0;
         }
 
-        setRightColor(rightColors[rightIndex]);
+        playRightTurn();
         playElectricEffect();
+        setRightColor(rightColors[rightIndex]);
 
         setTimeout(() => {
             rightBannerImg.src = rightImages[rightIndex];
-        }, 120);
+        }, 350);
     });
 
     setLeftColor(leftColors[0]);
