@@ -80,7 +80,7 @@ include __DIR__ . '/templates/head.php';
 </style>
 
 <link rel="stylesheet" href="assets/css/panier.css">
-
+<link rel="stylesheet" href="assets/css/panier.css?v=<?= time() ?>">
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <?php
