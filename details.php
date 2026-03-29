@@ -17,7 +17,11 @@ if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'balance' => ['gold' => $_SESSION['user']['gold'], 'silver' => $_SESSION['user']['silver'], 'bronze' => $_SESSION['user']['bronze']]
+        'balance' => [
+            'gold' => $_SESSION['user']['gold'],
+            'silver' => $_SESSION['user']['silver'],
+            'bronze' => $_SESSION['user']['bronze']
+        ]
     ];
 } else {
     $user = ['isConnected' => false];
@@ -67,6 +71,42 @@ $title = "Détails - " . $item['nom'];
 <link rel="stylesheet" href="assets/css/details.css">
 
 <?php include __DIR__ . '/includes/header.php'; ?>
+
+<?php
+$leftImages = [
+    'archer.png',
+    'chevalier2.png',
+    'kratos.png',
+    'mage.png',
+    'samurai.png',
+    'viking.png'
+];
+
+$rightImages = [
+    'bull.png',
+    'dragon_slayer.png',
+    'elf.png',
+    'sparta.png',
+    'sultan.png',
+    'orc.png'
+];
+?>
+
+<div class="page-banner banner-left">
+    <div class="banner-flip" id="leftFlip">
+        <div class="banner-scroll banner-clickable" id="leftBanner">
+            <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
+        </div>
+    </div>
+</div>
+
+<div class="page-banner banner-right">
+    <div class="banner-flip" id="rightFlip">
+        <div class="banner-scroll banner-clickable" id="rightBanner">
+            <img src="assets/img/bull.png" alt="Déco Droite" id="rightBannerImg">
+        </div>
+    </div>
+</div>
 
 <?php if (isset($_SESSION['alerte'])): ?>
     <div class="alert-box <?= $_SESSION['alerte']['type'] ?>">
@@ -161,7 +201,155 @@ $title = "Détails - " . $item['nom'];
 </div>
 
 <script>
-    // 1. Animation de secousse au clic sur l'icône
+    const leftImages = [
+        "assets/img/archer.png",
+        "assets/img/chevalier2.png",
+        "assets/img/kratos.png",
+        "assets/img/mage.png",
+        "assets/img/samurai.png",
+        "assets/img/viking.png"
+    ];
+
+    const rightImages = [
+        "assets/img/bull.png",
+        "assets/img/dragon_slayer.png",
+        "assets/img/elf.png",
+        "assets/img/sparta.png",
+        "assets/img/sultan.png",
+        "assets/img/orc.png"
+    ];
+
+    const leftColors = [
+        "#ff5a1f",
+        "#ff7b00",
+        "#ff2d55",
+        "#ffd000",
+        "#ff3c00",
+        "#ff00a8"
+    ];
+
+    const rightColors = [
+        "#00cfff",
+        "#1e90ff",
+        "#7b2cff",
+        "#00ffea",
+        "#8a7dff",
+        "#4dd2ff"
+    ];
+
+    let leftIndex = 0;
+    let rightIndex = 0;
+
+    const leftBanner = document.getElementById("leftBanner");
+    const rightBanner = document.getElementById("rightBanner");
+    const leftBannerImg = document.getElementById("leftBannerImg");
+    const rightBannerImg = document.getElementById("rightBannerImg");
+    const leftFlip = document.getElementById("leftFlip");
+    const rightFlip = document.getElementById("rightFlip");
+
+    function setLeftColor(color) {
+        document.documentElement.style.setProperty("--banner-left-color", color);
+    }
+
+    function setRightColor(color) {
+        document.documentElement.style.setProperty("--banner-right-color", color);
+    }
+
+    function playFireEffect() {
+        leftBanner.classList.remove("fire-animate");
+        void leftBanner.offsetWidth;
+        leftBanner.classList.add("fire-animate");
+    }
+
+    function playElectricEffect() {
+        rightBanner.classList.remove("electric-animate");
+        void rightBanner.offsetWidth;
+        rightBanner.classList.add("electric-animate");
+    }
+
+    function playLeftTurn() {
+        leftFlip.classList.remove("turn-left");
+        void leftFlip.offsetWidth;
+        leftFlip.classList.add("turn-left");
+    }
+
+    function playRightTurn() {
+        rightFlip.classList.remove("turn-right");
+        void rightFlip.offsetWidth;
+        rightFlip.classList.add("turn-right");
+    }
+
+        // Loop
+
+    function changeLeftBanner() {
+        leftIndex++;
+        if (leftIndex >= leftImages.length) {
+            leftIndex = 0;
+        }
+
+        playLeftTurn();
+        playFireEffect();
+        setLeftColor(leftColors[leftIndex]);
+
+        setTimeout(() => {
+            leftBannerImg.src = leftImages[leftIndex];
+        }, 350);
+    }
+
+    function changeRightBanner() {
+        rightIndex++;
+        if (rightIndex >= rightImages.length) {
+            rightIndex = 0;
+        }
+
+        playRightTurn();
+        playElectricEffect();
+        setRightColor(rightColors[rightIndex]);
+
+        setTimeout(() => {
+            rightBannerImg.src = rightImages[rightIndex];
+        }, 350);
+    }
+
+    // 🔁 AUTO LOOP
+    setInterval(() => {
+        changeLeftBanner();
+        changeRightBanner();
+    }, 5000);
+
+    leftBanner.addEventListener("click", () => {
+        leftIndex++;
+        if (leftIndex >= leftImages.length) {
+            leftIndex = 0;
+        }
+
+        playLeftTurn();
+        playFireEffect();
+        setLeftColor(leftColors[leftIndex]);
+
+        setTimeout(() => {
+            leftBannerImg.src = leftImages[leftIndex];
+        }, 350);
+    });
+
+    rightBanner.addEventListener("click", () => {
+        rightIndex++;
+        if (rightIndex >= rightImages.length) {
+            rightIndex = 0;
+        }
+
+        playRightTurn();
+        playElectricEffect();
+        setRightColor(rightColors[rightIndex]);
+
+        setTimeout(() => {
+            rightBannerImg.src = rightImages[rightIndex];
+        }, 350);
+    });
+
+    setLeftColor(leftColors[0]);
+    setRightColor(rightColors[0]);
+
     function triggerMagic() {
         const icon = document.getElementById('target-icon');
         icon.classList.remove('magic-shake');
@@ -169,20 +357,15 @@ $title = "Détails - " . $item['nom'];
         icon.classList.add('magic-shake');
     }
 
-    // 2. Logique "Fly to Cart" et Ajout AJAX
     document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
-        e.preventDefault(); // Empêche le rechargement de la page
+        e.preventDefault();
 
-        // --- NOUVEAU : VÉRIFICATION CONNEXION ---
-        // On récupère la variable PHP dans le JS
         const isConnected = <?= json_encode($user['isConnected']) ?>;
 
         if (!isConnected) {
-            // On récupère l'ID de l'item actuel pour revenir ici
             const itemId = document.querySelector('input[name="item_id"]').value;
-            // On redirige vers login.php avec le paramètre de retour
             window.location.href = `login.php?return_to=details.php?id=${itemId}`;
-            return; // On arrête tout le reste
+            return;
         }
 
         const form = this;
@@ -190,48 +373,38 @@ $title = "Détails - " . $item['nom'];
         const cartBtn = document.getElementById('cart-btn');
         const targetIcon = document.getElementById('target-icon');
 
-        // --- PARTIE ANIMATION ---
-        // Création du clone
         const clone = document.createElement('div');
-        clone.innerHTML = targetIcon.innerHTML; // On prend l'émoji/icône
+        clone.innerHTML = targetIcon.innerHTML;
         clone.className = 'flying-item';
 
-        // Position de départ (l'item au centre)
         const startRect = targetIcon.getBoundingClientRect();
         clone.style.left = startRect.left + 'px';
         clone.style.top = startRect.top + 'px';
         document.body.appendChild(clone);
 
-        // Position d'arrivée (le panier dans le header)
         const endRect = cartBtn.getBoundingClientRect();
 
-        // On lance le mouvement au prochain frame
         requestAnimationFrame(() => {
             clone.style.left = endRect.left + 'px';
             clone.style.top = endRect.top + 'px';
-            clone.style.transform = 'scale(0.1) rotate(360deg)'; // Réduit et tourne
+            clone.style.transform = 'scale(0.1) rotate(360deg)';
             clone.style.opacity = '0';
         });
 
-        // Nettoyage après l'animation
         setTimeout(() => {
             clone.remove();
             cartBtn.classList.add('cart-shake');
             setTimeout(() => cartBtn.classList.remove('cart-shake'), 400);
         }, 800);
 
-        // --- PARTIE ENVOI DES DONNÉES ---
         try {
             const response = await fetch('backend/ajouter_au_panier.php', {
                 method: 'POST',
                 body: formData
             });
 
-            // On recharge juste pour voir l'alerte PHP ou on peut l'afficher en JS
-            // Pour rester simple avec ta version 4.2, on simule le succès :
             if (response.ok) {
                 console.log("Ajouté avec succès");
-                // Optionnel : afficher une petite alerte personnalisée ici
             }
         } catch (error) {
             console.error("Erreur:", error);

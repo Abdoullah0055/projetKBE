@@ -284,19 +284,18 @@ body::before {
 
 .page-banner {
     position: fixed;
-    top: 80px;
-    width: clamp(140px, 11vw, 200px);
-    aspect-ratio: 240 / 750;
-    height: auto;
+    top: 70px;
+    bottom: 140px;
+    width: clamp(140px, 12vw, 290px);
     z-index: 100;
+    display: flex;
 }
-
 .banner-left {
-    left: clamp(60px, 2vw, 30px);
+    left: clamp(200px, 2vw, 30px);
 }
 
 .banner-right {
-    right: clamp(60px, 2vw, 30px);
+    right: clamp(200px, 2vw, 30px);
 }
 
 .banner-scroll {
@@ -665,3 +664,4 @@ body::before {
         transform: rotateY(0deg);
     }
 }
+

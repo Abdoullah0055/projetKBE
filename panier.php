@@ -393,6 +393,46 @@ $rightImages = [
             }
         });
     });
+ 
+    // Loop
+
+    function changeLeftBanner() {
+        leftIndex++;
+        if (leftIndex >= leftImages.length) {
+            leftIndex = 0;
+        }
+
+        playLeftTurn();
+        playFireEffect();
+        setLeftColor(leftColors[leftIndex]);
+
+        setTimeout(() => {
+            leftBannerImg.src = leftImages[leftIndex];
+        }, 350);
+    }
+
+    function changeRightBanner() {
+        rightIndex++;
+        if (rightIndex >= rightImages.length) {
+            rightIndex = 0;
+        }
+
+        playRightTurn();
+        playElectricEffect();
+        setRightColor(rightColors[rightIndex]);
+
+        setTimeout(() => {
+            rightBannerImg.src = rightImages[rightIndex];
+        }, 350);
+    }
+
+    // 🔁 AUTO LOOP
+    setInterval(() => {
+        changeLeftBanner();
+        changeRightBanner();
+    }, 5000);
+
+    
 
     function updateCartState() {
         let grandTotal = 0;
