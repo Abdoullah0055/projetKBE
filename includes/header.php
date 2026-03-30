@@ -21,15 +21,15 @@
                 <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
             </div>
 
-            <button id="cart-btn" class="btn-accent" onclick="window.location.href='panier.php'">
+            <button id="cart-btn" class="btn-accent" onclick="window.location.href='<?= BASE_URL ?>/panier.php'">
                 <i class="fa-solid fa-cart-shopping"></i>
             </button>
-            <button class="btn-danger-custom" onclick="window.location.href='logout.php'">
+            <button class="btn-danger-custom" onclick="window.location.href='<?= BASE_URL ?>/logout.php'">
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         <?php else: ?>
-            <button class="btn-outline-custom" onclick="window.location.href='../login.php'">Inscription</button>
-            <button class="btn-accent" onclick="window.location.href='../login.php'">Connexion</button>
+            <button class="btn-outline-custom" onclick="window.location.href='<?= BASE_URL ?>/login.php'">Inscription</button>
+            <button class="btn-accent" onclick="window.location.href='<?= BASE_URL ?>/login.php'">Connexion</button>
         <?php endif; ?>
     </div>
 </header>

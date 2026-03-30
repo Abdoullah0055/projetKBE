@@ -5,6 +5,7 @@ require_once __DIR__ . '/config/config.php';
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 $pdo = get_pdo();
 
 // 1. RÉCUPÉRATION DU THÈME
@@ -32,25 +33,36 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
+$itemId = (int)$_GET['id'];
+
 $stmt = $pdo->prepare("
-    SELECT i.ItemId AS id, i.Name AS nom, i.PriceGold AS prix, i.Description AS description,
-           i.Stock AS stock, t.Name AS type, IFNULL(AVG(r.Rating), 0) AS rating, COUNT(r.ReviewId) AS nb_avis
+    SELECT 
+        i.ItemId AS id,
+        i.Name AS nom,
+        i.PriceGold AS prix_gold,
+        i.PriceSilver AS prix_silver,
+        i.PriceBronze AS prix_bronze,
+        i.Description AS description,
+        i.Stock AS stock,
+        t.Name AS type,
+        IFNULL(AVG(r.Rating), 0) AS rating,
+        COUNT(r.ReviewId) AS nb_avis
     FROM Items i
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.ItemId = ?
-    GROUP BY i.ItemId, i.Name, i.PriceGold, i.Description, i.Stock, t.Name
+    GROUP BY i.ItemId, i.Name, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
 ");
-$stmt->execute([$_GET['id']]);
-$item = $stmt->fetch();
+$stmt->execute([$itemId]);
+$item = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$item) {
     header("Location: index.php");
     exit();
 }
 
-$icons = ['arme' => '⚔️', 'armure' => '🛡️', 'potion' => '🧪', 'sort' => '✨'];
-$item['image'] = $icons[strtolower($item['type'])] ?? '❓';
+$item['image'] = getItemImage($item['type']);
+$properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
 $title = "Détails - " . $item['nom'];
 ?>
 
@@ -120,7 +132,7 @@ $rightImages = [
     <main class="details-glass-card">
 
         <div class="visual-column">
-            <div class="item-display-box" onclick="triggerMagic()">
+            <div class="item-display-box type-<?= strtolower($item['type']) ?>" onclick="triggerMagic()">
                 <div class="rarity-tag"><?= htmlspecialchars($item['type']) ?></div>
 
                 <div class="floating-wrapper">
@@ -132,15 +144,16 @@ $rightImages = [
             </div>
 
             <div class="stats-grid">
-                <div class="stat-box">
+                <div class="stat-box upgraded-stat">
                     <span class="stat-label">Avis</span>
-                    <span class="stat-value">★ <?= number_format($item['rating'], 1) ?></span>
-                    <span class="stat-sub"><?= $item['nb_avis'] ?> avis</span>
+                    <span class="stat-value">★ <?= number_format((float)$item['rating'], 1) ?></span>
+                    <span class="stat-sub"><?= (int)$item['nb_avis'] ?> avis</span>
                 </div>
-                <div class="stat-box">
+
+                <div class="stat-box upgraded-stat">
                     <span class="stat-label">Stock</span>
-                    <span class="stat-value <?= ($item['stock'] == 0) ? 'text-danger' : 'text-success' ?>">
-                        <?= $item['stock'] ?>
+                    <span class="stat-value <?= ((int)$item['stock'] === 0) ? 'text-danger' : 'text-success' ?>">
+                        <?= (int)$item['stock'] ?>
                     </span>
                     <span class="stat-sub">unités</span>
                 </div>
@@ -148,53 +161,103 @@ $rightImages = [
         </div>
 
         <div class="info-column">
-            <div class="item-title-section">
-                <h1><?= htmlspecialchars($item['nom']) ?></h1>
-                <div class="price-tag"><?= number_format($item['prix'], 0) ?> <span class="gp">GP</span></div>
+            <div class="item-title-section item-title-upgraded">
+                <div class="title-top-row">
+                    <div>
+                        <div class="item-type-pill type-<?= strtolower($item['type']) ?>">
+                            <?= htmlspecialchars($item['type']) ?>
+                        </div>
+                        <h1><?= htmlspecialchars($item['nom']) ?></h1>
+                    </div>
+
+                    <div class="price-card">
+                        <div class="price-main-line">
+                            <span class="price-value"><?= number_format((int)$item['prix_gold'], 0) ?></span>
+                            <span class="price-unit">GP</span>
+                        </div>
+                        <div class="price-sub-line">
+                            <?= (int)$item['prix_silver'] ?> SP • <?= (int)$item['prix_bronze'] ?> BP
+                        </div>
+                    </div>
+                </div>
+
+                <div class="item-meta-row">
+                    <div class="meta-badge">
+                        <i class="fa-solid fa-box-open"></i>
+                        Stock : <?= (int)$item['stock'] ?>
+                    </div>
+                    <div class="meta-badge">
+                        <i class="fa-solid fa-star"></i>
+                        <?= number_format((float)$item['rating'], 1) ?> / 5
+                    </div>
+                    <div class="meta-badge">
+                        <i class="fa-solid fa-comment"></i>
+                        <?= (int)$item['nb_avis'] ?> avis
+                    </div>
+                </div>
             </div>
 
-            <div class="description-section">
-                <h3><i class="fa-solid fa-scroll"></i> Lore & Propriétés</h3>
-                <p><?= nl2br(htmlspecialchars($item['description'])) ?></p>
+            <div class="description-section upgraded-panel">
+                <h3><i class="fa-solid fa-scroll"></i> Description & Propriétés</h3>
+
+                <p class="details-description-text">
+                    <?= nl2br(htmlspecialchars($item['description'])) ?>
+                </p>
+
+                <?= renderItemProperties($item, $properties) ?>
             </div>
 
-            <div class="spec-grid">
-                <div class="spec-item"><span>Catégorie</span><strong><?= ucfirst($item['type']) ?></strong></div>
-                <div class="spec-item"><span>Authenticité</span><strong>Certifiée</strong></div>
-                <div class="spec-item"><span>Origine</span><strong>Inconnue</strong></div>
+            <div class="spec-grid upgraded-spec-grid">
+                <div class="spec-item">
+                    <span>Catégorie</span>
+                    <strong><?= htmlspecialchars($item['type']) ?></strong>
+                </div>
+                <div class="spec-item">
+                    <span>Authenticité</span>
+                    <strong>Certifiée</strong>
+                </div>
+                <div class="spec-item">
+                    <span>Origine</span>
+                    <strong>Inconnue</strong>
+                </div>
             </div>
 
-            <div class="purchase-section">
-                <?php if ($item['stock'] > 0): ?>
+            <div class="purchase-section upgraded-panel">
+                <?php if ((int)$item['stock'] > 0): ?>
                     <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
-
-                        <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                        <input type="hidden" name="item_id" value="<?= (int)$item['id'] ?>">
 
                         <div class="purchase-controls">
                             <div class="quantity-wrapper">
                                 <label for="qty">Quantité :</label>
                                 <select name="quantity" id="qty" class="qty-select">
-                                    <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
+                                    <?php for ($i = 1; $i <= min((int)$item['stock'], 10); $i++): ?>
                                         <option value="<?= $i ?>"><?= $i ?></option>
                                     <?php endfor; ?>
                                 </select>
                             </div>
 
-                            <?php if ($item['stock'] < 5): ?>
+                            <?php if ((int)$item['stock'] < 5): ?>
                                 <div class="urgency-badge">
                                     <i class="fa-solid fa-bolt"></i>
-                                    Plus que <?= $item['stock'] ?> restant !
+                                    Plus que <?= (int)$item['stock'] ?> restant !
                                 </div>
                             <?php endif; ?>
                         </div>
 
-                        <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
+                        <button type="submit" class="btn-buy-large btn-buy-legendary">
+                            <i class="fa-solid fa-cart-plus"></i>
+                            Ajouter au Panier
+                        </button>
                     </form>
                 <?php else: ?>
                     <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
                 <?php endif; ?>
 
-                <a href="index.php" class="back-link">Retour au catalogue</a>
+                <a href="index.php" class="back-link">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Retour au catalogue
+                </a>
             </div>
         </div>
     </main>
@@ -279,8 +342,6 @@ $rightImages = [
         rightFlip.classList.add("turn-right");
     }
 
-        // Loop
-
     function changeLeftBanner() {
         leftIndex++;
         if (leftIndex >= leftImages.length) {
@@ -311,7 +372,6 @@ $rightImages = [
         }, 350);
     }
 
-    // 🔁 AUTO LOOP
     setInterval(() => {
         changeLeftBanner();
         changeRightBanner();
@@ -382,20 +442,24 @@ $rightImages = [
         clone.style.top = startRect.top + 'px';
         document.body.appendChild(clone);
 
-        const endRect = cartBtn.getBoundingClientRect();
+        if (cartBtn) {
+            const endRect = cartBtn.getBoundingClientRect();
 
-        requestAnimationFrame(() => {
-            clone.style.left = endRect.left + 'px';
-            clone.style.top = endRect.top + 'px';
-            clone.style.transform = 'scale(0.1) rotate(360deg)';
-            clone.style.opacity = '0';
-        });
+            requestAnimationFrame(() => {
+                clone.style.left = endRect.left + 'px';
+                clone.style.top = endRect.top + 'px';
+                clone.style.transform = 'scale(0.1) rotate(360deg)';
+                clone.style.opacity = '0';
+            });
 
-        setTimeout(() => {
-            clone.remove();
-            cartBtn.classList.add('cart-shake');
-            setTimeout(() => cartBtn.classList.remove('cart-shake'), 400);
-        }, 800);
+            setTimeout(() => {
+                clone.remove();
+                cartBtn.classList.add('cart-shake');
+                setTimeout(() => cartBtn.classList.remove('cart-shake'), 400);
+            }, 800);
+        } else {
+            setTimeout(() => clone.remove(), 800);
+        }
 
         try {
             const response = await fetch('backend/ajouter_au_panier.php', {

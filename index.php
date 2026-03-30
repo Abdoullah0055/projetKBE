@@ -1,6 +1,7 @@
 <?php
 // On garde le config de votre ami et on ajoute votre connexion BD test
 require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/constants.php';
 require_once 'AlgosBD.php';
 
 // On s'assure que la session est démarrée
@@ -48,16 +49,34 @@ $stmt = $pdo->query("
     WHERE i.IsActive = TRUE
     GROUP BY i.ItemId, i.Name, t.Name, i.PriceGold, i.Stock
 ");
-$items = $stmt->fetchAll();
+$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $title = "L'Arsenal - Marché Noir";
 
 // Gestion du thème via Cookie (30 jours)
 $currentTheme = $_COOKIE['theme'] ?? 'light';
-$bgNum = $_COOKIE['bgNumber'] ?? '1'; // On récupère le numéro sauvegardé
+$bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
+/*
+|--------------------------------------------------------------------------
+| Normalisation des types pour le filtre
+|--------------------------------------------------------------------------
+| Adapte les noms venant de la BD vers des valeurs cohérentes pour le JS
+*/
+function normalizeItemType(string $type): string
+{
+    $t = strtolower(trim($type));
+
+    return match ($t) {
+        'arme', 'armes', 'weapon', 'weapons' => 'weapon',
+        'armure', 'armures', 'armor', 'armors' => 'armor',
+        'potion', 'potions' => 'potion',
+        'sort', 'sorts', 'magicspell', 'spell', 'spells' => 'magicspell',
+        default => $t
+    };
+}
 ?>
 
 <style>
@@ -66,24 +85,17 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
     }
 
     body {
-        /* On force l'image ici pour qu'elle passe au-dessus du gris du fichier CSS */
         background-image: var(--main-bg) !important;
         background-color: #1a1b1e;
-        /* Fond de secours si l'image rate */
         position: relative;
         z-index: 0;
     }
 
-    /* On s'assure que le dégradé sombre ne cache pas l'image */
     body::before {
         content: "";
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         background: rgba(0, 0, 0, 0.5);
-        /* Ajuste l'obscurité du fond ici */
         z-index: -1;
         pointer-events: none;
     }
@@ -92,9 +104,46 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
     main {
         background: transparent !important;
     }
-</style>
-<?php include __DIR__ . '/templates/head.php'; ?>
 
+    .filter-input,
+    .filter-select {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: white;
+        padding: 10px;
+        border-radius: 4px;
+        outline: none;
+    }
+
+    .filter-input::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    .filter-group {
+        margin-bottom: 12px;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: bold;
+    }
+
+    #no-results-message {
+        display: none;
+        margin-top: 20px;
+        text-align: center;
+        color: #ddd;
+        font-weight: bold;
+        padding: 18px;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+</style>
+
+<?php include __DIR__ . '/templates/head.php'; ?>
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <div class="wrapper">
@@ -107,21 +156,30 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
             <div class="show-icon">🔍</div>
 
             <div class="hide-text">
-                <form class="filter-section">
+                <form class="filter-section" onsubmit="return false;">
                     <div class="filter-group">
-                        <label>Catégorie</label>
-                        <select name="type">
+                        <label for="search-filter">Recherche</label>
+                        <input
+                            type="text"
+                            id="search-filter"
+                            class="filter-input"
+                            placeholder="Nom de l'item...">
+                    </div>
+
+                    <div class="filter-group">
+                        <label for="type-filter">Catégorie</label>
+                        <select id="type-filter" name="type" class="filter-select">
                             <option value="all">Tous les items</option>
-                            <option value="arme">Armes</option>
-                            <option value="armure">Armures</option>
+                            <option value="weapon">Armes</option>
+                            <option value="armor">Armures</option>
                             <option value="potion">Potions</option>
-                            <option value="sort">Sorts</option>
+                            <option value="magicspell">Sorts</option>
                         </select>
                     </div>
 
-                    <button type="submit"
+                    <button type="button" id="reset-filters"
                         style="width:100%; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
-                        Filtrer
+                        Réinitialiser
                     </button>
                 </form>
             </div>
@@ -129,15 +187,15 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
             <div class="cta-box">
                 <div class="hide-text">
                     <?php if ($user['isConnected']): ?>
-                        <p style="margin:0 0 8px 0; font-size:0.9rem;">Essais énigmes : <b style="color:var(--accent)">5 /
-                                5</b></p>
+                        <p style="margin:0 0 8px 0; font-size:0.9rem;">Essais énigmes : <b style="color:var(--accent)">5 / 5</b></p>
                     <?php else: ?>
                         <p style="margin:0 0 8px 0; font-size:0.9rem;">Besoin d'or ?</p>
                     <?php endif; ?>
 
                     <a href="#"
-                        style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre
-                        des énigmes</a>
+                        style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">
+                        Résoudre des énigmes
+                    </a>
                 </div>
             </div>
         </div>
@@ -146,38 +204,47 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
     <main>
         <div class="catalog-banner">
             <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
-                <?= $user['isConnected'] ? "Content de vous revoir, " . $user['alias'] : "Catalogue des Reliques" ?>
+                <?= $user['isConnected'] ? "Content de vous revoir, " . htmlspecialchars($user['alias']) : "Catalogue des Reliques" ?>
             </h2>
-
         </div>
 
-        <div class="product-list">
+        <div class="product-list" id="product-list">
             <?php foreach ($items as $item): ?>
+                <?php $normalizedType = normalizeItemType($item['type']); ?>
 
-                <div class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?>"
-                    onclick="window.location.href='<?= BASE_URL ?>/details.php?id=<?= $item['id'] ?>'"
+                <div class="item-row <?= ((int)$item['stock'] === 0) ? 'item-out-of-stock' : '' ?>"
+                    data-type="<?= htmlspecialchars($normalizedType) ?>"
+                    data-name="<?= htmlspecialchars(strtolower($item['nom'])) ?>"
+                    data-stock="<?= (int)$item['stock'] ?>"
+                    onclick="window.location.href='<?= BASE_URL ?>/details.php?id=<?= (int)$item['id'] ?>'"
                     style="cursor:pointer;">
-                    <div class="item-icon"><?= getItemImage($item['type']) ?></div>
-                    <div class="item-info">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <h3><?= $item['nom'] ?></h3>
-                            <span
-                                style="background: rgba(25, 133, 161, 0.2); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;"><?= $item['rarete'] ?></span>
-                        </div>
 
+                    <div class="item-icon"><?= getItemImage($item['type']) ?></div>
+
+                    <div class="item-info">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <h3><?= htmlspecialchars($item['nom']) ?></h3>
+                            <span style="background: rgba(25, 133, 161, 0.2); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">
+                                <?= htmlspecialchars($item['rarete']) ?>
+                            </span>
+                            <span style="background: rgba(255,255,255,0.08); color: #ddd; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">
+                                <?= htmlspecialchars($item['type']) ?>
+                            </span>
+                        </div>
 
                         <div style="margin-top: 5px;">
                             <span style="color: var(--gold);">★ ★ ★ ★ ☆</span>
-                            <small style="color: var(--text-silver); margin-left: 5px;">(<?= $item['reviews'] ?>
-                                aventuriers)</small>
+                            <small style="color: var(--text-silver); margin-left: 5px;">
+                                (<?= (int)$item['reviews'] ?> aventuriers)
+                            </small>
                         </div>
                     </div>
 
                     <div style="text-align: right;">
-                        <div class="item-price"><?= number_format($item['prix'], 0) ?> GP</div>
+                        <div class="item-price"><?= number_format((int)$item['prix'], 0) ?> GP</div>
 
-                        <?php if ($item['stock'] > 0): ?>
-                            <small style="color: #2ECC71; font-weight: bold;">En stock: <?= $item['stock'] ?></small>
+                        <?php if ((int)$item['stock'] > 0): ?>
+                            <small style="color: #2ECC71; font-weight: bold;">En stock: <?= (int)$item['stock'] ?></small>
                         <?php else: ?>
                             <small style="color: #E74C3C; font-weight: bold;">Rupture de stock</small>
                         <?php endif; ?>
@@ -185,22 +252,33 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
                     <div class="item-action-btns" style="margin-left: 20px;">
                         <?php if ($user['isConnected']): ?>
-                            <?php if ($item['stock'] == 0): ?>
+                            <?php if ((int)$item['stock'] === 0): ?>
                                 <button disabled style="background:#444; cursor:not-allowed;">Épuisé</button>
-                            <?php elseif ($item['type'] == 'sort' && !$user['isMage']): ?>
-                                <button disabled title="Niveau Mage requis" style="background:#666; font-size:0.7rem;">Mage
-                                    Requis</button>
+                            <?php elseif ($normalizedType === 'magicspell' && !$user['isMage']): ?>
+                                <button disabled title="Niveau Mage requis" style="background:#666; font-size:0.7rem;">
+                                    Mage Requis
+                                </button>
                             <?php else: ?>
-                                <button onclick="window.location.href='details.php?id=<?= $item['id'] ?>'"
-                                    style="padding: 5px 12px; font-size: 0.8rem; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer;">Acheter</button>
+                                <button
+                                    onclick="event.stopPropagation(); window.location.href='details.php?id=<?= (int)$item['id'] ?>'"
+                                    style="padding: 5px 12px; font-size: 0.8rem; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer;">
+                                    Acheter
+                                </button>
                             <?php endif; ?>
                         <?php else: ?>
-                            <a href="details.php?id=<?= $item['id'] ?>"
-                                style="text-decoration:none; color:var(--accent); font-size:1.5rem;">➔</a>
+                            <a href="details.php?id=<?= (int)$item['id'] ?>"
+                                onclick="event.stopPropagation();"
+                                style="text-decoration:none; color:var(--accent); font-size:1.5rem;">
+                                ➔
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
+        </div>
+
+        <div id="no-results-message">
+            Aucun item ne correspond à votre recherche.
         </div>
 
         <div class="pagination">
@@ -210,6 +288,51 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
         </div>
     </main>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const typeFilter = document.getElementById("type-filter");
+        const searchFilter = document.getElementById("search-filter");
+        const resetBtn = document.getElementById("reset-filters");
+        const items = document.querySelectorAll(".product-list .item-row");
+        const noResultsMessage = document.getElementById("no-results-message");
+
+        function applyFilters() {
+            const selectedType = (typeFilter.value || "all").toLowerCase();
+            const searchValue = (searchFilter.value || "").trim().toLowerCase();
+
+            let visibleCount = 0;
+
+            items.forEach(item => {
+                const itemType = (item.dataset.type || "").toLowerCase();
+                const itemName = (item.dataset.name || "").toLowerCase();
+
+                const matchesType = selectedType === "all" || itemType === selectedType;
+                const matchesSearch = searchValue === "" || itemName.includes(searchValue);
+
+                if (matchesType && matchesSearch) {
+                    item.style.display = "";
+                    visibleCount++;
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            noResultsMessage.style.display = visibleCount === 0 ? "block" : "none";
+        }
+
+        typeFilter.addEventListener("change", applyFilters);
+        searchFilter.addEventListener("input", applyFilters);
+
+        resetBtn.addEventListener("click", function () {
+            typeFilter.value = "all";
+            searchFilter.value = "";
+            applyFilters();
+        });
+
+        applyFilters();
+    });
+</script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
