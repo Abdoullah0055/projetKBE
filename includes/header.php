@@ -28,8 +28,8 @@
                 <i class="fa-solid fa-right-from-bracket"></i>
             </button>
         <?php else: ?>
-            <button class="btn-outline-custom" onclick="window.location.href='../login.php'">Inscription</button>
-            <button class="btn-accent" onclick="window.location.href='../login.php'">Connexion</button>
+            <button class="btn-outline-custom" onclick="window.location.href='login.php?mode=register'">Inscription</button>
+            <button class="btn-accent" onclick="window.location.href='login.php'">Connexion</button>
         <?php endif; ?>
     </div>
 </header>

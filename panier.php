@@ -155,7 +155,7 @@ include __DIR__ . '/templates/head.php';
 <?php endif; ?>
 
 <script>
-    // --- GESTION DES BANNIÈRES (LOGIQUE 3D RALENTIE) ---
+    // --- GESTION DES BANNIÈRES (LOGIQUE 3D) ---
     const leftImages = ["assets/img/archer.png", "assets/img/chevalier2.png", "assets/img/kratos.png", "assets/img/mage.png", "assets/img/samurai.png", "assets/img/viking.png"];
     const rightImages = ["assets/img/bull.png", "assets/img/dragon_slayer.png", "assets/img/elf.png", "assets/img/sparta.png", "assets/img/sultan.png", "assets/img/orc.png"];
 
@@ -168,18 +168,14 @@ include __DIR__ . '/templates/head.php';
         const banner = document.getElementById(bannerId);
         const frontImg = document.getElementById(imgFrontId);
         const backImg = document.getElementById(imgBackId);
-
         let nextIdx = (currentIndex + 1) % list.length;
 
-        // Pré-chargement sur la face opposée
         if (isFlipped) frontImg.src = list[nextIdx];
         else backImg.src = list[nextIdx];
 
-        // Petit délai pour laisser le navigateur initier le rendu de l'image
         setTimeout(() => {
             banner.classList.toggle('is-flipped');
         }, 30);
-
         return {
             nextIdx,
             nextFlipped: !isFlipped
@@ -198,7 +194,32 @@ include __DIR__ . '/templates/head.php';
         r_isFlipped = res.nextFlipped;
     };
 
-    // --- GESTION DU PANIER (QUANTITÉS) ---
+    function showCustomConfirm(message, title = "Confirmation") {
+        return new Promise((resolve) => {
+            const modal = document.getElementById('custom-modal');
+            const banners = document.querySelectorAll('.page-banner');
+
+            document.getElementById('modal-message').innerText = message;
+            document.getElementById('modal-title').innerText = title;
+
+            // EXECUTION SIMULTANÉE
+            // On applique le flou AVANT le display pour que le navigateur 
+            // calcule le rendu en une seule passe (Reflow/Repaint)
+            banners.forEach(b => b.classList.add('banner-blur'));
+            modal.style.display = 'flex';
+
+            const handleClose = (result) => {
+                modal.style.display = 'none';
+                banners.forEach(b => b.classList.remove('banner-blur'));
+                resolve(result);
+            };
+
+            document.getElementById('modal-btn-confirm').onclick = () => handleClose(true);
+            document.getElementById('modal-btn-cancel').onclick = () => handleClose(false);
+        });
+    }
+
+    // --- GESTION DU PANIER ---
     function updateCartState() {
         let grandTotal = 0;
         let hasGlobalError = false;
@@ -262,23 +283,6 @@ include __DIR__ . '/templates/head.php';
             }
         });
     });
-
-    function showCustomConfirm(message, title = "Confirmation") {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('custom-modal');
-            document.getElementById('modal-message').innerText = message;
-            document.getElementById('modal-title').innerText = title;
-            modal.style.display = 'flex';
-            document.getElementById('modal-btn-confirm').onclick = () => {
-                modal.style.display = 'none';
-                resolve(true);
-            };
-            document.getElementById('modal-btn-cancel').onclick = () => {
-                modal.style.display = 'none';
-                resolve(false);
-            };
-        });
-    }
 
     async function deleteItemFromCart(itemId, button) {
         if (await showCustomConfirm("Retirer cet objet de votre besace ?", "Suppression")) {

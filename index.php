@@ -167,7 +167,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 
                         <div style="margin-top: 5px;">
-                            <span style="color: var(--gold);">★ ★ ★ ★ ☆</span>
+                            <span style="color: var(--gold);">☆ ☆ ☆ ☆ ☆</span>
                             <small style="color: var(--text-silver); margin-left: 5px;">(<?= $item['reviews'] ?>
                                 aventuriers)</small>
                         </div>

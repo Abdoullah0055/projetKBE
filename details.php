@@ -12,15 +12,23 @@ $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-// Gestion de l'utilisateur
+// 2. GESTION DE L'UTILISATEUR (Adapté de ton index.php)
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'balance' => ['gold' => $_SESSION['user']['gold'], 'silver' => $_SESSION['user']['silver'], 'bronze' => $_SESSION['user']['bronze']]
+        'isMage' => (($_SESSION['user']['role'] ?? '') === 'Mage'),
+        'balance' => [
+            'gold' => $_SESSION['user']['gold'],
+            'silver' => $_SESSION['user']['silver'],
+            'bronze' => $_SESSION['user']['bronze']
+        ]
     ];
 } else {
-    $user = ['isConnected' => false];
+    $user = [
+        'isConnected' => false,
+        'isMage' => false
+    ];
 }
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -28,6 +36,7 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
+// 3. RÉCUPÉRATION DE L'ITEM
 $stmt = $pdo->prepare("
     SELECT i.ItemId AS id, i.Name AS nom, i.PriceGold AS prix, i.Description AS description,
            i.Stock AS stock, t.Name AS type, IFNULL(AVG(r.Rating), 0) AS rating, COUNT(r.ReviewId) AS nb_avis
@@ -61,6 +70,13 @@ $title = "Détails - " . $item['nom'];
         background-image: var(--main-bg) !important;
         background-color: #1a1b1e !important;
         overflow-y: auto !important;
+    }
+
+    /* Style pour le bouton Mage Requis pour matcher ton design */
+    .btn-buy-large:disabled {
+        background: #444 !important;
+        cursor: not-allowed;
+        opacity: 0.7;
     }
 </style>
 
@@ -126,30 +142,41 @@ $title = "Détails - " . $item['nom'];
 
             <div class="purchase-section">
                 <?php if ($item['stock'] > 0): ?>
-                    <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
 
-                        <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                    <?php
+                    // Logique de restriction : Sort réservé aux Mages
+                    $isSpell = (strtolower($item['type']) === 'sort');
+                    if ($isSpell && !$user['isMage']):
+                    ?>
+                        <button class="btn-buy-large" disabled title="Niveau Mage requis">
+                            <i class="fa-solid fa-lock"></i> Mage Requis
+                        </button>
+                    <?php else: ?>
+                        <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
+                            <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
 
-                        <div class="purchase-controls">
-                            <div class="quantity-wrapper">
-                                <label for="qty">Quantité :</label>
-                                <select name="quantity" id="qty" class="qty-select">
-                                    <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
-                                        <option value="<?= $i ?>"><?= $i ?></option>
-                                    <?php endfor; ?>
-                                </select>
+                            <div class="purchase-controls">
+                                <div class="quantity-wrapper">
+                                    <label for="qty">Quantité :</label>
+                                    <select name="quantity" id="qty" class="qty-select">
+                                        <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
+                                            <option value="<?= $i ?>"><?= $i ?></option>
+                                        <?php endfor; ?>
+                                    </select>
+                                </div>
+
+                                <?php if ($item['stock'] < 5): ?>
+                                    <div class="urgency-badge">
+                                        <i class="fa-solid fa-bolt"></i>
+                                        Plus que <?= $item['stock'] ?> restant !
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
-                            <?php if ($item['stock'] < 5): ?>
-                                <div class="urgency-badge">
-                                    <i class="fa-solid fa-bolt"></i>
-                                    Plus que <?= $item['stock'] ?> restant !
-                                </div>
-                            <?php endif; ?>
-                        </div>
+                            <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
+                        </form>
+                    <?php endif; ?>
 
-                        <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
-                    </form>
                 <?php else: ?>
                     <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
                 <?php endif; ?>
@@ -161,7 +188,6 @@ $title = "Détails - " . $item['nom'];
 </div>
 
 <script>
-    // 1. Animation de secousse au clic sur l'icône
     function triggerMagic() {
         const icon = document.getElementById('target-icon');
         icon.classList.remove('magic-shake');
@@ -169,20 +195,24 @@ $title = "Détails - " . $item['nom'];
         icon.classList.add('magic-shake');
     }
 
-    // 2. Logique "Fly to Cart" et Ajout AJAX
     document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
-        e.preventDefault(); // Empêche le rechargement de la page
+        e.preventDefault();
 
-        // --- NOUVEAU : VÉRIFICATION CONNEXION ---
-        // On récupère la variable PHP dans le JS
         const isConnected = <?= json_encode($user['isConnected']) ?>;
+        // On récupère aussi l'info Mage pour le JS par sécurité
+        const isMage = <?= json_encode($user['isMage']) ?>;
+        const itemType = <?= json_encode(strtolower($item['type'])) ?>;
 
         if (!isConnected) {
-            // On récupère l'ID de l'item actuel pour revenir ici
             const itemId = document.querySelector('input[name="item_id"]').value;
-            // On redirige vers login.php avec le paramètre de retour
             window.location.href = `login.php?return_to=details.php?id=${itemId}`;
-            return; // On arrête tout le reste
+            return;
+        }
+
+        // Vérification supplémentaire en JS au cas où l'utilisateur bidouille l'inspecteur
+        if (itemType === 'sort' && !isMage) {
+            alert("Seul un Mage peut manipuler ces reliques.");
+            return;
         }
 
         const form = this;
@@ -190,48 +220,39 @@ $title = "Détails - " . $item['nom'];
         const cartBtn = document.getElementById('cart-btn');
         const targetIcon = document.getElementById('target-icon');
 
-        // --- PARTIE ANIMATION ---
-        // Création du clone
+        // Animation "Fly to Cart"
         const clone = document.createElement('div');
-        clone.innerHTML = targetIcon.innerHTML; // On prend l'émoji/icône
+        clone.innerHTML = targetIcon.innerHTML;
         clone.className = 'flying-item';
 
-        // Position de départ (l'item au centre)
         const startRect = targetIcon.getBoundingClientRect();
         clone.style.left = startRect.left + 'px';
         clone.style.top = startRect.top + 'px';
         document.body.appendChild(clone);
 
-        // Position d'arrivée (le panier dans le header)
         const endRect = cartBtn.getBoundingClientRect();
 
-        // On lance le mouvement au prochain frame
         requestAnimationFrame(() => {
             clone.style.left = endRect.left + 'px';
             clone.style.top = endRect.top + 'px';
-            clone.style.transform = 'scale(0.1) rotate(360deg)'; // Réduit et tourne
+            clone.style.transform = 'scale(0.1) rotate(360deg)';
             clone.style.opacity = '0';
         });
 
-        // Nettoyage après l'animation
         setTimeout(() => {
             clone.remove();
             cartBtn.classList.add('cart-shake');
             setTimeout(() => cartBtn.classList.remove('cart-shake'), 400);
         }, 800);
 
-        // --- PARTIE ENVOI DES DONNÉES ---
         try {
             const response = await fetch('backend/ajouter_au_panier.php', {
                 method: 'POST',
                 body: formData
             });
 
-            // On recharge juste pour voir l'alerte PHP ou on peut l'afficher en JS
-            // Pour rester simple avec ta version 4.2, on simule le succès :
             if (response.ok) {
                 console.log("Ajouté avec succès");
-                // Optionnel : afficher une petite alerte personnalisée ici
             }
         } catch (error) {
             console.error("Erreur:", error);

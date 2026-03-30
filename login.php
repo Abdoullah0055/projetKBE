@@ -132,4 +132,19 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
     </div>
 </main>
 <script src="assets/js/auth.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // On récupère les paramètres de l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        // Si le mode est 'register', on simule un clic sur le lien de basculement
+        if (urlParams.get('mode') === 'register') {
+            const switchLink = document.getElementById('switch-link');
+            if (switchLink) {
+                // On appelle la fonction de basculement (ou on clique sur le lien)
+                switchLink.click();
+            }
+        }
+    });
+</script>
 <?php include __DIR__ . '/templates/end.php'; ?>

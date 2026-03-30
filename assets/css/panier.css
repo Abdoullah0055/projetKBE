@@ -1,11 +1,10 @@
 /* --- CONFIGURATION DU FOND --- */
 body {
-  /* On retire le background-image d'ici car il est géré par le PHP/JS en ligne */
   background-size: cover;
   background-attachment: fixed;
   background-position: center;
   background-repeat: no-repeat;
-  background-color: #1a1b1e; /* Couleur de secours */
+  background-color: #1a1b1e;
   color: var(--text-light);
   margin: 0;
   min-height: 100vh;
@@ -29,7 +28,7 @@ body::before {
 .cart-page {
   flex: 1;
   padding: 40px;
-  max-width: 800px; /* Aligné avec le calcul des bannières */
+  max-width: 800px;
   margin: 0 auto;
   width: 100%;
   background: rgba(0, 0, 0, 0.4);
@@ -71,7 +70,6 @@ body::before {
   font-size: 2rem;
   width: 50px;
 }
-
 .item-name-box {
   flex: 1;
   font-weight: bold;
@@ -108,7 +106,6 @@ body::before {
   background: var(--accent);
   color: white;
 }
-
 .item-total-box {
   font-size: 1.2rem;
   color: var(--gold);
@@ -116,7 +113,6 @@ body::before {
   min-width: 100px;
   text-align: right;
 }
-
 .btn-corbeille {
   background: none;
   border: none;
@@ -126,7 +122,6 @@ body::before {
   margin-right: 15px;
   transition: transform 0.2s;
 }
-
 .btn-corbeille:hover {
   transform: rotate(15deg) scale(1.2);
 }
@@ -150,7 +145,6 @@ body::before {
   font-weight: bold;
   color: var(--gold);
 }
-
 .btn-confirm {
   background: var(--accent);
   color: white;
@@ -162,19 +156,16 @@ body::before {
   cursor: pointer;
   transition: 0.3s;
 }
-
 .btn-confirm:hover {
   background: #1fa2c5;
   box-shadow: 0 0 15px var(--accent);
 }
-
 .btn-return {
   text-decoration: none;
   color: var(--text-silver);
   font-size: 0.9rem;
   border-bottom: 1px solid transparent;
 }
-
 .btn-return:hover {
   color: white;
   border-bottom: 1px solid white;
@@ -221,7 +212,6 @@ body::before {
     opacity: 0.5;
   }
 }
-
 @keyframes shake {
   0%,
   100% {
@@ -241,16 +231,17 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(30, 30, 46, 0.7); /* Couleur Mocha sombre */
+  background: rgba(30, 30, 46, 0.7);
   backdrop-filter: blur(8px);
-  display: none; /* Masqué par défaut */
+  -webkit-backdrop-filter: blur(8px);
+  display: none; /* Le passage de none à flex est instantané */
   align-items: center;
   justify-content: center;
   z-index: 9999;
 }
 
 .modal-content {
-  background: rgba(69, 71, 90, 0.4); /* Glassmorphism */
+  background: rgba(69, 71, 90, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 15px;
   padding: 25px;
@@ -258,15 +249,14 @@ body::before {
   max-width: 400px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   text-align: center;
-  color: #cdd6f4; /* Texte clair */
+  color: #cdd6f4;
 }
 
 .modal-header i {
   font-size: 2rem;
-  color: var(--accent); /* Ton accent (ex: jaune/or) */
+  color: var(--accent);
   margin-bottom: 10px;
 }
-
 .modal-footer {
   display: flex;
   gap: 15px;
@@ -287,6 +277,7 @@ body::before {
 .btn-secondary:hover {
   background: rgba(108, 112, 134, 0.2);
 }
+
 /* --- CONFIGURATION DES BANNIÈRES (STRUCTURE FIXE) --- */
 .page-banner {
   position: fixed;
@@ -295,13 +286,19 @@ body::before {
   aspect-ratio: 240 / 750;
   z-index: 100;
   perspective: 2000px;
+  transition: filter 0.4s ease; /* Transition ajoutée pour le flou */
+}
+
+/* CLASSE DE FLOU AJOUTÉE */
+.page-banner.banner-blur {
+  filter: blur(8px) grayscale(0.5); /* Aligné sur le flou du modal (8px) */
+  pointer-events: none;
 }
 
 .banner-left {
   left: calc((50% - 480px) / 2);
   transform: translate(-50%, -50%);
 }
-
 .banner-right {
   right: calc((50% - 480px) / 2);
   transform: translate(50%, -50%);
@@ -309,7 +306,6 @@ body::before {
 
 /* --- LE CONTENEUR DE ROTATION (SUPPORT 3D) --- */
 .banner-scroll {
-  /* On passe à 1.2s avec un easing plus lent au début pour laisser charger */
   transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   width: 100%;
@@ -342,7 +338,7 @@ body::before {
   transform: rotateY(180deg);
 }
 
-/* --- IMAGES & ANIMATIONS (CORRIGÉ POUR ÉVITER LE BUG) --- */
+/* --- IMAGES & ANIMATIONS --- */
 .banner-face img {
   width: 100%;
   height: 100%;
@@ -351,11 +347,9 @@ body::before {
   will-change: transform, filter;
 }
 
-/* L'image ne flotte que si sa face est visible pour éviter le "flash" au changement */
 .banner-scroll:not(.is-flipped) .face-front img {
   animation: subtleFloatFront 8s ease-in-out infinite;
 }
-
 .banner-scroll.is-flipped .face-back img {
   animation: subtleFloatBack 8s ease-in-out infinite;
 }
@@ -421,7 +415,6 @@ body::before {
 
 .banner-scroll.is-flipped::after,
 .banner-scroll:not(.is-flipped):active::after {
-  /* On synchronise la durée avec la rotation (1.2s) */
   animation: lightSweep 1.2s ease-in-out;
 }
 
