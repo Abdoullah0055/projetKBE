@@ -136,7 +136,7 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
     document.addEventListener("DOMContentLoaded", function() {
         // On récupère les paramètres de l'URL
         const urlParams = new URLSearchParams(window.location.search);
-        
+
         // Si le mode est 'register', on simule un clic sur le lien de basculement
         if (urlParams.get('mode') === 'register') {
             const switchLink = document.getElementById('switch-link');

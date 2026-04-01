@@ -12,12 +12,11 @@ $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-// 2. GESTION DE L'UTILISATEUR (Adapté de ton index.php)
+// Gestion de l'utilisateur
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'isMage' => (($_SESSION['user']['role'] ?? '') === 'Mage'),
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
@@ -25,10 +24,7 @@ if (isset($_SESSION['user'])) {
         ]
     ];
 } else {
-    $user = [
-        'isConnected' => false,
-        'isMage' => false
-    ];
+    $user = ['isConnected' => false];
 }
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
@@ -36,7 +32,6 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
-// 3. RÉCUPÉRATION DE L'ITEM
 $stmt = $pdo->prepare("
     SELECT i.ItemId AS id, i.Name AS nom, i.PriceGold AS prix, i.Description AS description,
            i.Stock AS stock, t.Name AS type, IFNULL(AVG(r.Rating), 0) AS rating, COUNT(r.ReviewId) AS nb_avis
@@ -71,18 +66,47 @@ $title = "Détails - " . $item['nom'];
         background-color: #1a1b1e !important;
         overflow-y: auto !important;
     }
-
-    /* Style pour le bouton Mage Requis pour matcher ton design */
-    .btn-buy-large:disabled {
-        background: #444 !important;
-        cursor: not-allowed;
-        opacity: 0.7;
-    }
 </style>
 
 <link rel="stylesheet" href="assets/css/details.css">
 
 <?php include __DIR__ . '/includes/header.php'; ?>
+
+<?php
+$leftImages = [
+    'archer.png',
+    'chevalier2.png',
+    'kratos.png',
+    'mage.png',
+    'samurai.png',
+    'viking.png'
+];
+
+$rightImages = [
+    'bull.png',
+    'dragon_slayer.png',
+    'elf.png',
+    'sparta.png',
+    'sultan.png',
+    'orc.png'
+];
+?>
+
+<div class="page-banner banner-left">
+    <div class="banner-flip" id="leftFlip">
+        <div class="banner-scroll banner-clickable" id="leftBanner">
+            <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
+        </div>
+    </div>
+</div>
+
+<div class="page-banner banner-right">
+    <div class="banner-flip" id="rightFlip">
+        <div class="banner-scroll banner-clickable" id="rightBanner">
+            <img src="assets/img/bull.png" alt="Déco Droite" id="rightBannerImg">
+        </div>
+    </div>
+</div>
 
 <?php if (isset($_SESSION['alerte'])): ?>
     <div class="alert-box <?= $_SESSION['alerte']['type'] ?>">
@@ -142,41 +166,30 @@ $title = "Détails - " . $item['nom'];
 
             <div class="purchase-section">
                 <?php if ($item['stock'] > 0): ?>
+                    <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
 
-                    <?php
-                    // Logique de restriction : Sort réservé aux Mages
-                    $isSpell = (strtolower($item['type']) === 'sort');
-                    if ($isSpell && !$user['isMage']):
-                    ?>
-                        <button class="btn-buy-large" disabled title="Niveau Mage requis">
-                            <i class="fa-solid fa-lock"></i> Mage Requis
-                        </button>
-                    <?php else: ?>
-                        <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
-                            <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
+                        <input type="hidden" name="item_id" value="<?= $item['id'] ?>">
 
-                            <div class="purchase-controls">
-                                <div class="quantity-wrapper">
-                                    <label for="qty">Quantité :</label>
-                                    <select name="quantity" id="qty" class="qty-select">
-                                        <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
-                                            <option value="<?= $i ?>"><?= $i ?></option>
-                                        <?php endfor; ?>
-                                    </select>
-                                </div>
-
-                                <?php if ($item['stock'] < 5): ?>
-                                    <div class="urgency-badge">
-                                        <i class="fa-solid fa-bolt"></i>
-                                        Plus que <?= $item['stock'] ?> restant !
-                                    </div>
-                                <?php endif; ?>
+                        <div class="purchase-controls">
+                            <div class="quantity-wrapper">
+                                <label for="qty">Quantité :</label>
+                                <select name="quantity" id="qty" class="qty-select">
+                                    <?php for ($i = 1; $i <= min($item['stock'], 10); $i++): ?>
+                                        <option value="<?= $i ?>"><?= $i ?></option>
+                                    <?php endfor; ?>
+                                </select>
                             </div>
 
-                            <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
-                        </form>
-                    <?php endif; ?>
+                            <?php if ($item['stock'] < 5): ?>
+                                <div class="urgency-badge">
+                                    <i class="fa-solid fa-bolt"></i>
+                                    Plus que <?= $item['stock'] ?> restant !
+                                </div>
+                            <?php endif; ?>
+                        </div>
 
+                        <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
+                    </form>
                 <?php else: ?>
                     <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
                 <?php endif; ?>
@@ -188,6 +201,155 @@ $title = "Détails - " . $item['nom'];
 </div>
 
 <script>
+    const leftImages = [
+        "assets/img/archer.png",
+        "assets/img/chevalier2.png",
+        "assets/img/kratos.png",
+        "assets/img/mage.png",
+        "assets/img/samurai.png",
+        "assets/img/viking.png"
+    ];
+
+    const rightImages = [
+        "assets/img/bull.png",
+        "assets/img/dragon_slayer.png",
+        "assets/img/elf.png",
+        "assets/img/sparta.png",
+        "assets/img/sultan.png",
+        "assets/img/orc.png"
+    ];
+
+    const leftColors = [
+        "#ff5a1f",
+        "#ff7b00",
+        "#ff2d55",
+        "#ffd000",
+        "#ff3c00",
+        "#ff00a8"
+    ];
+
+    const rightColors = [
+        "#00cfff",
+        "#1e90ff",
+        "#7b2cff",
+        "#00ffea",
+        "#8a7dff",
+        "#4dd2ff"
+    ];
+
+    let leftIndex = 0;
+    let rightIndex = 0;
+
+    const leftBanner = document.getElementById("leftBanner");
+    const rightBanner = document.getElementById("rightBanner");
+    const leftBannerImg = document.getElementById("leftBannerImg");
+    const rightBannerImg = document.getElementById("rightBannerImg");
+    const leftFlip = document.getElementById("leftFlip");
+    const rightFlip = document.getElementById("rightFlip");
+
+    function setLeftColor(color) {
+        document.documentElement.style.setProperty("--banner-left-color", color);
+    }
+
+    function setRightColor(color) {
+        document.documentElement.style.setProperty("--banner-right-color", color);
+    }
+
+    function playFireEffect() {
+        leftBanner.classList.remove("fire-animate");
+        void leftBanner.offsetWidth;
+        leftBanner.classList.add("fire-animate");
+    }
+
+    function playElectricEffect() {
+        rightBanner.classList.remove("electric-animate");
+        void rightBanner.offsetWidth;
+        rightBanner.classList.add("electric-animate");
+    }
+
+    function playLeftTurn() {
+        leftFlip.classList.remove("turn-left");
+        void leftFlip.offsetWidth;
+        leftFlip.classList.add("turn-left");
+    }
+
+    function playRightTurn() {
+        rightFlip.classList.remove("turn-right");
+        void rightFlip.offsetWidth;
+        rightFlip.classList.add("turn-right");
+    }
+
+        // Loop
+
+    function changeLeftBanner() {
+        leftIndex++;
+        if (leftIndex >= leftImages.length) {
+            leftIndex = 0;
+        }
+
+        playLeftTurn();
+        playFireEffect();
+        setLeftColor(leftColors[leftIndex]);
+
+        setTimeout(() => {
+            leftBannerImg.src = leftImages[leftIndex];
+        }, 350);
+    }
+
+    function changeRightBanner() {
+        rightIndex++;
+        if (rightIndex >= rightImages.length) {
+            rightIndex = 0;
+        }
+
+        playRightTurn();
+        playElectricEffect();
+        setRightColor(rightColors[rightIndex]);
+
+        setTimeout(() => {
+            rightBannerImg.src = rightImages[rightIndex];
+        }, 350);
+    }
+
+    // 🔁 AUTO LOOP
+    setInterval(() => {
+        changeLeftBanner();
+        changeRightBanner();
+    }, 5000);
+
+    leftBanner.addEventListener("click", () => {
+        leftIndex++;
+        if (leftIndex >= leftImages.length) {
+            leftIndex = 0;
+        }
+
+        playLeftTurn();
+        playFireEffect();
+        setLeftColor(leftColors[leftIndex]);
+
+        setTimeout(() => {
+            leftBannerImg.src = leftImages[leftIndex];
+        }, 350);
+    });
+
+    rightBanner.addEventListener("click", () => {
+        rightIndex++;
+        if (rightIndex >= rightImages.length) {
+            rightIndex = 0;
+        }
+
+        playRightTurn();
+        playElectricEffect();
+        setRightColor(rightColors[rightIndex]);
+
+        setTimeout(() => {
+            rightBannerImg.src = rightImages[rightIndex];
+        }, 350);
+    });
+
+    setLeftColor(leftColors[0]);
+    setRightColor(rightColors[0]);
+
     function triggerMagic() {
         const icon = document.getElementById('target-icon');
         icon.classList.remove('magic-shake');
@@ -199,19 +361,10 @@ $title = "Détails - " . $item['nom'];
         e.preventDefault();
 
         const isConnected = <?= json_encode($user['isConnected']) ?>;
-        // On récupère aussi l'info Mage pour le JS par sécurité
-        const isMage = <?= json_encode($user['isMage']) ?>;
-        const itemType = <?= json_encode(strtolower($item['type'])) ?>;
 
         if (!isConnected) {
             const itemId = document.querySelector('input[name="item_id"]').value;
             window.location.href = `login.php?return_to=details.php?id=${itemId}`;
-            return;
-        }
-
-        // Vérification supplémentaire en JS au cas où l'utilisateur bidouille l'inspecteur
-        if (itemType === 'sort' && !isMage) {
-            alert("Seul un Mage peut manipuler ces reliques.");
             return;
         }
 
@@ -220,7 +373,6 @@ $title = "Détails - " . $item['nom'];
         const cartBtn = document.getElementById('cart-btn');
         const targetIcon = document.getElementById('target-icon');
 
-        // Animation "Fly to Cart"
         const clone = document.createElement('div');
         clone.innerHTML = targetIcon.innerHTML;
         clone.className = 'flying-item';
