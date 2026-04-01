@@ -184,6 +184,11 @@
   color: #aaa;
   margin-left: 5px;
 }
+.price-sub-line {
+  margin-top: 4px;
+  color: #b7bcc5;
+  font-size: 0.85rem;
+}
 
 .description-section {
   margin: 25px 0;
@@ -204,6 +209,37 @@
   color: var(--accent, #1985a1);
   text-transform: uppercase;
   margin-bottom: 10px;
+}
+.details-properties-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.detail-prop-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.detail-prop-label {
+  display: block;
+  color: #8aaec8;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.detail-prop-value {
+  display: block;
+  margin-top: 4px;
+  color: #f4f6f8;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.property-empty {
+  margin-top: 12px;
+  color: #a2acb8;
+  font-size: 0.88rem;
 }
 
 .spec-grid {

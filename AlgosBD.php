@@ -30,39 +30,47 @@ function get_pdo()
 }
 
 /**
- * Récupère ou crée un panier pour un utilisateur
+ * Recupere le cart id d'un utilisateur, sans le creer.
+ */
+function get_cart_id($userId)
+{
+    $pdo = get_pdo();
+
+    $sql = "SELECT CartId FROM Carts WHERE UserId = :userId LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':userId' => $userId]);
+
+    $cartId = $stmt->fetchColumn();
+    return $cartId ? (int)$cartId : null;
+}
+
+/**
+ * Recupere ou cree un panier pour un utilisateur.
  */
 function get_or_create_cart_id($userId)
 {
     $pdo = get_pdo();
 
-    // Essayer de récupérer
-    $sql = "SELECT CartId FROM carts WHERE UserId = :userId LIMIT 1";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([':userId' => $userId]);
-    $cartId = $stmt->fetchColumn();
-
-    if ($cartId) {
+    $cartId = get_cart_id($userId);
+    if ($cartId !== null) {
         return $cartId;
     }
 
-    // Sinon créer
     try {
-        $sqlInsert = "INSERT INTO carts (UserId) VALUES (:userId)";
+        $sqlInsert = "INSERT INTO Carts (UserId) VALUES (:userId)";
         $stmt = $pdo->prepare($sqlInsert);
         $stmt->execute([':userId' => $userId]);
 
-        return $pdo->lastInsertId();
+        return (int)$pdo->lastInsertId();
     } catch (PDOException $e) {
-        // Si doublon (race condition), on récupère à nouveau
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([':userId' => $userId]);
-        return $stmt->fetchColumn();
+        // Si doublon (race condition), on relit le panier.
+        $cartId = get_cart_id($userId);
+        return $cartId !== null ? $cartId : 0;
     }
 }
 
 /**
- * Ajouter un item au panier (avec gestion des doublons)
+ * Ajouter un item au panier avec validations metier (stock + actif).
  */
 function add_to_cart($userId, $itemId, $quantity)
 {
@@ -75,11 +83,27 @@ function add_to_cart($userId, $itemId, $quantity)
     try {
         $pdo->beginTransaction();
 
-        $cartId = get_or_create_cart_id($userId);
+        $itemStmt = $pdo->prepare(
+            "SELECT ItemId, Stock, IsActive
+             FROM Items
+             WHERE ItemId = :itemId
+             FOR UPDATE"
+        );
+        $itemStmt->execute([':itemId' => $itemId]);
+        $item = $itemStmt->fetch();
 
-        // Vérifier si l'item existe déjà
-        $sqlCheck = "SELECT Quantity FROM cartItems 
-                     WHERE CartId = :cartId AND ItemId = :itemId";
+        if (!$item || (int)$item['IsActive'] !== 1) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $cartId = get_or_create_cart_id($userId);
+        if ($cartId <= 0) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $sqlCheck = "SELECT Quantity FROM CartItems WHERE CartId = :cartId AND ItemId = :itemId";
         $stmt = $pdo->prepare($sqlCheck);
         $stmt->execute([
             ':cartId' => $cartId,
@@ -87,44 +111,56 @@ function add_to_cart($userId, $itemId, $quantity)
         ]);
 
         $existing = $stmt->fetch();
+        $existingQty = $existing ? (int)$existing['Quantity'] : 0;
+        $newQty = $existingQty + (int)$quantity;
 
-        if ($existing) {
-            // Update quantité
-            $sqlUpdate = "UPDATE cartItems 
-                          SET Quantity = Quantity + :quantity 
-                          WHERE CartId = :cartId AND ItemId = :itemId";
-        } else {
-            // Insert
-            $sqlUpdate = "INSERT INTO cartItems (CartId, ItemId, Quantity) 
-                          VALUES (:cartId, :itemId, :quantity)";
+        if ($newQty > (int)$item['Stock']) {
+            $pdo->rollBack();
+            return false;
         }
 
-        $stmt = $pdo->prepare($sqlUpdate);
-        $stmt->execute([
-            ':cartId' => $cartId,
-            ':itemId' => $itemId,
-            ':quantity' => $quantity
-        ]);
+        if ($existing) {
+            $sqlUpdate = "UPDATE CartItems
+                          SET Quantity = :quantity
+                          WHERE CartId = :cartId AND ItemId = :itemId";
+            $stmt = $pdo->prepare($sqlUpdate);
+            $stmt->execute([
+                ':quantity' => $newQty,
+                ':cartId' => $cartId,
+                ':itemId' => $itemId
+            ]);
+        } else {
+            $sqlInsert = "INSERT INTO CartItems (CartId, ItemId, Quantity)
+                          VALUES (:cartId, :itemId, :quantity)";
+            $stmt = $pdo->prepare($sqlInsert);
+            $stmt->execute([
+                ':cartId' => $cartId,
+                ':itemId' => $itemId,
+                ':quantity' => (int)$quantity
+            ]);
+        }
 
         $pdo->commit();
         return true;
     } catch (PDOException $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         return false;
     }
 }
 
 /**
- * Ajouter un item (inchangé mais nettoyé)
+ * Ajouter un item dans le catalogue.
  */
 function add_item($name, $description, $gold, $silver, $bronze, $amount, $itemTypeId, $isActive)
 {
     $pdo = get_pdo();
 
     try {
-        $sql = "INSERT INTO items 
-                (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) 
-                VALUES 
+        $sql = "INSERT INTO Items
+                (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive)
+                VALUES
                 (:name, :description, :gold, :silver, :bronze, :amount, :itemTypeId, :isActive)";
 
         $stmt = $pdo->prepare($sql);
@@ -144,8 +180,8 @@ function add_item($name, $description, $gold, $silver, $bronze, $amount, $itemTy
 }
 
 /**
- * Modifie la quantité d'un item spécifique dans le panier.
- * Si la nouvelle quantité est <= 0, l'item est retiré du panier.
+ * Modifie la quantite d'un item du panier.
+ * Si newQuantity <= 0, l'item est supprime.
  */
 function modify_item_quantity_cart($userId, $itemId, $newQuantity)
 {
@@ -154,28 +190,50 @@ function modify_item_quantity_cart($userId, $itemId, $newQuantity)
     try {
         $pdo->beginTransaction();
 
-        // 1. Récupérer le CartId de l'utilisateur
-        $cartId = get_or_create_cart_id($userId);
+        $cartId = get_cart_id($userId);
+        if ($cartId === null) {
+            $pdo->rollBack();
+            return false;
+        }
 
-        if ($newQuantity <= 0) {
-            // Si la quantité est nulle ou négative, on supprime l'entrée
-            $sql = "DELETE FROM cartItems WHERE CartId = :cartId AND ItemId = :itemId";
+        if ((int)$newQuantity <= 0) {
+            $sql = "DELETE FROM CartItems WHERE CartId = :cartId AND ItemId = :itemId";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':cartId' => $cartId,
                 ':itemId' => $itemId
             ]);
-        } else {
-            // Sinon, on met à jour avec la valeur exacte fournie
-            $sql = "UPDATE cartItems 
-                    SET Quantity = :quantity 
-                    WHERE CartId = :cartId AND ItemId = :itemId";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':quantity' => $newQuantity,
-                ':cartId'   => $cartId,
-                ':itemId'   => $itemId
-            ]);
+            $pdo->commit();
+            return true;
+        }
+
+        $itemStmt = $pdo->prepare(
+            "SELECT ItemId, Stock, IsActive
+             FROM Items
+             WHERE ItemId = :itemId
+             FOR UPDATE"
+        );
+        $itemStmt->execute([':itemId' => $itemId]);
+        $item = $itemStmt->fetch();
+
+        if (!$item || (int)$item['IsActive'] !== 1 || (int)$newQuantity > (int)$item['Stock']) {
+            $pdo->rollBack();
+            return false;
+        }
+
+        $sql = "UPDATE CartItems
+                SET Quantity = :quantity
+                WHERE CartId = :cartId AND ItemId = :itemId";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':quantity' => (int)$newQuantity,
+            ':cartId'   => $cartId,
+            ':itemId'   => $itemId
+        ]);
+
+        if ($stmt->rowCount() === 0) {
+            $pdo->rollBack();
+            return false;
         }
 
         $pdo->commit();
@@ -188,23 +246,31 @@ function modify_item_quantity_cart($userId, $itemId, $newQuantity)
     }
 }
 
+/**
+ * Supprime un item du panier sans creer de panier fantome.
+ */
 function remove_from_cart($userId, $itemId)
 {
     $pdo = get_pdo();
+
     try {
         $pdo->beginTransaction();
 
-        $cartId = get_or_create_cart_id($userId);
+        $cartId = get_cart_id($userId);
+        if ($cartId === null) {
+            $pdo->rollBack();
+            return false;
+        }
 
-        $sql = "DELETE FROM cartItems WHERE CartId = :cartId AND ItemId = :itemId";
+        $sql = "DELETE FROM CartItems WHERE CartId = :cartId AND ItemId = :itemId";
         $stmt = $pdo->prepare($sql);
-        $result = $stmt->execute([
+        $stmt->execute([
             ':cartId' => $cartId,
             ':itemId' => $itemId
         ]);
 
         $pdo->commit();
-        return $result;
+        return $stmt->rowCount() > 0;
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();

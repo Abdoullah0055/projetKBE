@@ -42,7 +42,7 @@ try {
             i.Description AS item_description,
             i.PriceGold AS item_price_gold,
             t.Name AS item_type
-         FROM inventory inv
+         FROM Inventory inv
          LEFT JOIN Items i ON inv.ItemId = i.ItemId
          LEFT JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
          WHERE inv.UserId = ?

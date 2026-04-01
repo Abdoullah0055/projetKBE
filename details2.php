@@ -1,13 +1,14 @@
-﻿<?php
+<?php
 require_once 'AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
+
 $pdo = get_pdo();
 
-// 1. RECUPERATION DU THEME
+// 1. RÉCUPÉRATION DU THÈME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
@@ -32,12 +33,20 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     exit();
 }
 
-$itemId = (int) $_GET['id'];
+$itemId = (int)$_GET['id'];
 
 $stmt = $pdo->prepare("
-    SELECT i.ItemId AS id, i.Name AS nom, i.PriceGold AS prix_gold, i.PriceSilver AS prix_silver,
-           i.PriceBronze AS prix_bronze, i.Description AS description,
-           i.Stock AS stock, t.Name AS type, IFNULL(AVG(r.Rating), 0) AS rating, COUNT(r.ReviewId) AS nb_avis
+    SELECT 
+        i.ItemId AS id,
+        i.Name AS nom,
+        i.PriceGold AS prix_gold,
+        i.PriceSilver AS prix_silver,
+        i.PriceBronze AS prix_bronze,
+        i.Description AS description,
+        i.Stock AS stock,
+        t.Name AS type,
+        IFNULL(AVG(r.Rating), 0) AS rating,
+        COUNT(r.ReviewId) AS nb_avis
     FROM Items i
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
@@ -53,8 +62,8 @@ if (!$item) {
 }
 
 $item['image'] = getItemImage($item['type']);
-$properties = getItemProperties($pdo, (int) $item['id'], $item['type']);
-$title = "Details - " . $item['nom'];
+$properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
+$title = "Détails - " . $item['nom'];
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -98,7 +107,7 @@ $rightImages = [
 <div class="page-banner banner-left">
     <div class="banner-flip" id="leftFlip">
         <div class="banner-scroll banner-clickable" id="leftBanner">
-            <img src="assets/img/kratos.png" alt="Deco Gauche" id="leftBannerImg">
+            <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
         </div>
     </div>
 </div>
@@ -106,7 +115,7 @@ $rightImages = [
 <div class="page-banner banner-right">
     <div class="banner-flip" id="rightFlip">
         <div class="banner-scroll banner-clickable" id="rightBanner">
-            <img src="assets/img/bull.png" alt="Deco Droite" id="rightBannerImg">
+            <img src="assets/img/bull.png" alt="Déco Droite" id="rightBannerImg">
         </div>
     </div>
 </div>
@@ -123,7 +132,7 @@ $rightImages = [
     <main class="details-glass-card">
 
         <div class="visual-column">
-            <div class="item-display-box" onclick="triggerMagic()">
+            <div class="item-display-box type-<?= strtolower($item['type']) ?>" onclick="triggerMagic()">
                 <div class="rarity-tag"><?= htmlspecialchars($item['type']) ?></div>
 
                 <div class="floating-wrapper">
@@ -135,71 +144,120 @@ $rightImages = [
             </div>
 
             <div class="stats-grid">
-                <div class="stat-box">
+                <div class="stat-box upgraded-stat">
                     <span class="stat-label">Avis</span>
-                    <span class="stat-value">&#9733; <?= number_format((float) $item['rating'], 1) ?></span>
-                    <span class="stat-sub"><?= (int) $item['nb_avis'] ?> avis</span>
+                    <span class="stat-value">★ <?= number_format((float)$item['rating'], 1) ?></span>
+                    <span class="stat-sub"><?= (int)$item['nb_avis'] ?> avis</span>
                 </div>
-                <div class="stat-box">
+
+                <div class="stat-box upgraded-stat">
                     <span class="stat-label">Stock</span>
-                    <span class="stat-value <?= ((int) $item['stock'] === 0) ? 'text-danger' : 'text-success' ?>">
-                        <?= (int) $item['stock'] ?>
+                    <span class="stat-value <?= ((int)$item['stock'] === 0) ? 'text-danger' : 'text-success' ?>">
+                        <?= (int)$item['stock'] ?>
                     </span>
-                    <span class="stat-sub">unites</span>
+                    <span class="stat-sub">unités</span>
                 </div>
             </div>
         </div>
 
         <div class="info-column">
-            <div class="item-title-section">
-                <h1><?= htmlspecialchars($item['nom']) ?></h1>
-                <div class="price-tag"><?= number_format((int) $item['prix_gold'], 0) ?> <span class="gp">GP</span></div>
-                <div class="price-sub-line"><?= (int) $item['prix_silver'] ?> SP • <?= (int) $item['prix_bronze'] ?> BP</div>
+            <div class="item-title-section item-title-upgraded">
+                <div class="title-top-row">
+                    <div>
+                        <div class="item-type-pill type-<?= strtolower($item['type']) ?>">
+                            <?= htmlspecialchars($item['type']) ?>
+                        </div>
+                        <h1><?= htmlspecialchars($item['nom']) ?></h1>
+                    </div>
+
+                    <div class="price-card">
+                        <div class="price-main-line">
+                            <span class="price-value"><?= number_format((int)$item['prix_gold'], 0) ?></span>
+                            <span class="price-unit">GP</span>
+                        </div>
+                        <div class="price-sub-line">
+                            <?= (int)$item['prix_silver'] ?> SP • <?= (int)$item['prix_bronze'] ?> BP
+                        </div>
+                    </div>
+                </div>
+
+                <div class="item-meta-row">
+                    <div class="meta-badge">
+                        <i class="fa-solid fa-box-open"></i>
+                        Stock : <?= (int)$item['stock'] ?>
+                    </div>
+                    <div class="meta-badge">
+                        <i class="fa-solid fa-star"></i>
+                        <?= number_format((float)$item['rating'], 1) ?> / 5
+                    </div>
+                    <div class="meta-badge">
+                        <i class="fa-solid fa-comment"></i>
+                        <?= (int)$item['nb_avis'] ?> avis
+                    </div>
+                </div>
             </div>
 
-            <div class="description-section">
-                <h3><i class="fa-solid fa-scroll"></i> Lore & Proprietes</h3>
-                <p><?= nl2br(htmlspecialchars($item['description'])) ?></p>
+            <div class="description-section upgraded-panel">
+                <h3><i class="fa-solid fa-scroll"></i> Description & Propriétés</h3>
+
+                <p class="details-description-text">
+                    <?= nl2br(htmlspecialchars($item['description'])) ?>
+                </p>
+
                 <?= renderItemProperties($item, $properties) ?>
             </div>
 
-            <div class="spec-grid">
-                <div class="spec-item"><span>Categorie</span><strong><?= htmlspecialchars(ucfirst($item['type'])) ?></strong></div>
-                <div class="spec-item"><span>Authenticite</span><strong>Certifiee</strong></div>
-                <div class="spec-item"><span>Origine</span><strong>Inconnue</strong></div>
+            <div class="spec-grid upgraded-spec-grid">
+                <div class="spec-item">
+                    <span>Catégorie</span>
+                    <strong><?= htmlspecialchars($item['type']) ?></strong>
+                </div>
+                <div class="spec-item">
+                    <span>Authenticité</span>
+                    <strong>Certifiée</strong>
+                </div>
+                <div class="spec-item">
+                    <span>Origine</span>
+                    <strong>Inconnue</strong>
+                </div>
             </div>
 
-            <div class="purchase-section">
-                <?php if ((int) $item['stock'] > 0): ?>
+            <div class="purchase-section upgraded-panel">
+                <?php if ((int)$item['stock'] > 0): ?>
                     <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
-
-                        <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
+                        <input type="hidden" name="item_id" value="<?= (int)$item['id'] ?>">
 
                         <div class="purchase-controls">
                             <div class="quantity-wrapper">
-                                <label for="qty">Quantite :</label>
+                                <label for="qty">Quantité :</label>
                                 <select name="quantity" id="qty" class="qty-select">
-                                    <?php for ($i = 1; $i <= min((int) $item['stock'], 10); $i++): ?>
+                                    <?php for ($i = 1; $i <= min((int)$item['stock'], 10); $i++): ?>
                                         <option value="<?= $i ?>"><?= $i ?></option>
                                     <?php endfor; ?>
                                 </select>
                             </div>
 
-                            <?php if ((int) $item['stock'] < 5): ?>
+                            <?php if ((int)$item['stock'] < 5): ?>
                                 <div class="urgency-badge">
                                     <i class="fa-solid fa-bolt"></i>
-                                    Plus que <?= (int) $item['stock'] ?> restant !
+                                    Plus que <?= (int)$item['stock'] ?> restant !
                                 </div>
                             <?php endif; ?>
                         </div>
 
-                        <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
+                        <button type="submit" class="btn-buy-large btn-buy-legendary">
+                            <i class="fa-solid fa-cart-plus"></i>
+                            Ajouter au Panier
+                        </button>
                     </form>
                 <?php else: ?>
-                    <button class="btn-buy-large btn-out" disabled>Stock Epuise</button>
+                    <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
                 <?php endif; ?>
 
-                <a href="index.php" class="back-link">Retour au catalogue</a>
+                <a href="index.php" class="back-link">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    Retour au catalogue
+                </a>
             </div>
         </div>
     </main>
@@ -359,25 +417,6 @@ $rightImages = [
         icon.classList.add('magic-shake');
     }
 
-    function showDetailAlert(message, type = 'succes') {
-        const oldAlert = document.querySelector('.alert-box');
-        if (oldAlert) {
-            oldAlert.remove();
-        }
-
-        const box = document.createElement('div');
-        box.className = `alert-box ${type}`;
-        box.innerHTML = `
-            <i class="fa-solid ${type === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-            ${message}
-        `;
-        document.body.appendChild(box);
-
-        setTimeout(() => {
-            box.remove();
-        }, 2600);
-    }
-
     document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -425,23 +464,14 @@ $rightImages = [
         try {
             const response = await fetch('backend/ajouter_au_panier.php', {
                 method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
                 body: formData
             });
 
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                showDetailAlert(data.message || "Objet ajoute au panier.", 'succes');
-            } else {
-                showDetailAlert(data.message || "Echec de l'ajout au panier.", 'erreur');
+            if (response.ok) {
+                console.log("Ajouté avec succès");
             }
         } catch (error) {
             console.error("Erreur:", error);
-            showDetailAlert("Erreur reseau pendant l'ajout au panier.", 'erreur');
         }
     });
 </script>
@@ -450,4 +480,3 @@ $rightImages = [
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
-

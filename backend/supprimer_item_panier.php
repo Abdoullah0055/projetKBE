@@ -4,19 +4,20 @@ session_start();
 
 header('Content-Type: application/json');
 
-// Vérification de sécurité
 if (!isset($_SESSION['user'])) {
-    echo json_encode(['success' => false, 'message' => 'Utilisateur non connecté']);
+    echo json_encode(['success' => false, 'message' => 'Utilisateur non connecte']);
     exit;
 }
 
-$itemId = $_POST['item_id'] ?? 0;
-$userId = $_SESSION['user']['id'];
+$itemId = (int)($_POST['item_id'] ?? 0);
+$userId = (int)$_SESSION['user']['id'];
 
 if ($itemId > 0) {
-    // Appel de ta fonction dans AlgosBD.php
     $success = remove_from_cart($userId, $itemId);
-    echo json_encode(['success' => $success]);
+    echo json_encode([
+        'success' => $success,
+        'message' => $success ? 'Item supprime du panier.' : 'Item introuvable dans le panier.'
+    ]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'ID d\'item invalide']);
+    echo json_encode(['success' => false, 'message' => "ID d'item invalide"]);
 }

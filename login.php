@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/AlgosBD.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -8,10 +8,9 @@ if (session_status() === PHP_SESSION_NONE) {
 $pdo = get_pdo();
 
 if (!$pdo) {
-    die("Erreur critique : Impossible de se connecter à la base de données.");
+    die("Erreur critique : Impossible de se connecter a la base de donnees.");
 }
 
-// --- TON CODE PHP DE SESSION ET TRAITEMENT (GARDÉ TEL QUEL) ---
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
@@ -39,6 +38,15 @@ if (isset($_SESSION['user'])) {
 $error = "";
 $success = "";
 
+function flushProcedureResults(PDOStatement $stmt): void
+{
+    do {
+        $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } while ($stmt->nextRowset());
+
+    $stmt->closeCursor();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alias = trim($_POST['alias'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -49,7 +57,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
             $stmt->execute([$alias, $hashedPassword]);
-            $success = "Compte forgé avec succès ! Vous pouvez maintenant vous connecter.";
+            flushProcedureResults($stmt);
+            $success = "Compte forge avec succes ! Vous pouvez maintenant vous connecter.";
         } catch (PDOException $e) {
             $error = "Erreur : " . $e->getMessage();
         }
@@ -57,29 +66,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("CALL sp_GetUserByAlias(?)");
             $stmt->execute([$alias]);
-            $foundUser = $stmt->fetch();
+            $foundUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            flushProcedureResults($stmt);
 
             if ($foundUser && password_verify($password, $foundUser['Password'])) {
                 $_SESSION['user'] = [
-                    'id' => $foundUser['UserId'],
+                    'id' => (int)$foundUser['UserId'],
                     'alias' => $foundUser['Alias'],
                     'role' => $foundUser['Role'],
-                    'gold' => $foundUser['Gold'],
-                    'silver' => $foundUser['Silver'],
-                    'bronze' => $foundUser['Bronze']
+                    'gold' => (int)$foundUser['Gold'],
+                    'silver' => (int)$foundUser['Silver'],
+                    'bronze' => (int)$foundUser['Bronze']
                 ];
                 header("Location: index.php");
                 exit();
-            } else {
-                $error = "Alias ou mot de passe incorrect.";
             }
+
+            $error = "Alias ou mot de passe incorrect.";
         } catch (PDOException $e) {
-            $error = "Erreur système : " . $e->getMessage();
+            $error = "Erreur systeme : " . $e->getMessage();
         }
     }
 }
 
-$title = "L'Arsenal - Sanctuaire d'Accès";
+$title = "L'Arsenal - Sanctuaire d'Acces";
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -88,7 +98,7 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 <main class="auth-page">
     <div class="auth-container fade-in" id="auth-card">
         <div class="auth-header">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🗝️</div>
+            <div style="font-size: 3rem; margin-bottom: 10px;"><i class="fa-solid fa-key"></i></div>
             <h2 id="form-title">Connexion</h2>
             <p id="form-subtitle" style="font-size: 0.8rem; color: #5C5F66;">Entrez dans l'Arsenal de Sombre-Donjon</p>
         </div>
@@ -127,24 +137,22 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 
         <div class="switch-mode">
             <span id="switch-text">Nouveau ici ?</span>
-            <a href="#" id="switch-link">Créer un compte</a>
+            <a href="#" id="switch-link">Creer un compte</a>
         </div>
     </div>
 </main>
 <script src="assets/js/auth.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // On récupère les paramètres de l'URL
         const urlParams = new URLSearchParams(window.location.search);
 
-        // Si le mode est 'register', on simule un clic sur le lien de basculement
         if (urlParams.get('mode') === 'register') {
             const switchLink = document.getElementById('switch-link');
             if (switchLink) {
-                // On appelle la fonction de basculement (ou on clique sur le lien)
                 switchLink.click();
             }
         }
     });
 </script>
 <?php include __DIR__ . '/templates/end.php'; ?>
+

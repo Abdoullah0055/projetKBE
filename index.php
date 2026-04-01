@@ -62,10 +62,10 @@ function normalizeItemType(string $type): string
 {
     $t = mb_strtolower(trim($type), 'UTF-8');
     return match ($t) {
-        'arme', 'armes'   => 'arme',
-        'armure', 'armures' => 'armure',
+        'weapon', 'weapons', 'arme', 'armes' => 'weapon',
+        'armor', 'armour', 'armors', 'armours', 'armure', 'armures' => 'armor',
         'potion', 'potions' => 'potion',
-        'sort', 'sorts'     => 'sort',
+        'magicspell', 'magic spell', 'magic spells', 'sort', 'sorts' => 'magicspell',
         default => $t
     };
 }
@@ -188,10 +188,10 @@ function normalizeItemType(string $type): string
                         <label>Catégorie</label>
                         <select id="type-filter" class="filter-select">
                             <option value="all">Tous les items</option>
-                            <option value="arme">Armes</option>
-                            <option value="armure">Armures</option>
+                            <option value="weapon">Armes</option>
+                            <option value="armor">Armures</option>
                             <option value="potion">Potions</option>
-                            <option value="sort">Sorts</option>
+                            <option value="magicspell">Sorts</option>
                         </select>
                     </div>
 
@@ -264,7 +264,7 @@ function normalizeItemType(string $type): string
                         <?php if ($user['isConnected']): ?>
                             <?php if ($item['stock'] == 0): ?>
                                 <button disabled style="background:#444; cursor:not-allowed;">Épuisé</button>
-                            <?php elseif ($normType == 'sort' && !$user['isMage']): ?>
+                            <?php elseif ($normType === 'magicspell' && !$user['isMage']): ?>
                                 <button disabled title="Niveau Mage requis" style="background:#666; font-size:0.7rem;">Mage Requis</button>
                             <?php else: ?>
                                 <button onclick="event.stopPropagation(); window.location.href='details.php?id=<?= $item['id'] ?>'"
