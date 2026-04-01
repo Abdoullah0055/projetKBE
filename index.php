@@ -289,50 +289,7 @@ function normalizeItemType(string $type): string
     </main>
 </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const typeFilter = document.getElementById("type-filter");
-        const searchFilter = document.getElementById("search-filter");
-        const resetBtn = document.getElementById("reset-filters");
-        const items = document.querySelectorAll(".product-list .item-row");
-        const noResultsMessage = document.getElementById("no-results-message");
-
-        function applyFilters() {
-            const selectedType = (typeFilter.value || "all").toLowerCase();
-            const searchValue = (searchFilter.value || "").trim().toLowerCase();
-
-            let visibleCount = 0;
-
-            items.forEach(item => {
-                const itemType = (item.dataset.type || "").toLowerCase();
-                const itemName = (item.dataset.name || "").toLowerCase();
-
-                const matchesType = selectedType === "all" || itemType === selectedType;
-                const matchesSearch = searchValue === "" || itemName.includes(searchValue);
-
-                if (matchesType && matchesSearch) {
-                    item.style.display = "";
-                    visibleCount++;
-                } else {
-                    item.style.display = "none";
-                }
-            });
-
-            noResultsMessage.style.display = visibleCount === 0 ? "block" : "none";
-        }
-
-        typeFilter.addEventListener("change", applyFilters);
-        searchFilter.addEventListener("input", applyFilters);
-
-        resetBtn.addEventListener("click", function () {
-            typeFilter.value = "all";
-            searchFilter.value = "";
-            applyFilters();
-        });
-
-        applyFilters();
-    });
-</script>
+<script src="/js/scripts.js"></script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
