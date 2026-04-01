@@ -17,10 +17,121 @@ function toggleMenu() {
   }
 }
 
+// === MOBILE DRAWER MANAGEMENT ===
+class MobileDrawer {
+  constructor() {
+    this.drawer = document.getElementById("mobile-drawer");
+    this.overlay = document.getElementById("mobile-drawer-overlay");
+    this.toggle = document.getElementById("mobile-menu-toggle");
+    this.isOpen = false;
+
+    if (this.drawer && this.overlay && this.toggle) {
+      this.init();
+    }
+  }
+
+  init() {
+    // Toggle button click
+    this.toggle.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.toggleDrawer();
+    });
+
+    // Overlay click to close
+    this.overlay.addEventListener("click", () => {
+      this.closeDrawer();
+    });
+
+    // Escape key to close
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && this.isOpen) {
+        this.closeDrawer();
+      }
+    });
+
+    // Drawer action buttons - close drawer on click
+    const drawerButtons = this.drawer.querySelectorAll(".drawer-action");
+    drawerButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.closeDrawer();
+      });
+    });
+
+    // Search input in drawer
+    const drawerSearch = this.drawer.querySelector(
+      'input[name="drawer-search"]',
+    );
+    if (drawerSearch) {
+      // Copy search functionality from main search bar
+      drawerSearch.addEventListener("change", () => {
+        const searchValue = drawerSearch.value;
+        if (searchValue.trim()) {
+          // Navigate to inventory with search param if needed
+          // For now, just trigger search if callback exists
+          window.location.href = `inventory.php?search=${encodeURIComponent(searchValue)}`;
+        }
+      });
+    }
+  }
+
+  toggleDrawer() {
+    if (this.isOpen) {
+      this.closeDrawer();
+    } else {
+      this.openDrawer();
+    }
+  }
+
+  openDrawer() {
+    this.drawer.classList.add("open");
+    this.overlay.classList.add("open");
+    this.toggle.setAttribute("aria-expanded", "true");
+    this.isOpen = true;
+
+    // Prevent body scroll
+    document.body.classList.add("drawer-open");
+
+    // Focus management
+    this.drawer.focus();
+  }
+
+  closeDrawer() {
+    this.drawer.classList.remove("open");
+    this.overlay.classList.remove("open");
+    this.toggle.setAttribute("aria-expanded", "false");
+    this.isOpen = false;
+
+    // Allow body scroll
+    document.body.classList.remove("drawer-open");
+
+    // Return focus to toggle button
+    this.toggle.focus();
+  }
+
+  // Auto-close on resize to desktop
+  handleResize() {
+    if (window.innerWidth >= 1200 && this.isOpen) {
+      this.closeDrawer();
+    }
+  }
+}
+
+let mobileDrawer;
+
 document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.getElementById("theme-toggle");
   const themeIcon = document.getElementById("theme-icon");
   const easterEgg = document.getElementById("easter-egg");
+
+  // Initialize mobile drawer
+  mobileDrawer = new MobileDrawer();
+
+  // Handle window resize
+  window.addEventListener("resize", () => {
+    if (mobileDrawer) {
+      mobileDrawer.handleResize();
+    }
+  });
 
   function applyChanges(theme, num) {
     const path = `img/${theme}theme/${theme}${num}.png`;

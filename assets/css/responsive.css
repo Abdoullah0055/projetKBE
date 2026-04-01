@@ -1,0 +1,751 @@
+/* ========================================
+   RESPONSIVE LAYER - GLOBAL
+   Bootstrap & Mobile-First Approach
+   Breakpoints: 
+   - Mobile (iPhone): <= 767px
+   - Tablet (iPad):   768px - 1199px
+   - Desktop:         >= 1200px
+   ======================================== */
+
+/* --- CSS CUSTOM PROPERTIES (RESPONSIVE) --- */
+:root {
+  /* Mobile base */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+
+  /* Typography fluid */
+  --font-size-body: clamp(14px, 3.5vw, 16px);
+  --font-size-h1: clamp(24px, 7vw, 32px);
+  --font-size-h2: clamp(20px, 5.5vw, 28px);
+  --font-size-h3: clamp(18px, 4.5vw, 24px);
+  --font-size-button: clamp(13px, 3vw, 15px);
+
+  /* Touch targets */
+  --touch-target: 44px;
+
+  /* Responsive header */
+  --header-height-mobile: 60px;
+  --header-height: 70px;
+}
+
+/* --- BASE RESPONSIVE RULES --- */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-size: var(--font-size-body);
+  line-height: 1.5;
+  padding-top: var(--header-height-mobile);
+}
+
+/* iOS viewport fix */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: calc(
+      var(--header-height-mobile) + max(0px, env(safe-area-inset-top))
+    );
+  }
+}
+
+/* ========================================
+   MOBILE: <= 767px (iPhone)
+   ======================================== */
+@media (max-width: 767px) {
+  :root {
+    --header-height: var(--header-height-mobile);
+  }
+
+  /* --- HEADER MOBILE --- */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--header-height-mobile);
+    padding: 0 var(--spacing-sm) !important;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+  }
+
+  .logo-area {
+    gap: var(--spacing-sm);
+    order: 1;
+    flex-shrink: 0;
+  }
+
+  .logo-area h1 {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .logo-circle {
+    width: 35px;
+    height: 35px;
+  }
+
+  /* Hide search bar on mobile */
+  .search-container {
+    display: none;
+  }
+
+  .header-actions {
+    order: 2;
+    gap: var(--spacing-xs);
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .header-actions button {
+    padding: 8px 12px;
+    margin-left: var(--spacing-xs);
+    font-size: var(--font-size-button);
+  }
+
+  /* Hide wallet text on mobile, show icons only */
+  .user-wallet {
+    display: none;
+  }
+
+  /* Mobile hamburger menu button */
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(25, 133, 161, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 1.2rem;
+    padding: 0;
+    margin: 0;
+    transition: all 0.3s ease;
+    order: 3;
+  }
+
+  .mobile-menu-toggle:active,
+  .mobile-menu-toggle:focus {
+    background: rgba(25, 133, 161, 0.2);
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* --- MOBILE DRAWER MENU --- */
+  .mobile-drawer {
+    position: fixed;
+    top: var(--header-height-mobile);
+    left: 0;
+    width: 100%;
+    max-width: 280px;
+    max-height: calc(100vh - var(--header-height-mobile));
+    background: rgba(20, 22, 25, 0.95);
+    backdrop-filter: blur(15px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  .mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    top: var(--header-height-mobile);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+
+  .mobile-drawer-overlay.open {
+    display: block;
+  }
+
+  .mobile-drawer-content {
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .mobile-drawer-search {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-drawer-search input {
+    width: 100%;
+    padding: 10px var(--spacing-md);
+    border-radius: 25px;
+    border: 1px solid rgba(25, 133, 161, 0.3);
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    font-size: var(--font-size-button);
+  }
+
+  .mobile-drawer-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .mobile-drawer-actions button {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    text-align: left;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(25, 133, 161, 0.4);
+    border-radius: 4px;
+    color: var(--text-light);
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: var(--font-size-button);
+  }
+
+  .mobile-drawer-actions button:active,
+  .mobile-drawer-actions button:focus {
+    background: rgba(25, 133, 161, 0.2);
+  }
+
+  /* Prevent scroll when drawer open */
+  body.drawer-open {
+    overflow: hidden;
+  }
+
+  /* --- WRAPPER & SIDEBAR MOBILE --- */
+  .wrapper {
+    flex-direction: column;
+  }
+
+  aside {
+    display: none;
+  }
+
+  #toggle-btn {
+    display: none;
+  }
+
+  /* --- MAIN CONTENT MOBILE --- */
+  main {
+    padding: var(--spacing-md);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* --- GRID/CARD ADAPTATIONS --- */
+  .items-grid,
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .item-card {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  /* --- BUTTONS & CTA (TOUCH) --- */
+  button,
+  .btn-accent,
+  .btn-outline-custom,
+  .btn-danger-custom {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+    padding: 12px var(--spacing-md);
+    font-size: var(--font-size-button);
+    border-radius: 4px;
+  }
+
+  /* Full-width CTAs on mobile */
+  .cta-full {
+    width: 100%;
+  }
+
+  /* --- FORM MOBILE --- */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    font-size: var(--font-size-button);
+    border-radius: 4px;
+    margin-bottom: var(--spacing-md);
+  }
+
+  /* --- FOOTER MOBILE --- */
+  footer {
+    padding: var(--spacing-md);
+    font-size: 0.85rem;
+  }
+
+  /* --- DECORATIVE ELEMENTS --- */
+  .banner-decoration,
+  .sidebar-decoration {
+    display: none !important;
+  }
+
+  /* --- DETAILS PAGE MOBILE --- */
+  .product-detail {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .product-image {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .product-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .product-info h1 {
+    font-size: var(--font-size-h1);
+  }
+
+  .price-block,
+  .quantity-block {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .quantity-block input {
+    width: 60px;
+  }
+
+  /* --- CART/PANIER MOBILE --- */
+  .cart-items {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .cart-item {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .cart-summary {
+    width: 100%;
+  }
+
+  /* --- LOGIN/PROFILE MOBILE --- */
+  .form-container {
+    width: 100%;
+    max-width: 100%;
+    padding: var(--spacing-md);
+    border-radius: 8px;
+  }
+
+  .form-group {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+  }
+
+  /* --- PROFILE AVATAR --- */
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  /* --- HIDE DESKTOP ELEMENTS --- */
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* ========================================
+   TABLET: 768px - 1199px (iPad)
+   ======================================== */
+@media (min-width: 768px) and (max-width: 1199px) {
+  :root {
+    --header-height: 65px;
+  }
+
+  /* --- HEADER TABLET --- */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: var(--header-height);
+    padding: 0 var(--spacing-lg) !important;
+    box-sizing: border-box;
+  }
+
+  .logo-area h1 {
+    font-size: var(--font-size-h2);
+    margin: 0;
+  }
+
+  .logo-circle {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Reduced search on tablet */
+  .search-container {
+    flex: 0 1 300px;
+    margin: 0 var(--spacing-md);
+  }
+
+  /* Show mobile menu toggle on tablet too */
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(25, 133, 161, 0.4);
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--accent);
+    font-size: 1.2rem;
+    padding: 0;
+    margin: 0;
+    transition: all 0.3s ease;
+  }
+
+  /* Wallet visible but compact on tablet */
+  .user-wallet {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-right: var(--spacing-md);
+    font-size: 0.85rem;
+  }
+
+  /* --- TABLET DRAWER (same as mobile) --- */
+  .mobile-drawer {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    width: 100%;
+    max-width: 300px;
+    max-height: calc(100vh - var(--header-height));
+    background: rgba(20, 22, 25, 0.95);
+    backdrop-filter: blur(15px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 999;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-drawer.open {
+    transform: translateX(0);
+  }
+
+  .mobile-drawer-overlay {
+    display: none;
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+
+  .mobile-drawer-overlay.open {
+    display: block;
+  }
+
+  body.drawer-open {
+    overflow: hidden;
+  }
+
+  /* --- SIDEBAR BEHAVIOR TABLET --- */
+  aside {
+    width: var(--sidebar-width);
+    position: static;
+    transform: none;
+  }
+
+  aside.collapsed {
+    width: var(--sidebar-collapsed);
+  }
+
+  #toggle-btn {
+    display: flex;
+  }
+
+  /* Reduce sidebar content padding on tablet */
+  .sidebar-content {
+    padding: var(--spacing-md);
+  }
+
+  .filter-group {
+    margin-bottom: var(--spacing-md);
+  }
+
+  /* --- GRID TABLET --- */
+  .items-grid,
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-lg);
+  }
+
+  /* --- MAIN TABLET --- */
+  main {
+    padding: var(--spacing-lg);
+  }
+
+  /* --- FORMS TABLET --- */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    width: 100%;
+    padding: 10px var(--spacing-md);
+    font-size: var(--font-size-button);
+    border-radius: 4px;
+  }
+
+  /* --- DETAILS TABLET --- */
+  .product-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  /* --- CART TABLET --- */
+  .cart-items {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .cart-item {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: var(--spacing-md);
+  }
+
+  /* --- DECORATIVE ELEMENTS --- */
+  .banner-decoration {
+    display: block;
+    max-height: 200px;
+    overflow: hidden;
+  }
+
+  /* --- HIDE DESKTOP ELEMENTS --- */
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* ========================================
+   DESKTOP: >= 1200px
+   (Conservative - minimal changes to preserve current design)
+   ======================================== */
+@media (min-width: 1200px) {
+  :root {
+    --header-height: 70px;
+  }
+
+  body {
+    padding-top: var(--header-height);
+  }
+
+  header {
+    padding: 0 30px !important;
+  }
+
+  .mobile-menu-toggle {
+    display: none !important;
+  }
+
+  .mobile-drawer,
+  .mobile-drawer-overlay {
+    display: none !important;
+  }
+
+  .search-container {
+    display: flex;
+    flex: 0 1 400px;
+    margin: 0 20px;
+  }
+
+  .user-wallet {
+    display: flex;
+  }
+
+  aside {
+    width: var(--sidebar-width);
+    display: flex;
+  }
+
+  #toggle-btn {
+    display: flex;
+  }
+
+  main {
+    padding: 30px;
+  }
+
+  .items-grid,
+  .catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+  }
+
+  .desktop-only {
+    display: block !important;
+  }
+
+  /* Preserve original detail layout */
+  .product-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+}
+
+/* ========================================
+   LANDSCAPE ORIENTATION ADJUSTMENTS
+   ======================================== */
+@media (max-height: 500px) and (orientation: landscape) {
+  header {
+    position: relative;
+  }
+
+  body {
+    padding-top: var(--header-height-mobile);
+  }
+
+  main {
+    max-height: calc(100vh - var(--header-height-mobile));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .product-detail {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+  }
+}
+
+/* ========================================
+   ACCESSIBILITY & TOUCH
+   ======================================== */
+
+/* High contrast focus indicators */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+
+/* Show/hide by viewport */
+.mobile-only {
+  display: block;
+}
+
+.tablet-only {
+  display: none;
+}
+
+.desktop-only {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+  .tablet-only {
+    display: block;
+  }
+}
+
+@media (min-width: 1200px) {
+  .tablet-only {
+    display: none;
+  }
+  .desktop-only {
+    display: block;
+  }
+}
+
+/* Fluid spacing utilities */
+.p-responsive {
+  padding: var(--spacing-md);
+}
+
+.m-responsive {
+  margin: var(--spacing-md);
+}
+
+.gap-responsive {
+  gap: var(--spacing-md);
+}
+
+.mt-responsive {
+  margin-top: var(--spacing-lg);
+}
+
+.mb-responsive {
+  margin-bottom: var(--spacing-lg);
+}

@@ -28,37 +28,43 @@ body {
   color: var(--text-light);
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
   transition: background 0.4s ease;
   position: relative;
+  padding-top: var(--header-height);
 }
 
 body::before {
   content: "";
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: -1;
+  pointer-events: none;
 }
 
 /* --- HEADER (GLASSMORPHISM) --- */
 header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   height: var(--header-height);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
+  box-sizing: border-box;
   /* Effet de verre : sombre et translucide */
   background: rgba(20, 21, 23, 0.45) !important;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
   /* Bordure fine pour l'effet de relief */
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
-  flex-shrink: 0;
   z-index: 1000;
 }
 
@@ -146,6 +152,18 @@ header {
   display: flex;
   flex: 1;
   overflow: hidden;
+}
+
+/* Enable scrolling in main content areas */
+main {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+aside {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* --- SIDEBAR (GLASSMORPHISM) --- */

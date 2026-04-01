@@ -201,17 +201,171 @@
   border: 1px solid rgba(25, 133, 161, 0.55);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 767px) {
   .profile-page {
-    padding: 16px;
+    padding: var(--spacing-md);
+  }
+
+  .profile-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+  }
+
+  .profile-hero h1 {
+    font-size: var(--font-size-h2);
+  }
+
+  .profile-hero p {
+    font-size: var(--font-size-body);
+  }
+
+  .profile-avatar {
+    width: 70px;
+    height: 70px;
+  }
+
+  .avatar-fallback {
+    font-size: 1.5rem;
   }
 
   .profile-grid {
     grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .profile-card {
+    padding: var(--spacing-lg);
+    border-radius: 10px;
+  }
+
+  .profile-card h2 {
+    font-size: var(--font-size-h3);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .profile-card h3 {
+    font-size: var(--font-size-body);
+    margin-top: var(--spacing-md);
+  }
+
+  .profile-card label {
+    font-size: var(--font-size-button);
+    margin-top: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .profile-card input[type="text"],
+  .profile-card input[type="email"],
+  .profile-card input[type="url"],
+  .profile-card input[type="password"] {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    font-size: var(--font-size-button);
+    border-radius: 6px;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    font-size: var(--font-size-button);
+    min-height: var(--touch-target);
+    margin-top: var(--spacing-md);
+  }
+
+  .btn-danger {
+    width: 100%;
+    padding: 12px var(--spacing-md);
+    font-size: var(--font-size-button);
+    min-height: var(--touch-target);
+    margin-top: var(--spacing-md);
+  }
+
+  .danger-form {
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .field-help {
+    font-size: 0.8rem;
+    margin: var(--spacing-sm) 0 0 0;
+  }
+
+  .check-line {
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-sm);
+    font-size: 0.8rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .profile-page {
+    padding: var(--spacing-lg);
   }
 
   .profile-hero {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    text-align: left;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-lg);
+  }
+
+  .profile-hero h1 {
+    font-size: var(--font-size-h2);
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  .profile-card {
+    padding: var(--spacing-lg);
+  }
+
+  .profile-card h2 {
+    font-size: var(--font-size-h3);
+  }
+
+  .profile-card input[type="text"],
+  .profile-card input[type="email"],
+  .profile-card input[type="url"],
+  .profile-card input[type="password"] {
+    padding: 10px var(--spacing-md);
+    font-size: var(--font-size-body);
+  }
+
+  .btn-primary {
+    padding: 11px 16px;
+    font-size: var(--font-size-button);
+  }
+
+  .btn-danger {
+    padding: 10px 14px;
+    font-size: var(--font-size-button);
+  }
+}
+
+@media (min-width: 1200px) {
+  .profile-page {
+    padding: 30px;
+  }
+
+  .profile-avatar {
+    width: 96px;
+    height: 96px;
+  }
+
+  .profile-grid {
+    grid-template-columns: 2fr 1fr;
   }
 }
