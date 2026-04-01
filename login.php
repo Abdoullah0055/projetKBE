@@ -38,6 +38,10 @@ if (isset($_SESSION['user'])) {
 $error = "";
 $success = "";
 
+if (isset($_GET['account_deleted']) && $_GET['account_deleted'] === '1') {
+    $success = "Votre compte a bien ete supprime.";
+}
+
 function flushProcedureResults(PDOStatement $stmt): void
 {
     do {

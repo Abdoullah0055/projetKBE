@@ -21,6 +21,9 @@
                 <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
             </div>
 
+            <button class="btn-outline-custom" title="Mon profil" onclick="window.location.href='profile.php'">
+                <i class="fa-solid fa-user-gear"></i>
+            </button>
             <button id="cart-btn" class="btn-accent" onclick="window.location.href='panier.php'">
                 <i class="fa-solid fa-cart-shopping"></i>
             </button>

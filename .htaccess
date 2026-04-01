@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Canonical URL (no trailing slash) for profile endpoints.
+RewriteRule ^profile/$ profile [R=302,L]
+RewriteRule ^profile/update/$ profile/update [R=302,L]
+RewriteRule ^profile/delete-profile/$ profile/delete-profile [R=302,L]
+RewriteRule ^profile/delete-account/$ profile/delete-account [R=302,L]
+
+# Profile routes
+RewriteRule ^profile$ profile.php [L,QSA]
+RewriteRule ^profile/update$ backend/profile_update.php [L,QSA]
+RewriteRule ^profile/delete-profile$ backend/profile_delete_profile.php [L,QSA]
+RewriteRule ^profile/delete-account$ backend/profile_delete_account.php [L,QSA]
+</IfModule>
