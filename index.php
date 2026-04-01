@@ -125,6 +125,44 @@ function normalizeItemType(string $type): string
     main {
         background: transparent !important;
     }
+
+    .sidebar-bottom-actions {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .sidebar-inventory-btn {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(25, 133, 161, 0.45);
+        background: rgba(25, 133, 161, 0.18);
+        color: var(--text-light);
+        text-decoration: none;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        transition: 0.2s ease;
+    }
+
+    .sidebar-inventory-btn:hover {
+        background: rgba(25, 133, 161, 0.3);
+        border-color: var(--accent);
+    }
+
+    aside.collapsed .sidebar-inventory-btn {
+        padding: 12px 8px;
+    }
+
+    aside.collapsed .sidebar-inventory-btn .btn-label {
+        display: none;
+    }
 </style>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -164,13 +202,22 @@ function normalizeItemType(string $type): string
                 </form>
             </div>
 
-            <div class="cta-box">
-                <div class="hide-text">
-                    <p style="margin:0 0 8px 0; font-size:0.9rem;">
-                        <?= $user['isConnected'] ? "Essais énigmes : <b style='color:var(--accent)'>5 / 5</b>" : "Besoin d'or ?" ?>
-                    </p>
-                    <a href="#" style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre des énigmes</a>
+            <div class="sidebar-bottom-actions">
+                <div class="cta-box">
+                    <div class="hide-text">
+                        <p style="margin:0 0 8px 0; font-size:0.9rem;">
+                            <?= $user['isConnected'] ? "Essais énigmes : <b style='color:var(--accent)'>5 / 5</b>" : "Besoin d'or ?" ?>
+                        </p>
+                        <a href="#" style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre des énigmes</a>
+                    </div>
                 </div>
+
+                <?php if ($user['isConnected']): ?>
+                    <a href="inventory.php" class="sidebar-inventory-btn" title="Ouvrir mon inventaire">
+                        <span aria-hidden="true"><i class="fa-solid fa-box-open"></i></span>
+                        <span class="btn-label">Inventory</span>
+                    </a>
+                <?php endif; ?>
             </div>
         </div>
     </aside>
@@ -281,3 +328,5 @@ function normalizeItemType(string $type): string
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
+
+

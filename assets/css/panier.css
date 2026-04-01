@@ -11,6 +11,12 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
 }
 
 body::before {
@@ -32,6 +38,12 @@ body::before {
   max-width: 1000px;
   margin: 0 auto;
   width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.cart-page::-webkit-scrollbar {
+  display: none;
 }
 
 .cart-title-box {
@@ -286,16 +298,17 @@ body::before {
     position: fixed;
     top: 70px;
     bottom: 140px;
-    width: clamp(140px, 12vw, 290px);
+    --banner-width: clamp(140px, 12vw, 290px);
+    width: var(--banner-width);
     z-index: 100;
     display: flex;
 }
 .banner-left {
-    left: clamp(200px, 2vw, 30px);
+    left: max(16px, calc((100vw - 800px) / 4 - (var(--banner-width) / 2)));
 }
 
 .banner-right {
-    right: clamp(200px, 2vw, 30px);
+    right: max(16px, calc((100vw - 800px) / 4 - (var(--banner-width) / 2)));
 }
 
 .banner-scroll {
@@ -348,13 +361,13 @@ body::before {
 
 @media (max-width: 1600px) {
     .page-banner {
-        width: clamp(120px, 10vw, 170px);
+        --banner-width: clamp(120px, 10vw, 170px);
     }
 }
 
 @media (max-width: 1400px) {
     .page-banner {
-        width: clamp(100px, 9vw, 150px);
+        --banner-width: clamp(100px, 9vw, 150px);
     }
 }
 
