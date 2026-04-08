@@ -177,9 +177,8 @@ function renderItemProperties(array $item, array $properties): string
             ';
             break;
     }
-
+    // commentaire
     $html .= '</div>';
 
     return $html;
 }
-?>
