@@ -170,7 +170,7 @@ function normalizeItemType(string $type): string
 
 <div class="wrapper">
     <aside id="sidebar">
-        <button id="toggle-btn" onclick="toggleMenu()">
+        <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
             <span id="arrow-icon">«</span>
         </button>
 
@@ -247,9 +247,11 @@ function normalizeItemType(string $type): string
                             <span style="background: rgba(25, 133, 161, 0.2); color: var(--accent); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;"><?= $item['rarete'] ?></span>
                         </div>
 
-                        <div style="margin-top: 5px;">
-                            <span style="color: var(--gold);">★ ★ ★ ★ ☆</span>
-                            <small style="color: var(--text-silver); margin-left: 5px;">(<?= $item['reviews'] ?> aventuriers)</small>
+                        <div style="margin-top: 5px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <?= renderRatingStars((float) $item['rating']) ?>
+                            <small style="color: var(--text-silver); margin-left: 2px;">
+                                <?= formatRatingValue((float) $item['rating']) ?>/5 (<?= (int) $item['reviews'] ?> aventuriers)
+                            </small>
                         </div>
                     </div>
 
@@ -328,5 +330,3 @@ function normalizeItemType(string $type): string
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
-

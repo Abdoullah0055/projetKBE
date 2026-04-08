@@ -55,6 +55,28 @@ if (!$item) {
 $item['image'] = getItemImage($item['type']);
 $properties = getItemProperties($pdo, (int) $item['id'], $item['type']);
 $title = "Details - " . $item['nom'];
+$itemRatingText = formatRatingValue((float) $item['rating']);
+
+$detailAlert = null;
+if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
+    $candidate = $_SESSION['alerte'];
+    $alertTypeRaw = (string) ($candidate['type'] ?? '');
+    $alertType = in_array($alertTypeRaw, ['succes', 'erreur'], true) ? $alertTypeRaw : '';
+    $alertMessage = trim((string) ($candidate['message'] ?? ''));
+
+    $isExpectedSource = (($candidate['source'] ?? '') === 'add_to_cart');
+    $isSameItem = ((int) ($candidate['item_id'] ?? 0) === $itemId);
+    $isFresh = (isset($candidate['ts']) && (time() - (int) $candidate['ts']) <= 30);
+
+    if ($isExpectedSource && $isSameItem && $isFresh && $alertType !== '' && $alertMessage !== '') {
+        $detailAlert = [
+            'type' => $alertType,
+            'message' => $alertMessage,
+        ];
+    }
+
+    unset($_SESSION['alerte']);
+}
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -111,12 +133,11 @@ $rightImages = [
     </div>
 </div>
 
-<?php if (isset($_SESSION['alerte'])): ?>
-    <div class="alert-box <?= $_SESSION['alerte']['type'] ?>">
-        <i class="fa-solid <?= $_SESSION['alerte']['type'] === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
-        <?= $_SESSION['alerte']['message'] ?>
+<?php if ($detailAlert !== null): ?>
+    <div class="alert-box <?= $detailAlert['type'] ?>">
+        <i class="fa-solid <?= $detailAlert['type'] === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
+        <?= htmlspecialchars($detailAlert['message']) ?>
     </div>
-    <?php unset($_SESSION['alerte']); ?>
 <?php endif; ?>
 
 <div class="details-wrapper">
@@ -137,8 +158,8 @@ $rightImages = [
             <div class="stats-grid">
                 <div class="stat-box">
                     <span class="stat-label">Avis</span>
-                    <span class="stat-value">&#9733; <?= number_format((float) $item['rating'], 1) ?></span>
-                    <span class="stat-sub"><?= (int) $item['nb_avis'] ?> avis</span>
+                    <span class="stat-value details-rating-stars-wrap"><?= renderRatingStars((float) $item['rating'], 'details-rating-stars') ?></span>
+                    <span class="stat-sub"><?= $itemRatingText ?>/5 • <?= (int) $item['nb_avis'] ?> avis</span>
                 </div>
                 <div class="stat-box">
                     <span class="stat-label">Stock</span>
@@ -432,12 +453,20 @@ $rightImages = [
                 body: formData
             });
 
-            const data = await response.json();
+            let data = null;
+            try {
+                data = await response.json();
+            } catch (_error) {
+                data = null;
+            }
 
-            if (response.ok && data.success) {
+            if (response.ok && data && data.success) {
                 showDetailAlert(data.message || "Objet ajoute au panier.", 'succes');
             } else {
-                showDetailAlert(data.message || "Echec de l'ajout au panier.", 'erreur');
+                const errorMessage = data && data.message ?
+                    data.message :
+                    "Echec de l'ajout au panier.";
+                showDetailAlert(errorMessage, 'erreur');
             }
         } catch (error) {
             console.error("Erreur:", error);
@@ -450,4 +479,3 @@ $rightImages = [
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
-

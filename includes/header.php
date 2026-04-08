@@ -6,8 +6,19 @@
     </div>
 
     <!-- Desktop search (hidden on mobile) -->
-    <form class="search-container">
-        <input type="text" name="search" placeholder="Rechercher une arme, un sort...">
+    <form class="search-container" id="header-search-form" action="inventory.php" method="get" role="search" novalidate>
+        <input
+            type="text"
+            name="search"
+            id="header-search-input"
+            placeholder="Rechercher une arme, un sort..."
+            autocomplete="off"
+            aria-autocomplete="list"
+            aria-expanded="false"
+            aria-controls="header-search-suggestions-list">
+        <div class="search-suggestions" id="header-search-suggestions" hidden>
+            <ul id="header-search-suggestions-list" class="search-suggestion-list"></ul>
+        </div>
     </form>
 
     <div class="header-actions">
@@ -48,9 +59,21 @@
 <nav id="mobile-drawer" class="mobile-drawer" role="navigation" aria-label="Menu">
     <div class="mobile-drawer-content">
         <!-- Search in drawer -->
-        <div class="mobile-drawer-search">
-            <input type="text" name="drawer-search" placeholder="Rechercher..." aria-label="Recherche dans le menu">
-        </div>
+        <form class="mobile-drawer-search" id="drawer-search-form" action="inventory.php" method="get" role="search" novalidate>
+            <input
+                type="text"
+                name="search"
+                id="drawer-search-input"
+                placeholder="Rechercher..."
+                aria-label="Recherche dans le menu"
+                autocomplete="off"
+                aria-autocomplete="list"
+                aria-expanded="false"
+                aria-controls="drawer-search-suggestions-list">
+            <div class="search-suggestions mobile-search-suggestions" id="drawer-search-suggestions" hidden>
+                <ul id="drawer-search-suggestions-list" class="search-suggestion-list"></ul>
+            </div>
+        </form>
 
         <!-- Wallet info in drawer (mobile only) -->
         <?php if ($user['isConnected']): ?>

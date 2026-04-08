@@ -30,7 +30,14 @@ $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 $inventoryItems = [];
+$pendingReviewItems = [];
 $inventoryError = '';
+$reviewFlash = null;
+
+if (isset($_SESSION['review_feedback']) && is_array($_SESSION['review_feedback'])) {
+    $reviewFlash = $_SESSION['review_feedback'];
+    unset($_SESSION['review_feedback']);
+}
 
 try {
     $stmt = $pdo->prepare(
@@ -52,6 +59,42 @@ try {
     $inventoryItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $inventoryError = "Impossible de charger votre inventaire pour le moment.";
+}
+
+if ($inventoryError === '') {
+    try {
+        $reviewStmt = $pdo->prepare(
+            "SELECT
+                inv.ItemId AS item_id,
+                inv.Quantity AS quantity_owned,
+                i.Name AS item_name,
+                t.Name AS item_type,
+                IFNULL(AVG(all_reviews.Rating), 0) AS rating,
+                COUNT(all_reviews.ReviewId) AS review_count
+             FROM Inventory inv
+             JOIN Items i ON inv.ItemId = i.ItemId
+             JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
+             LEFT JOIN Reviews user_review
+                ON user_review.ItemId = inv.ItemId
+               AND user_review.UserId = :user_id_for_review
+             LEFT JOIN Reviews all_reviews
+                ON all_reviews.ItemId = inv.ItemId
+             WHERE inv.UserId = :user_id_for_inventory
+               AND inv.Quantity > 0
+               AND user_review.ReviewId IS NULL
+             GROUP BY inv.ItemId, inv.Quantity, i.Name, t.Name
+             ORDER BY i.Name ASC"
+        );
+
+        $reviewStmt->execute([
+            ':user_id_for_review' => $user['id'],
+            ':user_id_for_inventory' => $user['id'],
+        ]);
+
+        $pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $pendingReviewItems = [];
+    }
 }
 
 $title = "L'Arsenal - Inventory";
@@ -87,7 +130,7 @@ $title = "L'Arsenal - Inventory";
 
 <div class="wrapper">
     <aside id="sidebar">
-        <button id="toggle-btn" onclick="toggleMenu()">
+        <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
             <span id="arrow-icon">«</span>
         </button>
 
@@ -114,6 +157,89 @@ $title = "L'Arsenal - Inventory";
                 Inventory de <?= htmlspecialchars($user['alias']) ?>
             </h2>
         </div>
+
+        <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
+            <?php $flashType = ($reviewFlash['type'] ?? '') === 'success' ? 'success-state' : 'error-state'; ?>
+            <div class="inventory-state <?= $flashType ?>">
+                <span><?= htmlspecialchars((string) $reviewFlash['message']) ?></span>
+            </div>
+        <?php endif; ?>
+
+        <?php if (!empty($pendingReviewItems)): ?>
+            <section class="pending-reviews-panel" id="pending-reviews-panel" aria-label="Items à évaluer">
+                <div class="pending-reviews-header">
+                    <h3>Items achetés à évaluer</h3>
+                    <p>Attribuez une note de 1 à 5, avec demi-étoiles, pour améliorer les suggestions du marché.</p>
+                </div>
+
+                <div class="pending-reviews-list" id="pending-reviews-list">
+                    <?php foreach ($pendingReviewItems as $reviewItem): ?>
+                        <?php
+                        $reviewItemId = (int) $reviewItem['item_id'];
+                        $reviewItemType = (string) ($reviewItem['item_type'] ?? 'Inconnu');
+                        $reviewItemName = (string) ($reviewItem['item_name'] ?? ('Item #' . $reviewItemId));
+                        $ratingInputId = 'rating-input-' . $reviewItemId;
+                        $ratingPreviewId = 'rating-preview-' . $reviewItemId;
+                        ?>
+
+                        <article class="pending-review-card" data-pending-item-id="<?= $reviewItemId ?>">
+                            <div class="pending-review-item-meta">
+                                <div class="pending-review-thumb" aria-hidden="true">
+                                    <?= getItemImage($reviewItemType) ?>
+                                </div>
+
+                                <div>
+                                    <h4><?= htmlspecialchars($reviewItemName) ?></h4>
+                                    <p>
+                                        Type: <?= htmlspecialchars($reviewItemType) ?>
+                                        • Quantité: <?= (int) $reviewItem['quantity_owned'] ?>
+                                    </p>
+
+                                    <div class="pending-review-current-rating">
+                                        <?= renderRatingStars((float) $reviewItem['rating']) ?>
+                                        <span class="rating-value-inline">
+                                            <?= formatRatingValue((float) $reviewItem['rating']) ?>/5 (<?= (int) $reviewItem['review_count'] ?> avis)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form class="pending-review-form" action="backend/soumettre_review.php" method="post">
+                                <input type="hidden" name="item_id" value="<?= $reviewItemId ?>">
+                                <input type="hidden" name="rating" id="<?= $ratingInputId ?>" value="5.0">
+
+                                <div class="rating-picker" data-input-id="<?= $ratingInputId ?>" data-preview-id="<?= $ratingPreviewId ?>">
+                                    <?php for ($step = 2; $step <= 10; $step++): ?>
+                                        <?php
+                                        $stepValue = $step / 2;
+                                        $isHalf = ($step % 2) !== 0;
+                                        $valueLabel = number_format((float) $stepValue, 1, '.', '');
+                                        ?>
+                                        <button
+                                            type="button"
+                                            class="rating-step-btn<?= ($stepValue === 5.0) ? ' is-selected' : '' ?>"
+                                            data-value="<?= $valueLabel ?>"
+                                            aria-label="Noter <?= $valueLabel ?> sur 5">
+                                            <i class="fa-solid <?= $isHalf ? 'fa-star-half-stroke' : 'fa-star' ?>" aria-hidden="true"></i>
+                                            <span class="step-value"><?= $valueLabel ?></span>
+                                        </button>
+                                    <?php endfor; ?>
+                                </div>
+
+                                <div class="rating-picker-preview" id="<?= $ratingPreviewId ?>">
+                                    <?= renderRatingStars(5.0) ?>
+                                    <span class="rating-value-inline">5.0/5</span>
+                                </div>
+
+                                <button type="submit" class="btn-submit-rating">Envoyer ma note</button>
+                            </form>
+
+                            <p class="pending-review-message" aria-live="polite"></p>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
 
         <div id="inventory-loading" class="inventory-state loading-state">
             Chargement de votre inventaire...
@@ -184,46 +310,186 @@ $title = "L'Arsenal - Inventory";
 
         const tooltip = document.getElementById('inventory-tooltip');
         const slots = document.querySelectorAll('.inventory-slot');
-        if (!tooltip || slots.length === 0) return;
 
-        const tooltipTitle = document.getElementById('tooltip-title');
-        const tooltipDescription = document.getElementById('tooltip-description');
-        const tooltipQuantity = document.getElementById('tooltip-quantity');
-        const tooltipType = document.getElementById('tooltip-type');
-        const tooltipItemId = document.getElementById('tooltip-item-id');
-        const tooltipPrice = document.getElementById('tooltip-price');
+        if (tooltip && slots.length > 0) {
+            const tooltipTitle = document.getElementById('tooltip-title');
+            const tooltipDescription = document.getElementById('tooltip-description');
+            const tooltipQuantity = document.getElementById('tooltip-quantity');
+            const tooltipType = document.getElementById('tooltip-type');
+            const tooltipItemId = document.getElementById('tooltip-item-id');
+            const tooltipPrice = document.getElementById('tooltip-price');
 
-        function positionTooltip(event) {
-            const offsetX = 16;
-            const offsetY = 20;
-            const maxX = window.innerWidth - tooltip.offsetWidth - 10;
-            const maxY = window.innerHeight - tooltip.offsetHeight - 10;
-            const nextX = Math.min(event.clientX + offsetX, maxX);
-            const nextY = Math.min(event.clientY + offsetY, maxY);
+            function positionTooltip(event) {
+                const offsetX = 16;
+                const offsetY = 20;
+                const maxX = window.innerWidth - tooltip.offsetWidth - 10;
+                const maxY = window.innerHeight - tooltip.offsetHeight - 10;
+                const nextX = Math.min(event.clientX + offsetX, maxX);
+                const nextY = Math.min(event.clientY + offsetY, maxY);
 
-            tooltip.style.left = Math.max(10, nextX) + 'px';
-            tooltip.style.top = Math.max(10, nextY) + 'px';
+                tooltip.style.left = Math.max(10, nextX) + 'px';
+                tooltip.style.top = Math.max(10, nextY) + 'px';
+            }
+
+            slots.forEach(function(slot) {
+                slot.addEventListener('mouseenter', function(event) {
+                    tooltipTitle.textContent = slot.dataset.itemName || 'Objet';
+                    tooltipDescription.textContent = slot.dataset.itemDescription || '';
+                    tooltipQuantity.textContent = 'Quantite: ' + (slot.dataset.itemQuantity || '0');
+                    tooltipType.textContent = 'Type: ' + (slot.dataset.itemType || 'Inconnu');
+                    tooltipItemId.textContent = 'ItemId: ' + (slot.dataset.itemId || '-');
+                    tooltipPrice.textContent = 'Prix: ' + (slot.dataset.itemPrice || '0') + ' GP';
+
+                    tooltip.classList.add('visible');
+                    tooltip.setAttribute('aria-hidden', 'false');
+                    positionTooltip(event);
+                });
+
+                slot.addEventListener('mousemove', positionTooltip);
+
+                slot.addEventListener('mouseleave', function() {
+                    tooltip.classList.remove('visible');
+                    tooltip.setAttribute('aria-hidden', 'true');
+                });
+            });
         }
 
-        slots.forEach(function(slot) {
-            slot.addEventListener('mouseenter', function(event) {
-                tooltipTitle.textContent = slot.dataset.itemName || 'Objet';
-                tooltipDescription.textContent = slot.dataset.itemDescription || '';
-                tooltipQuantity.textContent = 'Quantite: ' + (slot.dataset.itemQuantity || '0');
-                tooltipType.textContent = 'Type: ' + (slot.dataset.itemType || 'Inconnu');
-                tooltipItemId.textContent = 'ItemId: ' + (slot.dataset.itemId || '-');
-                tooltipPrice.textContent = 'Prix: ' + (slot.dataset.itemPrice || '0') + ' GP';
+        const pendingPanel = document.getElementById('pending-reviews-panel');
+        const pendingCards = document.querySelectorAll('.pending-review-card');
 
-                tooltip.classList.add('visible');
-                tooltip.setAttribute('aria-hidden', 'false');
-                positionTooltip(event);
+        if (!pendingPanel || pendingCards.length === 0) {
+            return;
+        }
+
+        function clampRatingValue(value) {
+            const numeric = Number(value);
+            if (!Number.isFinite(numeric)) {
+                return 1;
+            }
+
+            const clamped = Math.max(1, Math.min(5, numeric));
+            return Math.round(clamped * 2) / 2;
+        }
+
+        function renderStarsMarkup(value) {
+            const rating = clampRatingValue(value);
+            const full = Math.floor(rating);
+            const hasHalf = rating - full >= 0.5;
+            const empty = 5 - full - (hasHalf ? 1 : 0);
+            const parts = ['<span class="rating-stars" aria-hidden="true">'];
+
+            for (let i = 0; i < full; i += 1) {
+                parts.push('<i class="fa-solid fa-star"></i>');
+            }
+
+            if (hasHalf) {
+                parts.push('<i class="fa-solid fa-star-half-stroke"></i>');
+            }
+
+            for (let i = 0; i < empty; i += 1) {
+                parts.push('<i class="fa-regular fa-star"></i>');
+            }
+
+            parts.push('</span>');
+            return parts.join('');
+        }
+
+        function updatePickerUI(picker, input, preview, value) {
+            const normalized = clampRatingValue(value);
+            input.value = normalized.toFixed(1);
+
+            const stepButtons = picker.querySelectorAll('.rating-step-btn');
+            stepButtons.forEach(function(button) {
+                const btnValue = clampRatingValue(button.dataset.value || '1');
+                button.classList.toggle('is-selected', btnValue === normalized);
             });
 
-            slot.addEventListener('mousemove', positionTooltip);
+            preview.innerHTML =
+                renderStarsMarkup(normalized) +
+                '<span class="rating-value-inline">' + normalized.toFixed(1) + '/5</span>';
+        }
 
-            slot.addEventListener('mouseleave', function() {
-                tooltip.classList.remove('visible');
-                tooltip.setAttribute('aria-hidden', 'true');
+        document.querySelectorAll('.rating-picker').forEach(function(picker) {
+            const inputId = picker.dataset.inputId;
+            const previewId = picker.dataset.previewId;
+            const input = inputId ? document.getElementById(inputId) : null;
+            const preview = previewId ? document.getElementById(previewId) : null;
+
+            if (!input || !preview) {
+                return;
+            }
+
+            updatePickerUI(picker, input, preview, input.value || '5');
+
+            picker.addEventListener('click', function(event) {
+                const button = event.target.closest('.rating-step-btn');
+                if (!button) {
+                    return;
+                }
+
+                updatePickerUI(picker, input, preview, button.dataset.value || '5');
+            });
+        });
+
+        document.querySelectorAll('.pending-review-form').forEach(function(form) {
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                const card = form.closest('.pending-review-card');
+                const messageBox = card ? card.querySelector('.pending-review-message') : null;
+                const submitButton = form.querySelector('.btn-submit-rating');
+                if (!card || !messageBox || !submitButton) {
+                    return;
+                }
+
+                messageBox.textContent = '';
+                messageBox.classList.remove('is-success', 'is-error');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Envoi en cours...';
+
+                try {
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new FormData(form)
+                    });
+
+                    let data = null;
+                    try {
+                        data = await response.json();
+                    } catch (_error) {
+                        data = null;
+                    }
+
+                    if (!response.ok || !data || data.success !== true) {
+                        const errorMessage = (data && data.message) ? data.message : 'Impossible d\'enregistrer la note.';
+                        messageBox.textContent = errorMessage;
+                        messageBox.classList.add('is-error');
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Envoyer ma note';
+                        return;
+                    }
+
+                    messageBox.textContent = data.message || 'Merci, votre note a été enregistrée.';
+                    messageBox.classList.add('is-success');
+                    submitButton.textContent = 'Note enregistrée';
+
+                    setTimeout(function() {
+                        card.remove();
+                        const remainingCards = document.querySelectorAll('.pending-review-card').length;
+                        if (remainingCards === 0) {
+                            pendingPanel.remove();
+                        }
+                    }, 900);
+                } catch (_error) {
+                    messageBox.textContent = 'Erreur réseau, veuillez réessayer.';
+                    messageBox.classList.add('is-error');
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Envoyer ma note';
+                }
             });
         });
     });

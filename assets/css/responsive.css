@@ -190,6 +190,7 @@ body {
     gap: var(--spacing-sm);
     padding-bottom: var(--spacing-md);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: relative;
   }
 
   .mobile-drawer-search input {
@@ -200,6 +201,16 @@ body {
     background: rgba(0, 0, 0, 0.4);
     color: white;
     font-size: var(--font-size-button);
+  }
+
+  .mobile-search-suggestions {
+    position: static;
+    margin-top: 8px;
+    max-height: 230px;
+  }
+
+  .mobile-search-suggestions .search-suggestion-title {
+    max-width: 100%;
   }
 
   .mobile-drawer-actions {
@@ -232,6 +243,16 @@ body {
   /* Prevent scroll when drawer open */
   body.drawer-open {
     overflow: hidden;
+  }
+
+  .search-suggestion-link {
+    padding: 10px;
+  }
+
+  .search-suggestion-thumb {
+    width: 34px;
+    height: 34px;
+    font-size: 1.2rem;
   }
 
   /* --- WRAPPER & SIDEBAR MOBILE --- */
@@ -492,6 +513,15 @@ body {
 
   body.drawer-open {
     overflow: hidden;
+  }
+
+  .mobile-drawer-search {
+    position: relative;
+  }
+
+  .mobile-search-suggestions {
+    position: static;
+    margin-top: 8px;
   }
 
   /* --- SIDEBAR BEHAVIOR TABLET --- */

@@ -71,6 +71,12 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   border-color: rgba(231, 76, 60, 0.35);
 }
 
+.success-state {
+  color: #b8ffd4;
+  border-color: rgba(46, 204, 113, 0.4);
+  background: rgba(28, 62, 46, 0.45);
+}
+
 .empty-state {
   color: var(--text-silver);
 }
@@ -210,6 +216,158 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   font-size: 0.74rem;
 }
 
+.pending-reviews-panel {
+  margin-bottom: 20px;
+  padding: 18px;
+  border-radius: 10px;
+  border: 1px solid rgba(25, 133, 161, 0.28);
+  background: rgba(20, 22, 25, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.pending-reviews-header h3 {
+  margin: 0;
+  color: var(--accent);
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.pending-reviews-header p {
+  margin: 8px 0 0;
+  color: var(--text-silver);
+  font-size: 0.85rem;
+}
+
+.pending-reviews-list {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.pending-review-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px;
+}
+
+.pending-review-item-meta {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.pending-review-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  border: 1px solid rgba(25, 133, 161, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.pending-review-item-meta h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-light);
+}
+
+.pending-review-item-meta p {
+  margin: 4px 0;
+  color: var(--text-silver);
+  font-size: 0.78rem;
+}
+
+.pending-review-current-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pending-review-form {
+  margin-top: 10px;
+}
+
+.rating-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rating-step-btn {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-silver);
+  border-radius: 6px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.rating-step-btn .step-value {
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.rating-step-btn:hover,
+.rating-step-btn.is-selected {
+  color: var(--gold);
+  border-color: rgba(241, 196, 15, 0.7);
+  background: rgba(241, 196, 15, 0.12);
+}
+
+.rating-picker-preview {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-submit-rating {
+  margin-top: 10px;
+  border: 1px solid rgba(25, 133, 161, 0.6);
+  background: rgba(25, 133, 161, 0.26);
+  color: #fff;
+  border-radius: 6px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-submit-rating:hover {
+  background: rgba(25, 133, 161, 0.42);
+}
+
+.btn-submit-rating:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.pending-review-message {
+  margin: 8px 0 0;
+  min-height: 18px;
+  font-size: 0.78rem;
+}
+
+.pending-review-message.is-success {
+  color: #80f2af;
+}
+
+.pending-review-message.is-error {
+  color: #ff9a9a;
+}
+
 @media (max-width: 767px) {
   .catalog-banner {
     padding: var(--spacing-md);
@@ -219,6 +377,18 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   .inventory-grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 10px;
+  }
+
+  .pending-review-item-meta {
+    flex-direction: column;
+  }
+
+  .rating-step-btn {
+    padding: 6px;
+  }
+
+  .btn-submit-rating {
+    width: 100%;
   }
 
   .inventory-slot {

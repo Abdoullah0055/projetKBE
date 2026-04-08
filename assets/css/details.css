@@ -167,6 +167,18 @@
   color: #fff;
 }
 
+.details-rating-stars-wrap {
+  line-height: 1;
+}
+
+.details-rating-stars {
+  justify-content: center;
+}
+
+.details-rating-stars i {
+  font-size: 1rem;
+}
+
 .item-title-section h1 {
   font-size: 2.5rem;
   color: #fff;

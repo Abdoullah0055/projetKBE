@@ -201,11 +201,13 @@ CREATE TABLE Reviews (
   ReviewId   INT AUTO_INCREMENT PRIMARY KEY,
   UserId     INT NOT NULL,
   ItemId     INT NOT NULL,
-  Rating     INT NOT NULL,
+  Rating     DECIMAL(2,1) NOT NULL,
   Comment    TEXT NULL,
   CreatedAt  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-  CONSTRAINT CHK_Reviews_Rating CHECK (Rating BETWEEN 1 AND 5),
+  CONSTRAINT CHK_Reviews_Rating CHECK (
+    Rating BETWEEN 1 AND 5 AND ROUND(Rating * 2) = Rating * 2
+  ),
   CONSTRAINT UQ_Reviews_User_Item UNIQUE (UserId, ItemId),
 
   CONSTRAINT FK_Reviews_Users

@@ -52,6 +52,64 @@ function getItemImage($type)
     }
 }
 
+function clampRating(float $rating): float
+{
+    if (!is_finite($rating)) {
+        return 0.0;
+    }
+
+    if ($rating < 0) {
+        return 0.0;
+    }
+
+    if ($rating > 5) {
+        return 5.0;
+    }
+
+    return $rating;
+}
+
+function roundRatingToHalf(float $rating): float
+{
+    $normalized = clampRating($rating);
+    return round($normalized * 2) / 2;
+}
+
+function formatRatingValue(float $rating): string
+{
+    return number_format(clampRating($rating), 1, '.', '');
+}
+
+function renderRatingStars(float $rating, string $extraClass = ''): string
+{
+    $rounded = roundRatingToHalf($rating);
+    $fullStars = (int) floor($rounded);
+    $hasHalf = (($rounded - $fullStars) >= 0.5) ? 1 : 0;
+    $emptyStars = 5 - $fullStars - $hasHalf;
+
+    $classes = trim('rating-stars ' . $extraClass);
+    $safeClass = htmlspecialchars($classes, ENT_QUOTES, 'UTF-8');
+    $ratingText = formatRatingValue($rounded);
+
+    $html = '<span class="' . $safeClass . '" aria-label="Note ' . $ratingText . ' sur 5">';
+
+    for ($i = 0; $i < $fullStars; $i++) {
+        $html .= '<i class="fa-solid fa-star" aria-hidden="true"></i>';
+    }
+
+    if ($hasHalf) {
+        $html .= '<i class="fa-solid fa-star-half-stroke" aria-hidden="true"></i>';
+    }
+
+    for ($i = 0; $i < $emptyStars; $i++) {
+        $html .= '<i class="fa-regular fa-star" aria-hidden="true"></i>';
+    }
+
+    $html .= '</span>';
+
+    return $html;
+}
+
 function getItemProperties(PDO $pdo, int $itemId, string $type): array
 {
     switch (strtolower(trim($type))) {
@@ -177,7 +235,6 @@ function renderItemProperties(array $item, array $properties): string
             ';
             break;
     }
-    // commentaire 2feikfbehkfrbhj
     $html .= '</div>';
 
     return $html;
