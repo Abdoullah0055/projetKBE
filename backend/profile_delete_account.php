@@ -36,48 +36,52 @@ $userId = (int)$_SESSION['user']['id'];
 $pdo = get_pdo();
 
 try {
-    $pdo->beginTransaction();
-
-    $passwordStmt = $pdo->prepare("SELECT Password FROM Users WHERE UserId = :userId LIMIT 1 FOR UPDATE");
+    $passwordStmt = $pdo->prepare("SELECT Password FROM Users WHERE UserId = :userId LIMIT 1");
     $passwordStmt->execute([':userId' => $userId]);
     $passwordHash = (string)$passwordStmt->fetchColumn();
 
     if ($passwordHash === '' || !password_verify($password, $passwordHash)) {
-        $pdo->rollBack();
         profile_set_flash('error', "Mot de passe incorrect. Suppression du compte annulee.");
         header('Location: ../profile.php');
         exit();
     }
 
-    $deleteCartStmt = $pdo->prepare("DELETE FROM Carts WHERE UserId = :userId");
-    $deleteCartStmt->execute([':userId' => $userId]);
+    $deleteStmt = $pdo->prepare("CALL sp_DeleteUserAccount(:userId)");
+    $deleteStmt->execute([':userId' => $userId]);
 
-    $deleteOrderStmt = $pdo->prepare("DELETE FROM Orders WHERE UserId = :userId");
-    $deleteOrderStmt->execute([':userId' => $userId]);
-
-    $deleteUserStmt = $pdo->prepare("DELETE FROM Users WHERE UserId = :userId");
-    $deleteUserStmt->execute([':userId' => $userId]);
-
-    if ($deleteUserStmt->rowCount() <= 0) {
-        $pdo->rollBack();
-        profile_set_flash('error', "Impossible de supprimer ce compte.");
-        header('Location: ../profile.php');
-        exit();
+    while ($deleteStmt->nextRowset()) {
+        // Flush potential rowsets returned by MySQL procedures.
     }
-
-    $pdo->commit();
+    $deleteStmt->closeCursor();
 
     session_unset();
-    session_destroy();
 
-    header('Location: ../login.php?account_deleted=1');
-    exit();
-} catch (PDOException $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
+    if (ini_get('session.use_cookies')) {
+        $params = session_get_cookie_params();
+        setcookie(
+            session_name(),
+            '',
+            time() - 42000,
+            $params['path'],
+            $params['domain'],
+            $params['secure'],
+            $params['httponly']
+        );
     }
 
-    profile_set_flash('error', "Erreur lors de la suppression du compte.");
+    session_destroy();
+
+    header('Location: ../index.php');
+    exit();
+} catch (PDOException $e) {
+    $errorCode = (int)($e->errorInfo[1] ?? 0);
+
+    if ($errorCode === 1305) {
+        profile_set_flash('error', "Suppression indisponible: procedure SQL manquante (sp_DeleteUserAccount).");
+    } else {
+        profile_set_flash('error', "Erreur lors de la suppression du compte.");
+    }
+
     header('Location: ../profile.php');
     exit();
 }

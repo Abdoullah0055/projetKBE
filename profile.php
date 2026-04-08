@@ -18,7 +18,7 @@ $loadError = '';
 
 try {
     $stmt = $pdo->prepare(
-        "SELECT UserId, Alias, FullName, Email, AvatarUrl, Role, Gold, Silver, Bronze, ProfileIsDeleted
+        "SELECT UserId, Alias, FullName, Email, AvatarUrl, Role, Gold, Silver, Bronze
          FROM Users
          WHERE UserId = ?
          LIMIT 1"
@@ -48,9 +48,8 @@ try {
         'Gold' => $_SESSION['user']['gold'] ?? 0,
         'Silver' => $_SESSION['user']['silver'] ?? 0,
         'Bronze' => $_SESSION['user']['bronze'] ?? 0,
-        'ProfileIsDeleted' => 0,
     ];
-    $loadError = "Impossible de charger toutes les donnees profil. Verifiez que la migration SQL profil a bien ete appliquee.";
+    $loadError = "Impossible de charger toutes les donnees profil actuellement.";
 }
 
 $user = [
@@ -103,7 +102,7 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['Alias'], 0, 1, 'UTF-8'));
         </div>
         <div>
             <h1>Gestion du profil</h1>
-            <p>Modifiez vos informations personnelles, anonymisez votre profil ou supprimez totalement votre compte.</p>
+            <p>Modifiez vos informations personnelles ou supprimez totalement votre compte.</p>
         </div>
     </section>
 
@@ -120,7 +119,7 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['Alias'], 0, 1, 'UTF-8'));
     <div class="profile-grid">
         <section class="profile-card">
             <h2>Modifier mon profil</h2>
-            <form method="POST" action="profile/update" autocomplete="off">
+            <form method="POST" action="backend/profile_update.php" autocomplete="off">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
                 <label for="alias">Alias</label>
@@ -157,26 +156,9 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['Alias'], 0, 1, 'UTF-8'));
 
         <section class="profile-card danger-card">
             <h2>Actions sensibles</h2>
-            <p class="danger-intro">Ces actions sont irreversibles. Une confirmation explicite est obligatoire.</p>
+            <p class="danger-intro">Cette action est irreversible. Une confirmation explicite est obligatoire.</p>
 
-            <form method="POST" action="profile/delete-profile" class="danger-form confirm-form" data-confirm-text="SUPPRIMER MON PROFIL" data-final-confirm="Confirmer la suppression de toutes vos donnees de profil ?">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-
-                <h3>Supprimer mon profil (anonymiser)</h3>
-                <p>Cette action retire vos informations personnelles (nom, email, avatar) sans supprimer votre compte.</p>
-
-                <label for="profile_phrase">Ecrivez "SUPPRIMER MON PROFIL"</label>
-                <input id="profile_phrase" name="confirmation_text" type="text" required autocomplete="off">
-
-                <label class="check-line">
-                    <input type="checkbox" name="confirm_delete_profile" value="1" required>
-                    Je confirme que je veux supprimer mes informations de profil.
-                </label>
-
-                <button type="submit" class="btn-danger" disabled>Supprimer mon profil</button>
-            </form>
-
-            <form method="POST" action="profile/delete-account" class="danger-form confirm-form" data-confirm-text="SUPPRIMER MON COMPTE" data-final-confirm="Derniere confirmation: supprimer definitivement ce compte ?">
+            <form method="POST" action="backend/profile_delete_account.php" class="danger-form confirm-form" data-confirm-text="SUPPRIMER MON COMPTE" data-final-confirm="Derniere confirmation: supprimer definitivement ce compte ?">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
                 <h3>Supprimer mon compte</h3>
@@ -197,12 +179,6 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['Alias'], 0, 1, 'UTF-8'));
             </form>
         </section>
     </div>
-
-    <?php if ((int)($dbUser['ProfileIsDeleted'] ?? 0) === 1): ?>
-        <div class="profile-alert alert-info">
-            Votre profil est actuellement anonymise. Vous pouvez le reconfigurer a tout moment avec le formulaire de modification.
-        </div>
-    <?php endif; ?>
 </main>
 
 <script src="assets/js/profile.js"></script>

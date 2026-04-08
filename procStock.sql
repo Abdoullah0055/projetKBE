@@ -48,4 +48,62 @@ BEGIN
     LIMIT 1;
 END //
 
+DROP PROCEDURE IF EXISTS sp_DeleteUserAccount //
+CREATE PROCEDURE sp_DeleteUserAccount(
+    IN p_UserId INT
+)
+proc: BEGIN
+    DECLARE v_user_exists INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    IF p_UserId IS NULL OR p_UserId <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Identifiant utilisateur invalide.';
+    END IF;
+
+    START TRANSACTION;
+
+    SELECT COUNT(*)
+    INTO v_user_exists
+    FROM Users
+    WHERE UserId = p_UserId
+    FOR UPDATE;
+
+    IF v_user_exists = 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Compte introuvable.';
+    END IF;
+
+    DELETE FROM OrderItems
+    WHERE OrderId IN (
+        SELECT OrderId
+        FROM Orders
+        WHERE UserId = p_UserId
+    );
+
+    DELETE FROM Orders
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Carts
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Reviews
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Inventory
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Users
+    WHERE UserId = p_UserId;
+
+    IF ROW_COUNT() <> 1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Suppression du compte echouee.';
+    END IF;
+
+    COMMIT;
+END //
+
 DELIMITER ;

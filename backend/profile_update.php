@@ -170,9 +170,7 @@ try {
                  FullName = :fullName,
                  Email = :email,
                  AvatarUrl = :avatarUrl,
-                 Password = :password,
-                 ProfileIsDeleted = 0,
-                 ProfileDeletedAt = NULL
+                 Password = :password
              WHERE UserId = :userId"
         );
 
@@ -190,9 +188,7 @@ try {
              SET Alias = :alias,
                  FullName = :fullName,
                  Email = :email,
-                 AvatarUrl = :avatarUrl,
-                 ProfileIsDeleted = 0,
-                 ProfileDeletedAt = NULL
+                 AvatarUrl = :avatarUrl
              WHERE UserId = :userId"
         );
 
@@ -214,7 +210,7 @@ try {
         $pdo->rollBack();
     }
 
-    profile_set_flash('error', "Erreur lors de la mise a jour du profil. Verifiez la migration SQL et reessayez.");
+    profile_set_flash('error', "Erreur lors de la mise a jour du profil. Reessayez.");
 }
 
 header('Location: ../profile.php');

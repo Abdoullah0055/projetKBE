@@ -9,16 +9,13 @@ CREATE TABLE Users (
   Gold     INT NOT NULL DEFAULT 1000,
   Silver   INT NOT NULL DEFAULT 1000,
   Bronze   INT NOT NULL DEFAULT 1000,
-  ProfileIsDeleted TINYINT(1) NOT NULL DEFAULT 0,
-  ProfileDeletedAt DATETIME NULL,
 
   CONSTRAINT UQ_Users_Alias UNIQUE (Alias),
   CONSTRAINT UQ_Users_Email UNIQUE (Email),
   CONSTRAINT CHK_Users_Role CHECK (Role IN ('Player', 'Mage', 'Admin')),
   CONSTRAINT CHK_Users_Gold CHECK (Gold >= 0),
   CONSTRAINT CHK_Users_Silver CHECK (Silver >= 0),
-  CONSTRAINT CHK_Users_Bronze CHECK (Bronze >= 0),
-  CONSTRAINT CHK_Users_ProfileIsDeleted CHECK (ProfileIsDeleted IN (0, 1))
+  CONSTRAINT CHK_Users_Bronze CHECK (Bronze >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 

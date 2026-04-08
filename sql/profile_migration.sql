@@ -54,11 +54,11 @@ SET @col_exists := (
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE()
     AND TABLE_NAME = 'Users'
-    AND COLUMN_NAME = 'ProfileIsDeleted'
+    AND COLUMN_NAME = 'ProfileDeletedAt'
 );
 SET @sql := IF(
-  @col_exists = 0,
-  'ALTER TABLE Users ADD COLUMN ProfileIsDeleted TINYINT(1) NOT NULL DEFAULT 0 AFTER Bronze',
+  @col_exists = 1,
+  'ALTER TABLE Users DROP COLUMN ProfileDeletedAt',
   'SELECT 1'
 );
 PREPARE stmt FROM @sql;
@@ -70,11 +70,11 @@ SET @col_exists := (
   FROM INFORMATION_SCHEMA.COLUMNS
   WHERE TABLE_SCHEMA = DATABASE()
     AND TABLE_NAME = 'Users'
-    AND COLUMN_NAME = 'ProfileDeletedAt'
+    AND COLUMN_NAME = 'ProfileIsDeleted'
 );
 SET @sql := IF(
-  @col_exists = 0,
-  'ALTER TABLE Users ADD COLUMN ProfileDeletedAt DATETIME NULL AFTER ProfileIsDeleted',
+  @col_exists = 1,
+  'ALTER TABLE Users DROP COLUMN ProfileIsDeleted',
   'SELECT 1'
 );
 PREPARE stmt FROM @sql;
