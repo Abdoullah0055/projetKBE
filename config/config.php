@@ -177,7 +177,7 @@ function renderItemProperties(array $item, array $properties): string
             ';
             break;
     }
-    // commentaire
+    // commentaire 2feikfbehkfrbhj
     $html .= '</div>';
 
     return $html;
