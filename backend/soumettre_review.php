@@ -3,7 +3,13 @@
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../config/config.php';
 
-session_start();
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 function is_ajax_request(): bool
 {
@@ -19,10 +25,18 @@ function is_ajax_request(): bool
 function review_response(array $payload, string $redirectUrl, bool $isAjax, int $status = 200): void
 {
     if ($isAjax) {
+        if (ob_get_length() > 0) {
+            ob_clean();
+        }
+
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($payload, JSON_UNESCAPED_UNICODE);
         exit;
+    }
+
+    if (ob_get_length() > 0) {
+        ob_clean();
     }
 
     $_SESSION['review_feedback'] = [

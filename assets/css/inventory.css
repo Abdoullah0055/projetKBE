@@ -81,10 +81,38 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   color: var(--text-silver);
 }
 
+.inventory-layout {
+  display: block;
+}
+
+.inventory-main-column {
+  min-width: 0;
+}
+
+.inventory-layout.has-review-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.inventory-layout.has-review-panel .inventory-main-column {
+  flex: 0 1 75%;
+  max-width: 75%;
+}
+
+.inventory-layout.has-review-panel .pending-reviews-panel {
+  flex: 0 0 25%;
+  max-width: 25%;
+  width: 25%;
+  margin-bottom: 0;
+  align-self: flex-start;
+}
+
 .inventory-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  align-items: stretch;
 }
 
 .inventory-slot {
@@ -92,12 +120,12 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(0, 0, 0, 0.28);
   border-radius: 8px;
-  padding: 12px;
-  min-height: 166px;
+  padding: 16px;
+  min-height: 320px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
   cursor: default;
   transition:
     transform 0.18s ease,
@@ -111,9 +139,17 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
+.slot-top-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-right: 52px;
+}
+
 .slot-thumb {
-  width: 96px;
-  height: 96px;
+  width: 84px;
+  height: 84px;
   border-radius: 6px;
   border: 1px solid rgba(25, 133, 161, 0.28);
   background: linear-gradient(
@@ -124,42 +160,116 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .slot-icon {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   line-height: 1;
+}
+
+.slot-main-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.slot-label {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--text-light);
+  text-align: left;
+  line-height: 1.28;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.slot-type,
+.slot-owned {
+  margin: 6px 0 0;
+  color: var(--text-silver);
+  font-size: 0.82rem;
 }
 
 .slot-qty-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 8px;
+  top: 0;
+  right: 0;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
   border-radius: 20px;
   background: rgba(20, 22, 25, 0.95);
   border: 1px solid rgba(25, 133, 161, 0.65);
   color: var(--accent);
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-.slot-label {
-  margin-top: 10px;
-  font-size: 0.82rem;
+.slot-description-text {
+  margin: 0;
+  font-size: 0.84rem;
   color: var(--text-silver);
-  text-align: center;
-  max-width: 100%;
-  line-height: 1.25;
+  line-height: 1.45;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 3.6rem;
+}
+
+.slot-rating-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slot-stats {
+  margin-top: auto;
+  display: grid;
+  gap: 7px;
+}
+
+.slot-stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.slot-stat-row span {
+  color: var(--text-silver);
+}
+
+.slot-stat-row strong {
+  color: var(--text-light);
+  font-weight: 700;
+}
+
+.slot-status {
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.slot-status.is-rated {
+  color: #8cf1b2;
+  border-color: rgba(46, 204, 113, 0.45);
+  background: rgba(46, 204, 113, 0.14);
+}
+
+.slot-status.is-unrated {
+  color: #ffd58f;
+  border-color: rgba(241, 196, 15, 0.48);
+  background: rgba(241, 196, 15, 0.12);
 }
 
 .inventory-tooltip {
@@ -217,13 +327,13 @@ aside.collapsed .sidebar-nav-btn .btn-label {
 }
 
 .pending-reviews-panel {
-  margin-bottom: 20px;
   padding: 18px;
   border-radius: 10px;
   border: 1px solid rgba(25, 133, 161, 0.28);
   background: rgba(20, 22, 25, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  height: auto;
 }
 
 .pending-reviews-header h3 {
@@ -374,9 +484,20 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-size: var(--font-size-h2);
   }
 
+  .inventory-layout.has-review-panel {
+    display: block;
+  }
+
+  .inventory-layout.has-review-panel .inventory-main-column,
+  .inventory-layout.has-review-panel .pending-reviews-panel {
+    max-width: 100%;
+    width: 100%;
+    flex: none;
+  }
+
   .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
   }
 
   .pending-review-item-meta {
@@ -392,32 +513,51 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   }
 
   .inventory-slot {
-    min-height: 120px;
-    padding: 8px;
+    min-height: auto;
+    padding: 12px;
     border-radius: 6px;
   }
 
+  .slot-top-row {
+    padding-right: 42px;
+  }
+
   .slot-thumb {
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
   }
 
   .slot-icon {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
   }
 
   .slot-qty-badge {
-    min-width: 24px;
-    height: 24px;
+    min-width: 28px;
+    height: 28px;
     padding: 0 6px;
     font-size: 0.75rem;
-    top: 4px;
-    right: 4px;
+    top: 0;
+    right: 0;
   }
 
   .slot-label {
-    margin-top: 6px;
-    font-size: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .slot-type,
+  .slot-owned,
+  .slot-description-text {
+    font-size: 0.78rem;
+  }
+
+  .slot-description-text {
+    min-height: auto;
+    -webkit-line-clamp: 4;
+  }
+
+  .slot-stat-row {
+    font-size: 0.76rem;
+    padding: 7px 8px;
   }
 
   .inventory-tooltip {
@@ -441,19 +581,30 @@ aside.collapsed .sidebar-nav-btn .btn-label {
 }
 
 @media (min-width: 768px) and (max-width: 1199px) {
+  .inventory-layout.has-review-panel {
+    display: block;
+  }
+
+  .inventory-layout.has-review-panel .inventory-main-column,
+  .inventory-layout.has-review-panel .pending-reviews-panel {
+    max-width: 100%;
+    width: 100%;
+    flex: none;
+  }
+
   .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 14px;
   }
 
   .inventory-slot {
-    min-height: 150px;
-    padding: 11px;
+    min-height: 280px;
+    padding: 14px;
   }
 
   .slot-thumb {
-    width: 80px;
-    height: 80px;
+    width: 74px;
+    height: 74px;
   }
 
   .slot-icon {
@@ -461,14 +612,17 @@ aside.collapsed .sidebar-nav-btn .btn-label {
   }
 
   .slot-qty-badge {
-    min-width: 26px;
-    height: 26px;
+    min-width: 32px;
+    height: 32px;
     font-size: 0.8rem;
   }
 
   .slot-label {
-    font-size: 0.8rem;
-    margin-top: 8px;
+    font-size: 0.92rem;
+  }
+
+  .slot-description-text {
+    min-height: 3.2rem;
   }
 
   .inventory-tooltip {
@@ -486,22 +640,27 @@ aside.collapsed .sidebar-nav-btn .btn-label {
 
 @media (min-width: 1200px) {
   .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
   }
 
   .inventory-slot {
-    min-height: 166px;
-    padding: 12px;
+    min-height: 320px;
+    padding: 16px;
   }
 
   .slot-thumb {
-    width: 96px;
-    height: 96px;
+    width: 84px;
+    height: 84px;
   }
 
   .slot-icon {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
+  }
+
+  .inventory-layout.has-review-panel .pending-reviews-panel {
+    position: sticky;
+    top: 20px;
   }
 
   .inventory-tooltip {
