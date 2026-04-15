@@ -36,6 +36,7 @@ try {
             i.ItemId AS id,
             i.Name AS item_name,
             t.Name AS item_type,
+            i.Rarity AS rarity,
             IFNULL(AVG(r.Rating), 0) AS rating,
             COUNT(r.ReviewId) AS review_count
          FROM Items i
@@ -43,7 +44,7 @@ try {
          LEFT JOIN Reviews r ON r.ItemId = i.ItemId
          WHERE i.IsActive = 1
            AND (i.Name LIKE :name_query ESCAPE '\\\\' OR t.Name LIKE :type_query ESCAPE '\\\\')
-         GROUP BY i.ItemId, i.Name, t.Name
+            GROUP BY i.ItemId, i.Name, t.Name, i.Rarity
          ORDER BY
             CASE WHEN i.Name LIKE :prefix_query ESCAPE '\\\\' THEN 0 ELSE 1 END,
             i.Name ASC
@@ -67,6 +68,7 @@ try {
             'id' => (int)$row['id'],
             'name' => (string)($row['item_name'] ?? ''),
             'type' => (string)($row['item_type'] ?? ''),
+            'rarity' => formatRarityLabel((string)($row['rarity'] ?? 'Commun')),
             'image' => getItemImage((string)($row['item_type'] ?? '')),
             'rating' => (float)$ratingText,
             'ratingText' => $ratingText,

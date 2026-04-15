@@ -387,11 +387,15 @@ class LiveSearchSuggestions {
         typeof item.ratingText === "string"
           ? item.ratingText
           : this.formatRatingValue(ratingValue);
+      const rarityText =
+        typeof item.rarity === "string" && item.rarity.trim() !== ""
+          ? item.rarity.trim()
+          : "Commun";
       const reviewCount = Number.isFinite(Number(item.reviewCount))
         ? Number(item.reviewCount)
         : 0;
 
-      meta.innerHTML = `${this.renderStars(ratingValue)}<span class="rating-value-inline">${ratingText}/5 (${reviewCount} avis)</span>`;
+      meta.innerHTML = `${this.renderStars(ratingValue)}<span class="rating-value-inline">${rarityText} · ${ratingText}/5 (${reviewCount} avis)</span>`;
 
       textWrap.appendChild(title);
       textWrap.appendChild(meta);

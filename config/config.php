@@ -52,6 +52,37 @@ function getItemImage($type)
     }
 }
 
+function normalizeRarityValue(string $rarity): string
+{
+    $normalized = mb_strtolower(trim($rarity), 'UTF-8');
+
+    return match ($normalized) {
+        'commun' => 'commun',
+        'rare' => 'rare',
+        'epique', 'épique' => 'epique',
+        'legendaire', 'légendaire' => 'legendaire',
+        'mythique' => 'mythique',
+        default => 'commun',
+    };
+}
+
+function formatRarityLabel(string $rarity): string
+{
+    return match (normalizeRarityValue($rarity)) {
+        'commun' => 'Commun',
+        'rare' => 'Rare',
+        'epique' => 'Épique',
+        'legendaire' => 'Légendaire',
+        'mythique' => 'Mythique',
+        default => 'Commun',
+    };
+}
+
+function getRarityClass(string $rarity): string
+{
+    return 'rarity-' . normalizeRarityValue($rarity);
+}
+
 function clampRating(float $rating): float
 {
     if (!is_finite($rating)) {
