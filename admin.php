@@ -391,7 +391,7 @@ include __DIR__ . '/templates/head.php';
 </div>
 
 <div id="editModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
-    <div class="modal-content details-glass-card" style="background:#1a1b1e; padding:30px; border-radius:8px; width:500px; border: 1px solid var(--accent);">
+    <div class="modal-content details-glass-card" style="background:#1a1b1e; padding:30px; border-radius:8px; width:600px; max-width:90%; border: 1px solid var(--accent);">
         <h3 style="margin-top:0; color:var(--accent);"><i class="fa-solid fa-hammer"></i> Modifier l'Artefact</h3>
         <form method="POST" action="admin.php">
             <input type="hidden" name="action" value="edit_item">
@@ -401,21 +401,27 @@ include __DIR__ . '/templates/head.php';
                 <label>Nom de l'objet</label>
                 <input type="text" name="name" id="edit_name" class="admin-input" required>
             </div>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <div class="admin-form-group" style="flex:1;">
-                    <label>GP</label><input type="number" min="0" name="gold" id="edit_gold" class="admin-input" required>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; margin-top:15px;">
+                <div class="admin-form-group">
+                    <label>Prix Or (GP)</label>
+                    <input type="number" min="0" name="gold" id="edit_gold" class="admin-input" required>
                 </div>
-                <div class="admin-form-group" style="flex:1;">
-                    <label>SP</label><input type="number" min="0" name="silver" id="edit_silver" class="admin-input" required>
+                <div class="admin-form-group">
+                    <label>Prix Argent (SP)</label>
+                    <input type="number" min="0" name="silver" id="edit_silver" class="admin-input" required>
                 </div>
-                <div class="admin-form-group" style="flex:1;">
-                    <label>BP</label><input type="number" min="0" name="bronze" id="edit_bronze" class="admin-input" required>
+                <div class="admin-form-group">
+                    <label>Prix Bronze (BP)</label>
+                    <input type="number" min="0" name="bronze" id="edit_bronze" class="admin-input" required>
                 </div>
-                <div class="admin-form-group" style="flex:1;">
-                    <label>Stock</label><input type="number" min="0" name="stock" id="edit_stock" class="admin-input" required>
+                <div class="admin-form-group">
+                    <label>Stock</label>
+                    <input type="number" min="0" name="stock" id="edit_stock" class="admin-input" required>
                 </div>
             </div>
-            <div class="admin-form-group" style="margin-top:10px;">
+
+            <div class="admin-form-group" style="margin-top:15px;">
                 <label>Description</label>
                 <textarea name="description" id="edit_desc" class="admin-input" rows="4" required></textarea>
             </div>
