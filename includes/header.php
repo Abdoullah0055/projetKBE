@@ -36,6 +36,9 @@
             <button class="btn-outline-custom" title="Mon profil" onclick="window.location.href='profile.php'">
                 <i class="fa-solid fa-user-gear"></i>
             </button>
+            <button class="btn-outline-custom desktop-only" title="Mon inventaire" onclick="window.location.href='inventory.php'">
+                <i class="fa-solid fa-box-open"></i>
+            </button>
             <button id="cart-btn" class="btn-accent" onclick="window.location.href='panier.php'">
                 <i class="fa-solid fa-cart-shopping"></i>
             </button>
@@ -89,6 +92,9 @@
             <?php if ($user['isConnected']): ?>
                 <button onclick="window.location.href='profile.php'" class="drawer-action">
                     <i class="fa-solid fa-user-gear"></i> Mon Profil
+                </button>
+                <button onclick="window.location.href='inventory.php'" class="drawer-action">
+                    <i class="fa-solid fa-box-open"></i> Inventaire
                 </button>
                 <button onclick="window.location.href='panier.php'" class="drawer-action">
                     <i class="fa-solid fa-cart-shopping"></i> Panier
