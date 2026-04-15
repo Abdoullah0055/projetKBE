@@ -74,6 +74,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flushProcedureResults($stmt);
 
             if ($foundUser && password_verify($password, $foundUser['Password'])) {
+                if (isset($utilisateur_db['IsBanned']) && $utilisateur_db['IsBanned'] == 1) {
+        $erreur = "Votre compte a été bloqué par le Conseil des Mages de l'Arsenal.";
+              } 
+              else {
                 $_SESSION['user'] = [
                     'id' => (int)$foundUser['UserId'],
                     'alias' => $foundUser['Alias'],
@@ -85,7 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header("Location: index.php");
                 exit();
             }
-
+            }
             $error = "Alias ou mot de passe incorrect.";
         } catch (PDOException $e) {
             $error = "Erreur systeme : " . $e->getMessage();
