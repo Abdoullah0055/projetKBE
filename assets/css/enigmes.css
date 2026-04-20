@@ -1,0 +1,559 @@
+:root {
+  --enigme-panel: rgba(39, 18, 61, 0.68);
+  --enigme-outline: rgba(197, 152, 255, 0.42);
+  --enigme-glow: rgba(175, 110, 255, 0.34);
+  --enigme-bg: #5d2e7d;
+  --enigme-bg-deep: #2a123f;
+}
+
+body.enigmes-page {
+  overflow: hidden;
+  min-height: 100vh;
+}
+
+.enigmes-main {
+  min-height: 100vh;
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enigmes-stage {
+  width: 100%;
+  min-height: 100vh;
+  padding: 0;
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(56, 24, 88, 0.22), rgba(16, 6, 29, 0.48)),
+    linear-gradient(135deg, var(--enigme-bg), var(--enigme-bg-deep));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enigmes-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-position: center center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transform-origin: center center;
+  animation: stage-float 5.8s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.enigmes-stage.is-intro-active::after {
+  background-image: url("../img/Magicien/gone.png");
+}
+
+.enigmes-stage.is-riddle-active::after {
+  background-image: url("../img/Magicien/respond.png");
+}
+
+.enigmes-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 68%, rgba(244, 212, 255, 0.16), transparent 12%),
+    radial-gradient(circle at 50% 68%, rgba(154, 108, 255, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(14, 4, 25, 0.08), rgba(14, 4, 25, 0.32));
+  pointer-events: none;
+  z-index: 1;
+}
+
+.enigmes-back {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  padding: 0;
+  background: transparent;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.enigmes-back:hover {
+  transform: translateY(-1px);
+}
+
+.enigmes-back:focus-visible {
+  outline: none;
+}
+
+.enigmes-back-image {
+  display: block;
+  width: clamp(180px, 20vw, 280px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.28));
+}
+
+.enigmes-replay-btn {
+  position: absolute;
+  top: 84px;
+  right: 24px;
+  z-index: 7;
+  width: 92px;
+  height: 92px;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  margin: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.enigmes-replay-btn:hover {
+  transform: translateY(-1px);
+}
+
+.enigmes-replay-btn:focus-visible {
+  outline: none;
+}
+
+.enigmes-replay-icon {
+  width: 92px;
+  height: 92px;
+  object-fit: contain;
+  filter: none;
+}
+
+.enigmes-stage.is-riddle-active .enigmes-replay-btn {
+  display: inline-flex;
+}
+
+.enigmes-stage.is-riddle-active.is-replay-active .enigmes-replay-btn {
+  display: none;
+}
+
+.enigmes-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity 0.45s ease,
+    visibility 0.45s ease;
+}
+
+.enigmes-intro-dock {
+  position: absolute;
+  left: clamp(80px, 12vw, 226px);
+  bottom: 0;
+  width: min(1280px, calc(100vw - clamp(150px, 22vw, 430px)));
+  display: grid;
+  grid-template-columns: auto minmax(460px, 1fr);
+  align-items: end;
+  gap: clamp(2px, 0.5vw, 8px);
+}
+
+.enigmes-mage {
+  pointer-events: auto;
+  appearance: none;
+  border: none;
+  margin: 0;
+  padding: 0;
+  line-height: 0;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition: transform 0.24s ease;
+}
+
+.enigmes-mage:hover {
+  transform: translateY(-2px);
+}
+
+.enigmes-mage:focus-visible {
+  outline: 2px solid rgba(236, 205, 255, 0.95);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
+.enigmes-mage-image {
+  display: block;
+  width: clamp(360px, 46vw, 620px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 26px rgba(0, 0, 0, 0.36));
+  opacity: 1;
+  transform: translateY(12px) scale(1);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease,
+    filter 0.22s ease;
+}
+
+.enigmes-mage.is-switching .enigmes-mage-image {
+  opacity: 0.28;
+  transform: translateY(24px) scale(0.98);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.2));
+}
+
+.enigmes-dialog {
+  align-self: center;
+  width: min(100%, clamp(500px, 44vw, 760px));
+  margin-left: -22px;
+  margin-bottom: 0;
+  transform: translateY(88%);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: rgba(231, 207, 159, 0.92);
+  background-image: url("../img/Magicien/scroll.png");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  border: 1px solid rgba(136, 93, 38, 0.55);
+  border-radius: 22px;
+  padding: 16px 20px 14px;
+  box-shadow:
+    0 0 24px rgba(124, 74, 31, 0.24),
+    0 18px 36px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.enigmes-dialog::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(180deg, rgba(249, 236, 209, 0.76), rgba(231, 207, 159, 0.72));
+}
+
+.enigmes-dialog-text {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  min-height: 84px;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: clamp(0.98rem, 1.8vw, 1.16rem);
+  font-weight: 700;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: #1f0f00;
+  text-align: center;
+  text-wrap: pretty;
+  text-shadow: 0 1px 0 rgba(255, 247, 229, 0.92);
+}
+
+.enigmes-dialog-text.is-typing::after {
+  content: "|";
+  display: inline-block;
+  margin-left: 3px;
+  color: #1f0f00;
+  animation: dialog-caret 0.85s steps(1, end) infinite;
+}
+
+.enigmes-dialog-hint {
+  position: relative;
+  z-index: 1;
+  margin: 10px 0 0;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: rgba(55, 28, 6, 0.92);
+  text-align: center;
+}
+
+.enigmes-orb {
+  position: absolute;
+  left: 50%;
+  top: 58.2%;
+  transform: translate(-50%, -50%);
+  width: min(100%, 560px);
+  z-index: 4;
+  animation: orb-pulse 4.2s ease-in-out infinite;
+  opacity: 1;
+  pointer-events: auto;
+  transition:
+    opacity 0.38s ease,
+    transform 0.38s ease;
+}
+
+.enigmes-form {
+  padding: 10px;
+  border-radius: 999px;
+  background: rgba(31, 13, 48, 0.46);
+  box-shadow:
+    0 0 32px rgba(175, 110, 255, 0.22),
+    0 18px 36px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.enigmes-form input {
+  width: 100%;
+  padding: 16px 24px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 250, 255, 0.96);
+  color: #2c1840;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  outline: none;
+  box-shadow: 0 0 0 2px transparent;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.25s ease,
+    opacity 0.25s ease;
+}
+
+.enigmes-form input:focus {
+  box-shadow: 0 0 0 2px rgba(171, 103, 255, 0.5);
+  transform: scale(1.01);
+}
+
+.enigmes-form input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.enigmes-form input::placeholder {
+  color: rgba(72, 39, 101, 0.82);
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.enigmes-stage.is-intro-active .enigmes-orb {
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -45%) scale(0.98);
+}
+
+.enigmes-stage.is-riddle-active .enigmes-intro {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.enigmes-stage.is-riddle-active.is-replay-active .enigmes-intro {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.enigmes-stage.is-intro-active.is-replay-active .enigmes-intro {
+  pointer-events: auto;
+}
+
+.enigmes-stage.is-riddle-active .enigmes-orb {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.enigmes-stage.is-riddle-active.is-replay-active .enigmes-orb {
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.enigmes-fog {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  background:
+    radial-gradient(circle at 50% 52%, rgba(6, 7, 12, 1) 0%, rgba(6, 7, 12, 0.99) 46%, rgba(5, 6, 10, 0.98) 100%),
+    radial-gradient(circle at 34% 62%, rgba(230, 238, 255, 0.44), transparent 52%),
+    radial-gradient(circle at 70% 42%, rgba(214, 228, 255, 0.34), transparent 58%),
+    linear-gradient(180deg, rgba(5, 6, 10, 0.98), rgba(3, 4, 8, 0.995));
+  filter: blur(3px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transform: scale(1.04);
+  transition:
+    opacity 0.48s ease,
+    visibility 0.48s ease,
+    transform 0.48s ease,
+    filter 0.48s ease;
+}
+
+.enigmes-stage.is-fogging .enigmes-fog {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  filter: blur(4px);
+}
+
+@keyframes stage-float {
+  0%,
+  100% {
+    transform: scale(1.015);
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.12));
+  }
+
+  50% {
+    transform: translateY(-8px) scale(1.03);
+    filter: drop-shadow(0 18px 28px rgba(167, 96, 255, 0.18));
+  }
+}
+
+@keyframes orb-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  50% {
+    transform: translate(-50%, -50%) scale(1.02);
+  }
+}
+
+@keyframes dialog-caret {
+  0%,
+  45% {
+    opacity: 1;
+  }
+
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .enigmes-main {
+    padding: 0;
+  }
+
+  .enigmes-stage {
+    min-height: 100vh;
+  }
+
+  .enigmes-intro-dock {
+    left: clamp(42px, 8vw, 108px);
+    bottom: 0;
+    width: calc(100vw - clamp(80px, 16vw, 200px));
+    grid-template-columns: auto minmax(280px, 1fr);
+    gap: clamp(2px, 0.5vw, 8px);
+  }
+
+  .enigmes-mage-image {
+    width: clamp(260px, 48vw, 430px);
+  }
+
+  .enigmes-dialog {
+    width: min(100%, clamp(320px, 45vw, 520px));
+    margin-left: -14px;
+    margin-bottom: 0;
+    transform: translateY(70%);
+  }
+
+  .enigmes-dialog-text {
+    min-height: 72px;
+  }
+
+  .enigmes-orb {
+    top: 60%;
+    width: min(100%, 500px);
+  }
+}
+
+@media (max-width: 640px) {
+  .enigmes-stage {
+    min-height: 100vh;
+  }
+
+  .enigmes-back {
+    top: 16px;
+    left: 16px;
+  }
+
+  .enigmes-back-image {
+    width: clamp(128px, 34vw, 196px);
+  }
+
+  .enigmes-replay-btn {
+    top: 72px;
+    right: 16px;
+    width: 80px;
+    height: 80px;
+  }
+
+  .enigmes-replay-icon {
+    width: 80px;
+    height: 80px;
+  }
+
+  .enigmes-intro-dock {
+    left: clamp(8px, 3.5vw, 15px);
+    bottom: 0;
+    width: calc(100vw - clamp(18px, 8vw, 34px));
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .enigmes-mage-image {
+    width: clamp(160px, 46vw, 230px);
+    transform: translateY(8px) scale(1);
+  }
+
+  .enigmes-dialog {
+    width: min(100%, clamp(220px, 52vw, 340px));
+    margin-left: -8px;
+    margin-bottom: 0;
+    transform: translateY(50%);
+    border-radius: 16px;
+    padding: 12px 14px 11px;
+  }
+
+  .enigmes-dialog-text {
+    min-height: 62px;
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .enigmes-dialog-hint {
+    margin-top: 8px;
+    font-size: 0.72rem;
+  }
+
+  .enigmes-stage.is-intro-active .enigmes-orb {
+    transform: translate(-50%, -42%) scale(0.98);
+  }
+
+  .enigmes-orb {
+    top: 63%;
+    width: min(100%, 380px);
+  }
+
+  .enigmes-form {
+    padding: 10px;
+  }
+
+  .enigmes-form input {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+  }
+}

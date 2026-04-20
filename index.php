@@ -124,6 +124,11 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
                         Filtrer
                     </button>
                 </form>
+
+                <a href="enigmes.php"
+                    style="display:inline-flex; align-items:center; justify-content:center; width:100%; margin-top:14px; padding:11px 14px; background:rgba(25,133,161,0.16); color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.9rem; border:1px solid rgba(25,133,161,0.45); border-radius:999px;">
+                    &Eacute;nigme
+                </a>
             </div>
 
             <div class="cta-box">

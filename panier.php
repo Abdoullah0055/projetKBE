@@ -27,7 +27,7 @@ $user = [
     ]
 ];
 
-// 2. RÉCUPÉRATION DU THÈME ET DE L'IMAGE DE FOND
+// 2. RÉCUPÉRATION DU THÈME ET DE L'IMAGE DE FOND   
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
