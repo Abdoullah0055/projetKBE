@@ -30,7 +30,25 @@ if (isset($_SESSION['user'])) {
 }
 
 // 2. RÉCUPÉRATION DES ITEMS (Ta requête SQL d'origine)
-$stmt = $pdo->query("
+$itemsPerPage = 25;
+$countStmt = $pdo->query("
+    SELECT COUNT(*)
+    FROM Items i
+    WHERE i.IsActive = TRUE
+");
+$totalItems = (int) $countStmt->fetchColumn();
+$totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
+
+$pageFromQuery = filter_input(
+    INPUT_GET,
+    'page',
+    FILTER_VALIDATE_INT,
+    ['options' => ['default' => 1, 'min_range' => 1]]
+);
+$currentPage = min((int) ($pageFromQuery ?: 1), $totalPages);
+$offset = ($currentPage - 1) * $itemsPerPage;
+
+$stmt = $pdo->prepare("
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
@@ -45,7 +63,12 @@ $stmt = $pdo->query("
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.IsActive = TRUE
     GROUP BY i.ItemId, i.Name, t.Name, i.Rarity, i.PriceGold, i.Stock
+    ORDER BY i.ItemId ASC
+    LIMIT :limit OFFSET :offset
 ");
+$stmt->bindValue(':limit', $itemsPerPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $title = "L'Arsenal - Marché Noir";
@@ -69,11 +92,21 @@ function normalizeItemType(string $type): string
         default => $t
     };
 }
+
+function buildPageUrl(int $targetPage): string
+{
+    $params = $_GET;
+    $params['page'] = max(1, $targetPage);
+
+    return 'index.php?' . http_build_query($params);
+}
 ?>
 
 <style>
     :root {
         --main-bg: url('<?= $bgImage ?>');
+        --catalog-card-max: clamp(192px, 14.8vw, 232px);
+        --catalog-card-gap: 10px;
     }
 
     body {
@@ -101,27 +134,31 @@ function normalizeItemType(string $type): string
 
     .product-list {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--catalog-card-gap);
+        align-items: start;
+        justify-items: center;
     }
 
     .product-list .item-row {
         position: relative;
         isolation: isolate;
         aspect-ratio: 4 / 5;
-        min-height: 290px;
+        min-height: 0;
+        width: 100%;
+        max-width: var(--catalog-card-max);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        gap: 14px;
-        padding: 14px;
-        border-radius: 14px;
+        justify-content: flex-start;
+        gap: 7px;
+        padding: 9px;
+        border-radius: 10px;
         overflow: hidden;
         cursor: pointer;
-        background: rgba(14, 16, 20, 0.84);
+        background: rgba(14, 16, 20, 0.86);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 14px 26px rgba(0, 0, 0, 0.32);
-        transition: transform 0.28s ease, border-color 0.28s ease, box-shadow 0.28s ease, background 0.28s ease;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
+        transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
     }
 
     .product-list .item-row::before {
@@ -129,51 +166,56 @@ function normalizeItemType(string $type): string
         position: absolute;
         inset: 0;
         border-radius: inherit;
-        background: linear-gradient(135deg, var(--rarity-tint, rgba(43, 85, 61, 0.4)) 0%, rgba(0, 0, 0, 0) 42%);
+        background: linear-gradient(135deg, var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%, var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%, rgba(0, 0, 0, 0) 88%);
         pointer-events: none;
         z-index: -1;
     }
 
     .product-list .item-row:hover {
-        transform: translateY(-6px);
+        transform: translateY(-3px);
         background: rgba(18, 21, 26, 0.92);
-        border-color: rgba(255, 255, 255, 0.24);
-        box-shadow: 0 18px 30px rgba(0, 0, 0, 0.44);
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 11px 18px rgba(0, 0, 0, 0.38);
     }
 
     .product-list .item-row.rarity-commun {
-        --rarity-tint: rgba(43, 92, 63, 0.42);
+        --rarity-tint-strong: rgba(43, 92, 63, 0.42);
+        --rarity-tint-soft: rgba(43, 92, 63, 0.18);
     }
 
     .product-list .item-row.rarity-rare {
-        --rarity-tint: rgba(38, 69, 112, 0.42);
+        --rarity-tint-strong: rgba(38, 69, 112, 0.42);
+        --rarity-tint-soft: rgba(38, 69, 112, 0.18);
     }
 
     .product-list .item-row.rarity-epique {
-        --rarity-tint: rgba(83, 62, 112, 0.46);
+        --rarity-tint-strong: rgba(83, 62, 112, 0.44);
+        --rarity-tint-soft: rgba(83, 62, 112, 0.2);
     }
 
     .product-list .item-row.rarity-legendaire {
-        --rarity-tint: rgba(118, 98, 50, 0.44);
+        --rarity-tint-strong: rgba(118, 98, 50, 0.42);
+        --rarity-tint-soft: rgba(118, 98, 50, 0.2);
     }
 
     .product-list .item-row.rarity-mythique {
-        --rarity-tint: rgba(201, 210, 222, 0.34);
+        --rarity-tint-strong: rgba(201, 210, 222, 0.34);
+        --rarity-tint-soft: rgba(201, 210, 222, 0.16);
     }
 
     .product-list .item-row.rarity-mythique::after {
         content: "";
         position: absolute;
-        top: -36%;
-        left: -56%;
-        width: 74%;
-        height: 212%;
-        background: linear-gradient(115deg, rgba(255, 255, 255, 0) 0%, rgba(239, 243, 250, 0.16) 48%, rgba(255, 255, 255, 0) 100%);
+        top: -30%;
+        left: -58%;
+        width: 90%;
+        height: 220%;
+        background: linear-gradient(115deg, rgba(255, 255, 255, 0) 0%, rgba(239, 243, 250, 0.12) 48%, rgba(255, 255, 255, 0) 100%);
         transform: rotate(8deg);
         opacity: 0;
         mix-blend-mode: screen;
         pointer-events: none;
-        animation: mythic-sheen 6.8s ease-in-out infinite;
+        animation: mythic-sheen 9s ease-in-out infinite;
     }
 
     @keyframes mythic-sheen {
@@ -199,7 +241,7 @@ function normalizeItemType(string $type): string
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 8px;
+        gap: 5px;
     }
 
     .item-rarity-pill,
@@ -208,9 +250,9 @@ function normalizeItemType(string $type): string
         align-items: center;
         justify-content: center;
         border-radius: 999px;
-        padding: 4px 10px;
-        font-size: 0.68rem;
-        letter-spacing: 0.6px;
+        padding: 2px 7px;
+        font-size: 0.56rem;
+        letter-spacing: 0.38px;
         text-transform: uppercase;
         font-weight: 700;
         border: 1px solid transparent;
@@ -255,28 +297,33 @@ function normalizeItemType(string $type): string
     }
 
     .item-card-media {
-        flex: 1;
+        flex: 1 1 auto;
+        min-height: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 6px;
     }
 
     .item-card-media .item-icon {
-        font-size: clamp(2.6rem, 5vw, 3.7rem);
+        font-size: clamp(1.8rem, 2.35vw, 2.55rem);
         width: auto;
     }
 
     .item-info {
-        margin-top: 2px;
+        margin-top: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
     }
 
     .item-info h3 {
         margin: 0;
-        font-size: 1.02rem;
-        line-height: 1.3;
+        font-size: clamp(0.79rem, 0.96vw, 0.9rem);
+        line-height: 1.2;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         line-clamp: 2;
@@ -285,74 +332,198 @@ function normalizeItemType(string $type): string
     }
 
     .item-price-line {
-        margin-top: 8px;
+        margin-top: 1px;
     }
 
     .item-price {
         margin: 0;
         color: #d9c176;
         font-weight: 700;
-        font-size: 1.08rem;
+        font-size: clamp(0.77rem, 1.02vw, 0.88rem);
     }
 
     .item-rating {
-        margin-top: 7px;
+        margin-top: 1px;
         display: flex;
         align-items: center;
-        gap: 7px;
+        gap: 4px;
     }
 
     .item-rating .rating-stars i {
-        font-size: 0.78rem;
+        font-size: 0.66rem;
     }
 
     .item-rating small {
         color: var(--text-silver);
-        font-size: 0.75rem;
+        font-size: 0.63rem;
     }
 
     .product-list .item-row.item-out-of-stock {
-        opacity: 0.72;
-        filter: saturate(0.65);
+        opacity: 0.7;
+        filter: saturate(0.55);
     }
 
     .product-list .item-row.item-out-of-stock:hover {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
     }
 
     #no-results-message {
         margin-top: 24px;
     }
 
-    @media (max-width: 767px) {
+    .catalog-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .catalog-pagination .page-link,
+    .catalog-pagination .page-current,
+    .catalog-pagination .page-ellipsis {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 10px;
+        border-radius: 9px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .catalog-pagination .page-link {
+        color: var(--text-light);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(18, 22, 27, 0.65);
+        transition: background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .catalog-pagination .page-link:hover {
+        background: rgba(25, 133, 161, 0.24);
+        border-color: rgba(25, 133, 161, 0.62);
+    }
+
+    .catalog-pagination .page-current {
+        color: #fff;
+        border: 1px solid rgba(25, 133, 161, 0.8);
+        background: rgba(25, 133, 161, 0.45);
+    }
+
+    .catalog-pagination .page-ellipsis {
+        color: var(--text-silver);
+    }
+
+    .catalog-pagination .page-nav {
+        min-width: auto;
+        padding: 0 12px;
+    }
+
+    .product-list .item-row.item-last-single-row-2 {
+        grid-column: 1 / -1;
+        max-width: var(--catalog-card-max);
+        width: 100%;
+        justify-self: center;
+    }
+
+    .product-list .item-row.item-last-single-row-3 {
+        grid-column: 2;
+    }
+
+    .product-list .item-row.item-last-single-row-4 {
+        grid-column: 2 / span 2;
+    }
+
+    .product-list .item-row.item-last-single-row-5 {
+        grid-column: 3;
+    }
+
+    .product-list .item-row.item-last-single-row-6 {
+        grid-column: 3 / span 2;
+    }
+
+    .product-list .item-row.item-last-single-row-7 {
+        grid-column: 4;
+    }
+
+    @media (min-width: 600px) {
         .product-list {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 860px) {
+        .product-list {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+    }
+
+    @media (min-width: 1160px) {
+        .product-list {
+            grid-template-columns: repeat(5, minmax(0, 1fr));
             gap: 12px;
         }
+    }
 
+    @media (min-width: 1500px) {
+        .product-list {
+            grid-template-columns: repeat(6, minmax(0, 1fr));
+            gap: 11px;
+        }
+    }
+
+    @media (min-width: 1840px) {
+        .product-list {
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 10px;
+        }
+    }
+
+    @media (max-width: 859px) {
         .product-list .item-row {
-            min-height: 240px;
-            padding: 12px;
+            max-width: 184px;
+            padding: 8px;
         }
 
         .item-rarity-pill,
         .item-stock-pill {
-            font-size: 0.64rem;
-            padding: 4px 8px;
+            font-size: 0.55rem;
+            padding: 2px 6px;
         }
 
         .item-info h3 {
-            font-size: 0.94rem;
+            font-size: 0.76rem;
         }
 
         .item-price {
-            font-size: 0.95rem;
+            font-size: 0.76rem;
+        }
+
+        .catalog-pagination {
+            gap: 6px;
+        }
+
+        .catalog-pagination .page-link,
+        .catalog-pagination .page-current,
+        .catalog-pagination .page-ellipsis {
+            min-width: 30px;
+            height: 30px;
+            font-size: 0.76rem;
         }
     }
 
     @media (max-width: 460px) {
         .product-list {
             grid-template-columns: 1fr;
+        }
+
+        .product-list .item-row {
+            max-width: min(228px, 100%);
         }
     }
 
@@ -530,11 +701,44 @@ function normalizeItemType(string $type): string
 
         <div id="no-results-message">Aucun objet trouvé dans les archives...</div>
 
-        <!-- <div class="pagination">
-            <a href="#">&laquo; Précédent</a>
-            <span>Page <strong>1</strong> sur 1</span>
-            <a href="#">Suivant &raquo;</a>
-        </div> -->
+        <?php if ($totalPages > 1): ?>
+            <nav class="catalog-pagination" id="catalog-pagination" aria-label="Pagination des items">
+                <?php if ($currentPage > 1): ?>
+                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage - 1)) ?>">&laquo; Prec.</a>
+                <?php endif; ?>
+
+                <?php
+                $windowStart = max(1, $currentPage - 2);
+                $windowEnd = min($totalPages, $currentPage + 2);
+                ?>
+
+                <?php if ($windowStart > 1): ?>
+                    <a class="page-link" href="<?= htmlspecialchars(buildPageUrl(1)) ?>">1</a>
+                    <?php if ($windowStart > 2): ?>
+                        <span class="page-ellipsis">...</span>
+                    <?php endif; ?>
+                <?php endif; ?>
+
+                <?php for ($page = $windowStart; $page <= $windowEnd; $page++): ?>
+                    <?php if ($page === $currentPage): ?>
+                        <span class="page-current"><?= $page ?></span>
+                    <?php else: ?>
+                        <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($page)) ?>"><?= $page ?></a>
+                    <?php endif; ?>
+                <?php endfor; ?>
+
+                <?php if ($windowEnd < $totalPages): ?>
+                    <?php if ($windowEnd < ($totalPages - 1)): ?>
+                        <span class="page-ellipsis">...</span>
+                    <?php endif; ?>
+                    <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($totalPages)) ?>"><?= $totalPages ?></a>
+                <?php endif; ?>
+
+                <?php if ($currentPage < $totalPages): ?>
+                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage + 1)) ?>">Suiv. &raquo;</a>
+                <?php endif; ?>
+            </nav>
+        <?php endif; ?>
     </main>
 </div>
 
@@ -545,6 +749,60 @@ function normalizeItemType(string $type): string
         const resetBtn = document.getElementById("reset-filters");
         const items = document.querySelectorAll(".item-row");
         const noResults = document.getElementById("no-results-message");
+        const pagination = document.getElementById("catalog-pagination");
+
+        function getGridColumns() {
+            if (window.matchMedia("(min-width: 1840px)").matches) {
+                return 7;
+            }
+
+            if (window.matchMedia("(min-width: 1500px)").matches) {
+                return 6;
+            }
+
+            if (window.matchMedia("(min-width: 1160px)").matches) {
+                return 5;
+            }
+
+            if (window.matchMedia("(min-width: 860px)").matches) {
+                return 4;
+            }
+
+            if (window.matchMedia("(min-width: 600px)").matches) {
+                return 3;
+            }
+
+            if (window.matchMedia("(min-width: 460px)").matches) {
+                return 2;
+            }
+
+            return 1;
+        }
+
+        function refreshLastRowAlignment() {
+            items.forEach(item => {
+                item.classList.remove(
+                    "item-last-single-row-2",
+                    "item-last-single-row-3",
+                    "item-last-single-row-4",
+                    "item-last-single-row-5",
+                    "item-last-single-row-6",
+                    "item-last-single-row-7"
+                );
+            });
+
+            const visibleItems = Array.from(items).filter(item => item.style.display !== "none");
+            const columns = getGridColumns();
+
+            if (columns <= 1 || visibleItems.length === 0) {
+                return;
+            }
+
+            if (visibleItems.length % columns === 1) {
+                const orphanItem = visibleItems[visibleItems.length - 1];
+                orphanItem.classList.add(`item-last-single-row-${columns}`);
+            }
+        }
 
         function applyFilters() {
             const selectedType = typeFilter.value;
@@ -564,6 +822,12 @@ function normalizeItemType(string $type): string
             });
 
             noResults.style.display = (count === 0) ? "block" : "none";
+
+            if (pagination) {
+                pagination.style.display = (count === 0) ? "none" : "flex";
+            }
+
+            refreshLastRowAlignment();
         }
 
         typeFilter.addEventListener("change", applyFilters);
@@ -573,6 +837,9 @@ function normalizeItemType(string $type): string
             searchFilter.value = "";
             applyFilters();
         });
+
+        window.addEventListener("resize", refreshLastRowAlignment);
+        refreshLastRowAlignment();
     });
 </script>
 

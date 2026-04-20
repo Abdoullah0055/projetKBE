@@ -120,106 +120,66 @@ END$$
 
 DELIMITER ;
 
+SET FOREIGN_KEY_CHECKS = 0;
+SET @OLD_DEFAULT_STORAGE_ENGINE = @@default_storage_engine;
+SET default_storage_engine = InnoDB;
+
 -- --------------------------------------------------------
 
 --
--- Structure de la table `armorproperties`
+-- Structure de la table `users`
 --
 
-DROP TABLE IF EXISTS `armorproperties`;
-CREATE TABLE IF NOT EXISTS `armorproperties` (
-  `ItemId` int NOT NULL,
-  `Defense` int NOT NULL,
-  `Durability` int NOT NULL DEFAULT '100',
-  `RequiredLevel` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`ItemId`)
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `UserId` int NOT NULL AUTO_INCREMENT,
+  `Alias` varchar(30) NOT NULL,
+  `FullName` varchar(80) DEFAULT NULL,
+  `Email` varchar(190) DEFAULT NULL,
+  `AvatarUrl` varchar(255) DEFAULT NULL,
+  `Password` varchar(255) NOT NULL,
+  `Role` varchar(20) NOT NULL,
+  `Gold` int NOT NULL DEFAULT '1000',
+  `Silver` int NOT NULL DEFAULT '1000',
+  `Bronze` int NOT NULL DEFAULT '1000',
+  `ProfileIsDeleted` tinyint(1) NOT NULL DEFAULT '0',
+  `ProfileDeletedAt` datetime DEFAULT NULL,
+  `IsBanned` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`UserId`),
+  UNIQUE KEY `UQ_Users_Alias` (`Alias`),
+  UNIQUE KEY `UQ_Users_Email` (`Email`)
 ) ;
 
 --
--- Déchargement des données de la table `armorproperties`
+-- Déchargement des données de la table `users`
 --
 
-INSERT INTO `armorproperties` (`ItemId`, `Defense`, `Durability`, `RequiredLevel`) VALUES
-(11, 8, 100, 1),
-(12, 15, 120, 2),
-(13, 20, 150, 3),
-(14, 35, 200, 5),
-(15, 12, 90, 2),
-(16, 24, 170, 4),
-(17, 18, 110, 3),
-(18, 30, 180, 5),
-(19, 6, 70, 1),
-(20, 40, 220, 7);
+INSERT INTO `users` (`UserId`, `Alias`, `FullName`, `Email`, `AvatarUrl`, `Password`, `Role`, `Gold`, `Silver`, `Bronze`, `ProfileIsDeleted`, `ProfileDeletedAt`, `IsBanned`) VALUES
+(3, 'test123', 'Testual', 'testual@yopmail.com', 'https://images.twinkl.co.uk/tw1n/image/private/t_630/u/ux/screenshot-2023-04-18-at-09.43.39_ver_1.png', '$2y$10$0X4W/We1RjcRARt/J0fvmuttALMkud5Y07M6KSVbKOoouQOsd7dFy', 'Player', 13575, 61813, 85434, 0, NULL, 0);
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `cartitems`
+-- Structure de la table `itemtypes`
 --
 
-DROP TABLE IF EXISTS `cartitems`;
-CREATE TABLE IF NOT EXISTS `cartitems` (
-  `CartItemId` int NOT NULL AUTO_INCREMENT,
-  `CartId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`CartItemId`),
-  UNIQUE KEY `UQ_CartItems_Cart_Item` (`CartId`,`ItemId`),
-  KEY `FK_CartItems_Items` (`ItemId`)
-) ;
-
--- --------------------------------------------------------
-
---
--- Structure de la table `carts`
---
-
-DROP TABLE IF EXISTS `carts`;
-CREATE TABLE IF NOT EXISTS `carts` (
-  `CartId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`CartId`),
-  UNIQUE KEY `UQ_Carts_User` (`UserId`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Déchargement des données de la table `carts`
---
-
-INSERT INTO `carts` (`CartId`, `UserId`, `CreatedAt`) VALUES
-(8, 3, '2026-04-08 10:29:49');
-
--- --------------------------------------------------------
-
---
--- Structure de la table `inventory`
---
-
-DROP TABLE IF EXISTS `inventory`;
-CREATE TABLE IF NOT EXISTS `inventory` (
-  `InventoryId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`InventoryId`),
-  UNIQUE KEY `UQ_Inventory_User_Item` (`UserId`,`ItemId`),
-  KEY `FK_Inventory_Items` (`ItemId`)
+DROP TABLE IF EXISTS `itemtypes`;
+CREATE TABLE IF NOT EXISTS `itemtypes` (
+  `ItemTypeId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(50) NOT NULL,
+  PRIMARY KEY (`ItemTypeId`),
+  UNIQUE KEY `UQ_ItemTypes_Name` (`Name`)
 ) ;
 
 --
--- Déchargement des données de la table `inventory`
+-- Déchargement des données de la table `itemtypes`
 --
 
-INSERT INTO `inventory` (`InventoryId`, `UserId`, `ItemId`, `Quantity`) VALUES
-(3, 3, 1, 1),
-(4, 3, 14, 1),
-(5, 3, 2, 1),
-(6, 3, 15, 1),
-(7, 3, 16, 2),
-(9, 3, 22, 1),
-(10, 3, 25, 1),
-(11, 3, 17, 1);
+INSERT INTO `itemtypes` (`ItemTypeId`, `Name`) VALUES
+(2, 'Armor'),
+(4, 'MagicSpell'),
+(3, 'Potion'),
+(1, 'Weapon');
 
 -- --------------------------------------------------------
 
@@ -293,26 +253,97 @@ INSERT INTO `items` (`ItemId`, `Name`, `Description`, `PriceGold`, `PriceSilver`
 -- --------------------------------------------------------
 
 --
--- Structure de la table `itemtypes`
+-- Structure de la table `weaponproperties`
 --
 
-DROP TABLE IF EXISTS `itemtypes`;
-CREATE TABLE IF NOT EXISTS `itemtypes` (
-  `ItemTypeId` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(50) NOT NULL,
-  PRIMARY KEY (`ItemTypeId`),
-  UNIQUE KEY `UQ_ItemTypes_Name` (`Name`)
+DROP TABLE IF EXISTS `weaponproperties`;
+CREATE TABLE IF NOT EXISTS `weaponproperties` (
+  `ItemId` int NOT NULL,
+  `DamageMin` int NOT NULL,
+  `DamageMax` int NOT NULL,
+  `Durability` int NOT NULL DEFAULT '100',
+  `RequiredLevel` int NOT NULL DEFAULT '1',
+  `AttackSpeed` decimal(4,2) NOT NULL DEFAULT '1.00',
+  PRIMARY KEY (`ItemId`)
 ) ;
 
 --
--- Déchargement des données de la table `itemtypes`
+-- Déchargement des données de la table `weaponproperties`
 --
 
-INSERT INTO `itemtypes` (`ItemTypeId`, `Name`) VALUES
-(2, 'Armor'),
-(4, 'MagicSpell'),
-(3, 'Potion'),
-(1, 'Weapon');
+INSERT INTO `weaponproperties` (`ItemId`, `DamageMin`, `DamageMax`, `Durability`, `RequiredLevel`, `AttackSpeed`) VALUES
+(1, 5, 10, 100, 1, 1.00),
+(2, 12, 20, 120, 2, 0.90),
+(3, 3, 8, 80, 1, 1.50),
+(4, 15, 25, 110, 3, 0.70),
+(5, 25, 40, 200, 5, 1.10),
+(6, 10, 18, 90, 2, 1.20),
+(7, 18, 30, 140, 3, 0.65),
+(8, 14, 22, 85, 4, 1.70),
+(9, 20, 32, 130, 4, 1.00),
+(10, 35, 55, 250, 7, 0.85);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `armorproperties`
+--
+
+DROP TABLE IF EXISTS `armorproperties`;
+CREATE TABLE IF NOT EXISTS `armorproperties` (
+  `ItemId` int NOT NULL,
+  `Defense` int NOT NULL,
+  `Durability` int NOT NULL DEFAULT '100',
+  `RequiredLevel` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`ItemId`)
+) ;
+
+--
+-- Déchargement des données de la table `armorproperties`
+--
+
+INSERT INTO `armorproperties` (`ItemId`, `Defense`, `Durability`, `RequiredLevel`) VALUES
+(11, 8, 100, 1),
+(12, 15, 120, 2),
+(13, 20, 150, 3),
+(14, 35, 200, 5),
+(15, 12, 90, 2),
+(16, 24, 170, 4),
+(17, 18, 110, 3),
+(18, 30, 180, 5),
+(19, 6, 70, 1),
+(20, 40, 220, 7);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `potionproperties`
+--
+
+DROP TABLE IF EXISTS `potionproperties`;
+CREATE TABLE IF NOT EXISTS `potionproperties` (
+  `ItemId` int NOT NULL,
+  `EffectType` varchar(50) NOT NULL,
+  `EffectValue` int NOT NULL,
+  `DurationSeconds` int DEFAULT NULL,
+  PRIMARY KEY (`ItemId`)
+) ;
+
+--
+-- Déchargement des données de la table `potionproperties`
+--
+
+INSERT INTO `potionproperties` (`ItemId`, `EffectType`, `EffectValue`, `DurationSeconds`) VALUES
+(21, 'Heal', 25, NULL),
+(22, 'Heal', 50, NULL),
+(23, 'Heal', 100, NULL),
+(24, 'Mana', 40, NULL),
+(25, 'Strength', 10, 30),
+(26, 'Defense', 10, 30),
+(27, 'Speed', 10, 25),
+(28, 'Heal', 200, NULL),
+(29, 'CurePoison', 1, NULL),
+(30, 'Mana', 100, NULL);
 
 -- --------------------------------------------------------
 
@@ -350,37 +381,24 @@ INSERT INTO `magicspellproperties` (`ItemId`, `SpellDamage`, `ManaCost`, `Elemen
 -- --------------------------------------------------------
 
 --
--- Structure de la table `orderitems`
+-- Structure de la table `carts`
 --
 
-DROP TABLE IF EXISTS `orderitems`;
-CREATE TABLE IF NOT EXISTS `orderitems` (
-  `OrderItemId` int NOT NULL AUTO_INCREMENT,
-  `OrderId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Quantity` int NOT NULL DEFAULT '1',
-  `PriceGold` int NOT NULL DEFAULT '0',
-  `PriceSilver` int NOT NULL DEFAULT '0',
-  `PriceBronze` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`OrderItemId`),
-  KEY `FK_OrderItems_Orders` (`OrderId`),
-  KEY `FK_OrderItems_Items` (`ItemId`)
-) ;
+DROP TABLE IF EXISTS `carts`;
+CREATE TABLE IF NOT EXISTS `carts` (
+  `CartId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`CartId`),
+  UNIQUE KEY `UQ_Carts_User` (`UserId`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
--- Déchargement des données de la table `orderitems`
+-- Déchargement des données de la table `carts`
 --
 
-INSERT INTO `orderitems` (`OrderItemId`, `OrderId`, `ItemId`, `Quantity`, `PriceGold`, `PriceSilver`, `PriceBronze`) VALUES
-(3, 3, 1, 1, 50, 20, 10),
-(4, 4, 14, 1, 400, 200, 80),
-(5, 5, 2, 1, 120, 40, 15),
-(6, 6, 15, 1, 80, 30, 10),
-(7, 7, 16, 1, 210, 90, 30),
-(8, 8, 16, 1, 210, 90, 30),
-(9, 9, 22, 1, 20, 10, 5),
-(10, 10, 25, 1, 25, 12, 6),
-(11, 11, 17, 1, 170, 75, 25);
+INSERT INTO `carts` (`CartId`, `UserId`, `CreatedAt`) VALUES
+(8, 3, '2026-04-08 10:29:49');
 
 -- --------------------------------------------------------
 
@@ -418,33 +436,33 @@ INSERT INTO `orders` (`OrderId`, `UserId`, `OrderDate`, `TotalGold`, `TotalSilve
 -- --------------------------------------------------------
 
 --
--- Structure de la table `potionproperties`
+-- Structure de la table `inventory`
 --
 
-DROP TABLE IF EXISTS `potionproperties`;
-CREATE TABLE IF NOT EXISTS `potionproperties` (
+DROP TABLE IF EXISTS `inventory`;
+CREATE TABLE IF NOT EXISTS `inventory` (
+  `InventoryId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
   `ItemId` int NOT NULL,
-  `EffectType` varchar(50) NOT NULL,
-  `EffectValue` int NOT NULL,
-  `DurationSeconds` int DEFAULT NULL,
-  PRIMARY KEY (`ItemId`)
+  `Quantity` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`InventoryId`),
+  UNIQUE KEY `UQ_Inventory_User_Item` (`UserId`,`ItemId`),
+  KEY `FK_Inventory_Items` (`ItemId`)
 ) ;
 
 --
--- Déchargement des données de la table `potionproperties`
+-- Déchargement des données de la table `inventory`
 --
 
-INSERT INTO `potionproperties` (`ItemId`, `EffectType`, `EffectValue`, `DurationSeconds`) VALUES
-(21, 'Heal', 25, NULL),
-(22, 'Heal', 50, NULL),
-(23, 'Heal', 100, NULL),
-(24, 'Mana', 40, NULL),
-(25, 'Strength', 10, 30),
-(26, 'Defense', 10, 30),
-(27, 'Speed', 10, 25),
-(28, 'Heal', 200, NULL),
-(29, 'CurePoison', 1, NULL),
-(30, 'Mana', 100, NULL);
+INSERT INTO `inventory` (`InventoryId`, `UserId`, `ItemId`, `Quantity`) VALUES
+(3, 3, 1, 1),
+(4, 3, 14, 1),
+(5, 3, 2, 1),
+(6, 3, 15, 1),
+(7, 3, 16, 2),
+(9, 3, 22, 1),
+(10, 3, 25, 1),
+(11, 3, 17, 1);
 
 -- --------------------------------------------------------
 
@@ -482,72 +500,75 @@ INSERT INTO `reviews` (`ReviewId`, `UserId`, `ItemId`, `Rating`, `Comment`, `Cre
 -- --------------------------------------------------------
 
 --
--- Structure de la table `users`
+-- Structure de la table `cartitems`
 --
 
-DROP TABLE IF EXISTS `users`;
-CREATE TABLE IF NOT EXISTS `users` (
-  `UserId` int NOT NULL AUTO_INCREMENT,
-  `Alias` varchar(30) NOT NULL,
-  `FullName` varchar(80) DEFAULT NULL,
-  `Email` varchar(190) DEFAULT NULL,
-  `AvatarUrl` varchar(255) DEFAULT NULL,
-  `Password` varchar(255) NOT NULL,
-  `Role` varchar(20) NOT NULL,
-  `Gold` int NOT NULL DEFAULT '1000',
-  `Silver` int NOT NULL DEFAULT '1000',
-  `Bronze` int NOT NULL DEFAULT '1000',
-  `ProfileIsDeleted` tinyint(1) NOT NULL DEFAULT '0',
-  `ProfileDeletedAt` datetime DEFAULT NULL,
-  `IsBanned` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`UserId`),
-  UNIQUE KEY `UQ_Users_Alias` (`Alias`),
-  UNIQUE KEY `UQ_Users_Email` (`Email`)
+DROP TABLE IF EXISTS `cartitems`;
+CREATE TABLE IF NOT EXISTS `cartitems` (
+  `CartItemId` int NOT NULL AUTO_INCREMENT,
+  `CartId` int NOT NULL,
+  `ItemId` int NOT NULL,
+  `Quantity` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`CartItemId`),
+  UNIQUE KEY `UQ_CartItems_Cart_Item` (`CartId`,`ItemId`),
+  KEY `FK_CartItems_Items` (`ItemId`)
 ) ;
-
---
--- Déchargement des données de la table `users`
---
-
-INSERT INTO `users` (`UserId`, `Alias`, `FullName`, `Email`, `AvatarUrl`, `Password`, `Role`, `Gold`, `Silver`, `Bronze`, `ProfileIsDeleted`, `ProfileDeletedAt`, `IsBanned`) VALUES
-(3, 'test123', 'Testual', 'testual@yopmail.com', 'https://images.twinkl.co.uk/tw1n/image/private/t_630/u/ux/screenshot-2023-04-18-at-09.43.39_ver_1.png', '$2y$10$0X4W/We1RjcRARt/J0fvmuttALMkud5Y07M6KSVbKOoouQOsd7dFy', 'Player', 13575, 61813, 85434, 0, NULL, 0);
 
 -- --------------------------------------------------------
 
 --
--- Structure de la table `weaponproperties`
+-- Structure de la table `orderitems`
 --
 
-DROP TABLE IF EXISTS `weaponproperties`;
-CREATE TABLE IF NOT EXISTS `weaponproperties` (
+DROP TABLE IF EXISTS `orderitems`;
+CREATE TABLE IF NOT EXISTS `orderitems` (
+  `OrderItemId` int NOT NULL AUTO_INCREMENT,
+  `OrderId` int NOT NULL,
   `ItemId` int NOT NULL,
-  `DamageMin` int NOT NULL,
-  `DamageMax` int NOT NULL,
-  `Durability` int NOT NULL DEFAULT '100',
-  `RequiredLevel` int NOT NULL DEFAULT '1',
-  `AttackSpeed` decimal(4,2) NOT NULL DEFAULT '1.00',
-  PRIMARY KEY (`ItemId`)
+  `Quantity` int NOT NULL DEFAULT '1',
+  `PriceGold` int NOT NULL DEFAULT '0',
+  `PriceSilver` int NOT NULL DEFAULT '0',
+  `PriceBronze` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`OrderItemId`),
+  KEY `FK_OrderItems_Orders` (`OrderId`),
+  KEY `FK_OrderItems_Items` (`ItemId`)
 ) ;
 
 --
--- Déchargement des données de la table `weaponproperties`
+-- Déchargement des données de la table `orderitems`
 --
 
-INSERT INTO `weaponproperties` (`ItemId`, `DamageMin`, `DamageMax`, `Durability`, `RequiredLevel`, `AttackSpeed`) VALUES
-(1, 5, 10, 100, 1, 1.00),
-(2, 12, 20, 120, 2, 0.90),
-(3, 3, 8, 80, 1, 1.50),
-(4, 15, 25, 110, 3, 0.70),
-(5, 25, 40, 200, 5, 1.10),
-(6, 10, 18, 90, 2, 1.20),
-(7, 18, 30, 140, 3, 0.65),
-(8, 14, 22, 85, 4, 1.70),
-(9, 20, 32, 130, 4, 1.00),
-(10, 35, 55, 250, 7, 0.85);
+INSERT INTO `orderitems` (`OrderItemId`, `OrderId`, `ItemId`, `Quantity`, `PriceGold`, `PriceSilver`, `PriceBronze`) VALUES
+(3, 3, 1, 1, 50, 20, 10),
+(4, 4, 14, 1, 400, 200, 80),
+(5, 5, 2, 1, 120, 40, 15),
+(6, 6, 15, 1, 80, 30, 10),
+(7, 7, 16, 1, 210, 90, 30),
+(8, 8, 16, 1, 210, 90, 30),
+(9, 9, 22, 1, 20, 10, 5),
+(10, 10, 25, 1, 25, 12, 6),
+(11, 11, 17, 1, 170, 75, 25);
+
+SET default_storage_engine = @OLD_DEFAULT_STORAGE_ENGINE;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- --------------------------------------------------------
 
 --
 -- Contraintes pour les tables déchargées
 --
+
+--
+-- Contraintes pour la table `items`
+--
+ALTER TABLE `items`
+  ADD CONSTRAINT `FK_Items_ItemTypes` FOREIGN KEY (`ItemTypeId`) REFERENCES `itemtypes` (`ItemTypeId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `weaponproperties`
+--
+ALTER TABLE `weaponproperties`
+  ADD CONSTRAINT `FK_WeaponProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `armorproperties`
@@ -556,17 +577,28 @@ ALTER TABLE `armorproperties`
   ADD CONSTRAINT `FK_ArmorProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Contraintes pour la table `cartitems`
+-- Contraintes pour la table `potionproperties`
 --
-ALTER TABLE `cartitems`
-  ADD CONSTRAINT `FK_CartItems_Carts` FOREIGN KEY (`CartId`) REFERENCES `carts` (`CartId`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `FK_CartItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `potionproperties`
+  ADD CONSTRAINT `FK_PotionProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `magicspellproperties`
+--
+ALTER TABLE `magicspellproperties`
+  ADD CONSTRAINT `FK_MagicSpellProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `carts`
 --
 ALTER TABLE `carts`
   ADD CONSTRAINT `FK_Carts_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `FK_Orders_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `inventory`
@@ -576,16 +608,18 @@ ALTER TABLE `inventory`
   ADD CONSTRAINT `FK_Inventory_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Contraintes pour la table `items`
+-- Contraintes pour la table `reviews`
 --
-ALTER TABLE `items`
-  ADD CONSTRAINT `FK_Items_ItemTypes` FOREIGN KEY (`ItemTypeId`) REFERENCES `itemtypes` (`ItemTypeId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `FK_Reviews_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Reviews_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Contraintes pour la table `magicspellproperties`
+-- Contraintes pour la table `cartitems`
 --
-ALTER TABLE `magicspellproperties`
-  ADD CONSTRAINT `FK_MagicSpellProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `cartitems`
+  ADD CONSTRAINT `FK_CartItems_Carts` FOREIGN KEY (`CartId`) REFERENCES `carts` (`CartId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_CartItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 --
 -- Contraintes pour la table `orderitems`
@@ -594,30 +628,6 @@ ALTER TABLE `orderitems`
   ADD CONSTRAINT `FK_OrderItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE,
   ADD CONSTRAINT `FK_OrderItems_Orders` FOREIGN KEY (`OrderId`) REFERENCES `orders` (`OrderId`) ON DELETE CASCADE ON UPDATE CASCADE;
 
---
--- Contraintes pour la table `orders`
---
-ALTER TABLE `orders`
-  ADD CONSTRAINT `FK_Orders_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
---
--- Contraintes pour la table `potionproperties`
---
-ALTER TABLE `potionproperties`
-  ADD CONSTRAINT `FK_PotionProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Contraintes pour la table `reviews`
---
-ALTER TABLE `reviews`
-  ADD CONSTRAINT `FK_Reviews_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `FK_Reviews_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Contraintes pour la table `weaponproperties`
---
-ALTER TABLE `weaponproperties`
-  ADD CONSTRAINT `FK_WeaponProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
