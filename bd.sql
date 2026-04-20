@@ -1,679 +1,34 @@
--- --------------------------------------------------------
--- Initialisation de la base de données
--- --------------------------------------------------------
-CREATE DATABASE IF NOT EXISTS `projetkbe` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-USE `projetkbe`;
+-- phpMyAdmin SQL Dump
+-- version 5.2.3
+-- https://www.phpmyadmin.net/
+--
+-- Hôte : 127.0.0.1:3306
+-- Généré le : lun. 20 avr. 2026 à 20:47
+-- Version du serveur : 8.4.7
+-- Version de PHP : 8.3.28
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Base de données : `projetkbe`
+--
 
--- --------------------------------------------------------
--- Suppression des tables existantes (ordre respectant les contraintes)
--- --------------------------------------------------------
-SET FOREIGN_KEY_CHECKS = 0;
-
-DROP TABLE IF EXISTS `userriddles`;
-DROP TABLE IF EXISTS `userriddlestats`;
-DROP TABLE IF EXISTS `riddles`;
-DROP TABLE IF EXISTS `riddlecategories`;
-
-DROP TABLE IF EXISTS `weaponproperties`;
-DROP TABLE IF EXISTS `armorproperties`;
-DROP TABLE IF EXISTS `potionproperties`;
-DROP TABLE IF EXISTS `magicspellproperties`;
-
-DROP TABLE IF EXISTS `cartitems`;
-DROP TABLE IF EXISTS `carts`;
-DROP TABLE IF EXISTS `orderitems`;
-DROP TABLE IF EXISTS `orders`;
-DROP TABLE IF EXISTS `inventory`;
-DROP TABLE IF EXISTS `reviews`;
-
-DROP TABLE IF EXISTS `items`;
-DROP TABLE IF EXISTS `itemtypes`;
-DROP TABLE IF EXISTS `users`;
-
-SET FOREIGN_KEY_CHECKS = 1;
--- --------------------------------------------------------
--- Structure de la table `users`
--- --------------------------------------------------------
-CREATE TABLE `users` (
-  `UserId` int NOT NULL AUTO_INCREMENT,
-  `Alias` varchar(30) NOT NULL,
-  `FullName` varchar(80) DEFAULT NULL,
-  `Email` varchar(190) DEFAULT NULL,
-  `AvatarUrl` varchar(255) DEFAULT NULL,
-  `Password` varchar(255) NOT NULL,
-  `Role` varchar(20) NOT NULL,
-  `Gold` int NOT NULL DEFAULT '1000',
-  `Silver` int NOT NULL DEFAULT '1000',
-  `Bronze` int NOT NULL DEFAULT '1000',
-  `ProfileIsDeleted` tinyint(1) NOT NULL DEFAULT '0',
-  `ProfileDeletedAt` datetime DEFAULT NULL,
-  `IsBanned` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`UserId`),
-  UNIQUE KEY `UQ_Users_Alias` (`Alias`),
-  UNIQUE KEY `UQ_Users_Email` (`Email`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Structure de la table `itemtypes`
--- --------------------------------------------------------
-CREATE TABLE `itemtypes` (
-  `ItemTypeId` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(50) NOT NULL,
-  PRIMARY KEY (`ItemTypeId`),
-  UNIQUE KEY `UQ_ItemTypes_Name` (`Name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Structure de la table `items`
--- --------------------------------------------------------
-CREATE TABLE `items` (
-  `ItemId` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(80) NOT NULL,
-  `Description` text,
-  `PriceGold` int NOT NULL DEFAULT '0',
-  `PriceSilver` int NOT NULL DEFAULT '0',
-  `PriceBronze` int NOT NULL DEFAULT '0',
-  `Stock` int NOT NULL DEFAULT '0',
-  `ItemTypeId` int NOT NULL,
-  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`ItemId`),
-  UNIQUE KEY `UQ_Items_Name` (`Name`),
-  KEY `FK_Items_ItemTypes` (`ItemTypeId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Tables de propriétés spécifiques
--- --------------------------------------------------------
-CREATE TABLE `weaponproperties` (
-  `ItemId` int NOT NULL,
-  `DamageMin` int NOT NULL,
-  `DamageMax` int NOT NULL,
-  `Durability` int NOT NULL DEFAULT '100',
-  `RequiredLevel` int NOT NULL DEFAULT '1',
-  `AttackSpeed` decimal(4,2) NOT NULL DEFAULT '1.00',
-  PRIMARY KEY (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `armorproperties` (
-  `ItemId` int NOT NULL,
-  `Defense` int NOT NULL,
-  `Durability` int NOT NULL DEFAULT '100',
-  `RequiredLevel` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `potionproperties` (
-  `ItemId` int NOT NULL,
-  `EffectType` varchar(50) NOT NULL,
-  `EffectValue` int NOT NULL,
-  `DurationSeconds` int DEFAULT NULL,
-  PRIMARY KEY (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `magicspellproperties` (
-  `ItemId` int NOT NULL,
-  `SpellDamage` int NOT NULL DEFAULT '0',
-  `ManaCost` int NOT NULL,
-  `ElementType` varchar(30) NOT NULL,
-  `RequiredLevel` int NOT NULL DEFAULT '1',
-  `CooldownSeconds` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Paniers et Commandes
--- --------------------------------------------------------
-CREATE TABLE `carts` (
-  `CartId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`CartId`),
-  UNIQUE KEY `UQ_Carts_User` (`UserId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `cartitems` (
-  `CartItemId` int NOT NULL AUTO_INCREMENT,
-  `CartId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`CartItemId`),
-  UNIQUE KEY `UQ_CartItems_Cart_Item` (`CartId`,`ItemId`),
-  KEY `FK_CartItems_Items` (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `orders` (
-  `OrderId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `OrderDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `TotalGold` int NOT NULL DEFAULT '0',
-  `TotalSilver` int NOT NULL DEFAULT '0',
-  `TotalBronze` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`OrderId`),
-  KEY `FK_Orders_Users` (`UserId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `orderitems` (
-  `OrderItemId` int NOT NULL AUTO_INCREMENT,
-  `OrderId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Quantity` int NOT NULL DEFAULT '1',
-  `PriceGold` int NOT NULL DEFAULT '0',
-  `PriceSilver` int NOT NULL DEFAULT '0',
-  `PriceBronze` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`OrderItemId`),
-  KEY `FK_OrderItems_Orders` (`OrderId`),
-  KEY `FK_OrderItems_Items` (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Inventaire et Avis
--- --------------------------------------------------------
-CREATE TABLE `inventory` (
-  `InventoryId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Quantity` int NOT NULL DEFAULT '1',
-  PRIMARY KEY (`InventoryId`),
-  UNIQUE KEY `UQ_Inventory_User_Item` (`UserId`,`ItemId`),
-  KEY `FK_Inventory_Items` (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `reviews` (
-  `ReviewId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `ItemId` int NOT NULL,
-  `Rating` decimal(2,1) NOT NULL,
-  `Comment` text,
-  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`ReviewId`),
-  UNIQUE KEY `UQ_Reviews_User_Item` (`UserId`,`ItemId`),
-  KEY `FK_Reviews_Items` (`ItemId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Tables des énigmes
--- --------------------------------------------------------
-
-CREATE TABLE `riddlecategories` (
-  `RiddleCategoryId` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(50) NOT NULL,
-  PRIMARY KEY (`RiddleCategoryId`),
-  UNIQUE KEY `UQ_RiddleCategories_Name` (`Name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `riddles` (
-  `RiddleId` int NOT NULL AUTO_INCREMENT,
-  `QuestionText` text NOT NULL,
-  `AnswerText` varchar(255) NOT NULL,
-  `HintText` text DEFAULT NULL,
-  `Difficulty` varchar(20) NOT NULL,
-  `RiddleCategoryId` int NOT NULL,
-  `RewardGold` int NOT NULL DEFAULT '0',
-  `RewardSilver` int NOT NULL DEFAULT '0',
-  `RewardBronze` int NOT NULL DEFAULT '0',
-  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
-  PRIMARY KEY (`RiddleId`),
-  KEY `FK_Riddles_RiddleCategories` (`RiddleCategoryId`),
-  CONSTRAINT `CHK_Riddles_Difficulty`
-    CHECK (`Difficulty` IN ('Facile', 'Moyenne', 'Difficile'))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `userriddles` (
-  `UserRiddleId` int NOT NULL AUTO_INCREMENT,
-  `UserId` int NOT NULL,
-  `RiddleId` int NOT NULL,
-  `GivenAnswer` varchar(255) DEFAULT NULL,
-  `IsSuccess` tinyint(1) NOT NULL,
-  `AnsweredAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`UserRiddleId`),
-  KEY `FK_UserRiddles_Users` (`UserId`),
-  KEY `FK_UserRiddles_Riddles` (`RiddleId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-CREATE TABLE `userriddlestats` (
-  `UserId` int NOT NULL,
-  `SolvedCount` int NOT NULL DEFAULT '0',
-  `FailedCount` int NOT NULL DEFAULT '0',
-  `MagicSolvedCount` int NOT NULL DEFAULT '0',
-  PRIMARY KEY (`UserId`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
--- --------------------------------------------------------
--- Insertion des données initiales
--- --------------------------------------------------------
-
-INSERT INTO `itemtypes` (`ItemTypeId`, `Name`) VALUES
-(1, 'Weapon'), (2, 'Armor'), (3, 'Potion'), (4, 'MagicSpell');
-
-INSERT INTO `items` (`ItemId`, `Name`, `Description`, `PriceGold`, `PriceSilver`, `PriceBronze`, `Stock`, `ItemTypeId`, `IsActive`) VALUES
-(1, 'Basic Sword', 'Épée simple pour débutant.', 50, 20, 10, 5, 1, 1),
-(2, 'Knight Blade', 'Épée robuste de chevalier.', 120, 40, 15, 4, 1, 1),
-(11, 'Leather Armor', 'Armure légère en cuir.', 40, 15, 5, 10, 2, 1),
-(14, 'Golden Armor', 'Armure prestigieuse et résistante.', 400, 200, 80, 1, 2, 1),
-(21, 'Small Health Potion', 'Restaure un peu de vie.', 10, 5, 2, 50, 3, 1),
-(31, 'Fireball', 'Sort de feu basique.', 80, 30, 10, 10, 4, 1);
-
-INSERT INTO `weaponproperties` (`ItemId`, `DamageMin`, `DamageMax`, `Durability`, `RequiredLevel`, `AttackSpeed`) VALUES
-(1, 5, 10, 100, 1, 1.00),
-(2, 12, 20, 120, 2, 0.90);
-
-INSERT INTO `armorproperties` (`ItemId`, `Defense`, `Durability`, `RequiredLevel`) VALUES
-(11, 8, 100, 1),
-(14, 35, 200, 5);
-
-INSERT INTO `potionproperties` (`ItemId`, `EffectType`, `EffectValue`, `DurationSeconds`) VALUES
-(21, 'Heal', 25, NULL);
-
-INSERT INTO `magicspellproperties` (`ItemId`, `SpellDamage`, `ManaCost`, `ElementType`, `RequiredLevel`, `CooldownSeconds`) VALUES
-(31, 30, 15, 'Fire', 1, 3);
-
-INSERT INTO `users` (`UserId`, `Alias`, `FullName`, `Email`, `AvatarUrl`, `Password`, `Role`, `Gold`, `Silver`, `Bronze`) VALUES
-(3, 'test123', 'Testual', 'testual@yopmail.com', NULL, '$2y$10$0X4W/We1RjcRARt/J0fvmuttALMkud5Y07M6KSVbKOoouQOsd7dFy', 'Player', 13575, 61813, 85434);
-
--- --------------------------------------------------------
--- 8 énigmes spéciales à 50 gold
--- --------------------------------------------------------
-INSERT INTO `riddlecategories` (`RiddleCategoryId`, `Name`) VALUES
-(1, 'Magie'),
-(2, 'Potions'),
-(3, 'Armes'),
-(4, 'Armures'),
-(5, 'Autres');
-
-INSERT INTO `riddles`
-(`RiddleId`,`QuestionText`,`AnswerText`,`HintText`,`Difficulty`,`RiddleCategoryId`,`RewardGold`,`RewardSilver`,`RewardBronze`,`IsActive`)
-VALUES
-(1,
-'Je suis lié à un oiseau obscur et je frappe dans le silence avant d'être vu. Qui suis-je ?',
-'Lame du Corbeau Noir',
-'Cherche parmi les armes sombres et discrètes.',
-'Difficile',
-3,
-50,0,0,1),
-
-(2,
-'Je porte la mémoire des anciens et chacun de mes coups sonne comme un tambour. Qui suis-je ?',
-'Marteau des Ancêtres',
-'Une arme lourde héritée du passé.',
-'Difficile',
-3,
-50,0,0,1),
-
-(3,
-'Je vise de loin, je me cache dans la brume, puis j'atteins toujours ma cible. Qui suis-je ?',
-'Arc de Brume-Lune',
-'Une arme de précision liée au brouillard.',
-'Difficile',
-3,
-50,0,0,1),
-
-(4,
-'Je protège comme une forteresse grise et je résiste à d'innombrables coups. Qui suis-je ?',
-'Cuirasse du Bastion Gris',
-'Cherche une protection solide comme un mur.',
-'Difficile',
-4,
-50,0,0,1),
-
-(5,
-'Je suis de métal saint, et l'ombre fuit quand j'avance. Qui suis-je ?',
-'Voile d'Acier Sacré',
-'Une armure bénie contre les ténèbres.',
-'Difficile',
-4,
-50,0,0,1),
-
-(6,
-'Je viens avec le matin et je rends la vigueur à celui qui me boit. Qui suis-je ?',
-'Élixir de l'Aube Claire',
-'Une potion liée à la lumière du jour.',
-'Difficile',
-2,
-50,0,0,1),
-
-(7,
-'Je refroidis les nerfs et fais taire la peur dans la bataille. Qui suis-je ?',
-'Breuvage du Sang-Froid',
-'Une potion qui calme le cœur.',
-'Difficile',
-2,
-50,0,0,1),
-
-(8,
-'Je suis une colère venue du ciel et je frappe sept fois en lumière. Qui suis-je ?',
-'Tempête des Sept Éclairs',
-'Un sort ancien lié à la foudre.',
-'Difficile',
-1,
-50,0,0,1);
-
--- --------------------------------------------------------
--- Magie : 6 énigmes
--- --------------------------------------------------------
-
-INSERT INTO `riddles`
-(`RiddleId`,`QuestionText`,`AnswerText`,`HintText`,`Difficulty`,`RiddleCategoryId`,`RewardGold`,`RewardSilver`,`RewardBronze`,`IsActive`)
-VALUES
-(9,
-'Je suis une petite flamme lancée par la main d'un mage. Qui suis-je ?',
-'Fireball',
-'Va voir les sorts de feu les plus simples.',
-'Facile',
-1,
-0,0,10,1),
-
-(10,
-'Je suis une lumière sacrée qui chasse l'ombre. Qui suis-je ?',
-'Holy Light',
-'Cherche un sort lumineux et béni.',
-'Facile',
-1,
-0,0,10,1),
-
-(11,
-'Je suis un projectile glacé qui transperce l'air. Qui suis-je ?',
-'Ice Spike',
-'Regarde les sorts liés à la glace.',
-'Moyenne',
-1,
-0,10,0,1),
-
-(12,
-'Je suis une lame invisible faite de vent rapide. Qui suis-je ?',
-'Wind Slash',
-'Cherche un sort rapide associé à l'air.',
-'Moyenne',
-1,
-0,10,0,1),
-
-(13,
-'Je tombe du ciel avec une force électrique redoutable. Qui suis-je ?',
-'Lightning Bolt',
-'Va dans les sorts de foudre.',
-'Difficile',
-1,
-10,0,0,1),
-
-(14,
-'Je fais trembler le sol sous les pieds de tous. Qui suis-je ?',
-'Earthquake',
-'Cherche un sort qui frappe la terre entière.',
-'Difficile',
-1,
-10,0,0,1);
-
--- --------------------------------------------------------
--- Potions : 6 énigmes
--- --------------------------------------------------------
-
-INSERT INTO `riddles`
-(`RiddleId`,`QuestionText`,`AnswerText`,`HintText`,`Difficulty`,`RiddleCategoryId`,`RewardGold`,`RewardSilver`,`RewardBronze`,`IsActive`)
-VALUES
-(15,
-'Je rends un peu de vie après un combat. Qui suis-je ?',
-'Small Health Potion',
-'Va voir les petites potions de soin.',
-'Facile',
-2,
-0,0,10,1),
-
-(16,
-'Je retire le poison du corps de celui qui me boit. Qui suis-je ?',
-'Antidote',
-'Cherche une potion contre un mauvais effet.',
-'Facile',
-2,
-0,0,10,1),
-
-(17,
-'Je rends une quantité moyenne de vie au joueur. Qui suis-je ?',
-'Medium Health Potion',
-'Va voir les potions de soin intermédiaires.',
-'Moyenne',
-2,
-0,10,0,1),
-
-(18,
-'Je rends du mana pour continuer à lancer des sorts. Qui suis-je ?',
-'Mana Potion',
-'Cherche une potion liée à la magie.',
-'Moyenne',
-2,
-0,10,0,1),
-
-(19,
-'Je donne plus de force pendant un moment. Qui suis-je ?',
-'Strength Potion',
-'Va voir les potions qui améliorent les statistiques.',
-'Difficile',
-2,
-10,0,0,1),
-
-(20,
-'Je rends énormément de mana à celui qui me boit. Qui suis-je ?',
-'Mega Mana Potion',
-'Cherche la version la plus puissante d'une potion magique.',
-'Difficile',
-2,
-10,0,0,1);
-
--- --------------------------------------------------------
--- Armes : 6 énigmes
--- --------------------------------------------------------
-
-INSERT INTO `riddles`
-(`RiddleId`,`QuestionText`,`AnswerText`,`HintText`,`Difficulty`,`RiddleCategoryId`,`RewardGold`,`RewardSilver`,`RewardBronze`,`IsActive`)
-VALUES
-(21,
-'Je suis une épée simple pensée pour débuter. Qui suis-je ?',
-'Basic Sword',
-'Regarde les armes les plus de base.',
-'Facile',
-3,
-0,0,10,1),
-
-(22,
-'Je suis une petite lame légère et rapide. Qui suis-je ?',
-'Dagger',
-'Cherche une arme courte et discrète.',
-'Facile',
-3,
-0,0,10,1),
-
-(23,
-'Je suis une épée robuste portée par les chevaliers. Qui suis-je ?',
-'Knight Blade',
-'Va voir les armes de chevalier.',
-'Moyenne',
-3,
-0,10,0,1),
-
-(24,
-'Je suis une arme précise pour attaquer à distance. Qui suis-je ?',
-'Hunter Bow',
-'Cherche une arme qui lance des projectiles.',
-'Moyenne',
-3,
-0,10,0,1),
-
-(25,
-'Je suis une hache lourde faite pour frapper fort. Qui suis-je ?',
-'War Axe',
-'Va voir les armes les plus massives.',
-'Difficile',
-3,
-10,0,0,1),
-
-(26,
-'Je suis une grande épée créée pour tuer les monstres. Qui suis-je ?',
-'Dragon Slayer',
-'Cherche une arme légendaire très puissante.',
-'Difficile',
-3,
-10,0,0,1);
-
--- --------------------------------------------------------
--- Armures : 6 énigmes
--- --------------------------------------------------------
-
-INSERT INTO `riddles`
-(`RiddleId`,`QuestionText`,`AnswerText`,`HintText`,`Difficulty`,`RiddleCategoryId`,`RewardGold`,`RewardSilver`,`RewardBronze`,`IsActive`)
-VALUES
-(27,
-'Je suis une armure légère en cuir. Qui suis-je ?',
-'Leather Armor',
-'Regarde les protections les plus simples.',
-'Facile',
-4,
-0,0,10,1),
-
-(28,
-'Je suis une veste légère portée par les aventuriers. Qui suis-je ?',
-'Traveler Vest',
-'Cherche une protection modeste de voyage.',
-'Facile',
-4,
-0,0,10,1),
-
-(29,
-'Je suis une armure faite de mailles de métal. Qui suis-je ?',
-'Chainmail',
-'Va voir les armures intermédiaires.',
-'Moyenne',
-4,
-0,10,0,1),
-
-(30,
-'Je suis une robe conçue pour ceux qui utilisent la magie. Qui suis-je ?',
-'Mage Robe',
-'Cherche une tenue liée aux mages.',
-'Moyenne',
-4,
-0,10,0,1),
-
-(31,
-'Je suis une cape sombre qui protège avec discrétion. Qui suis-je ?',
-'Shadow Cloak',
-'Va voir les protections furtives.',
-'Difficile',
-4,
-10,0,0,1),
-
-(32,
-'Je suis une armure forgée à partir d'écailles rares. Qui suis-je ?',
-'Dragon Scale Armor',
-'Cherche l'une des protections les plus puissantes.',
-'Difficile',
-4,
-10,0,0,1);
-
--- --------------------------------------------------------
--- Autres : 6 énigmes
--- --------------------------------------------------------
-
-INSERT INTO `riddles`
-(`RiddleId`,`QuestionText`,`AnswerText`,`HintText`,`Difficulty`,`RiddleCategoryId`,`RewardGold`,`RewardSilver`,`RewardBronze`,`IsActive`)
-VALUES
-(33,
-'Je suis un peuple du nord connu pour mes drakkars, mes raids et mes guerriers redoutés. Qui suis-je ?',
-'Vikings',
-'Peuple scandinave célèbre du Moyen Âge.',
-'Facile',
-5,
-0,0,10,1),
-
-(34,
-'Je suis un grand royaume médiéval souvent associé aux rois, aux châteaux et aux chevaliers. Qui suis-je ?',
-'France',
-'Un royaume très puissant en Europe médiévale.',
-'Facile',
-5,
-0,0,10,1),
-
-(35,
-'Nous sommes des chevaliers chrétiens partis combattre en Terre sainte. Qui sommes-nous ?',
-'Croisés',
-'Ils participaient aux croisades.',
-'Moyenne',
-5,
-0,10,0,1),
-
-(36,
-'Je suis une grande ville souvent vue comme le cœur de l'Empire byzantin. Qui suis-je ?',
-'Constantinople',
-'Aujourd'hui, cette ville porte un autre nom.',
-'Moyenne',
-5,
-0,10,0,1),
-
-(37,
-'Je suis un peuple cavalier venu d'Asie qui a bâti un immense empire sous Gengis Khan. Qui suis-je ?',
-'Mongols',
-'Empire nomade très vaste.',
-'Difficile',
-5,
-10,0,0,1),
-
-(38,
-'Je suis un royaume chrétien de la péninsule ibérique lié à la Reconquista. Qui suis-je ?',
-'Espagne',
-'Pense à la Reconquista.',
-'Difficile',
-5,
-10,0,0,1);
--- --------------------------------------------------------
--- Stats initiales
--- --------------------------------------------------------
-
-INSERT INTO `userriddlestats` (`UserId`, `SolvedCount`, `FailedCount`, `MagicSolvedCount`) VALUES
-(3, 0, 0, 0);
-
--- --------------------------------------------------------
--- Ajout des contraintes (Foreign Keys)
--- --------------------------------------------------------
-ALTER TABLE `items` ADD CONSTRAINT `FK_Items_ItemTypes` FOREIGN KEY (`ItemTypeId`) REFERENCES `itemtypes` (`ItemTypeId`) ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE `weaponproperties` ADD CONSTRAINT `FK_WeaponProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `armorproperties` ADD CONSTRAINT `FK_ArmorProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `potionproperties` ADD CONSTRAINT `FK_PotionProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `magicspellproperties` ADD CONSTRAINT `FK_MagicSpellProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `carts` ADD CONSTRAINT `FK_Carts_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `cartitems` ADD CONSTRAINT `FK_CartItems_Carts` FOREIGN KEY (`CartId`) REFERENCES `carts` (`CartId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `cartitems` ADD CONSTRAINT `FK_CartItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE `orders` ADD CONSTRAINT `FK_Orders_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE `orderitems` ADD CONSTRAINT `FK_OrderItems_Orders` FOREIGN KEY (`OrderId`) REFERENCES `orders` (`OrderId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `orderitems` ADD CONSTRAINT `FK_OrderItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE `inventory` ADD CONSTRAINT `FK_Inventory_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `inventory` ADD CONSTRAINT `FK_Inventory_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE;
-ALTER TABLE `reviews` ADD CONSTRAINT `FK_Reviews_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `reviews` ADD CONSTRAINT `FK_Reviews_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE `riddles`
-ADD CONSTRAINT `FK_Riddles_RiddleCategories`
-FOREIGN KEY (`RiddleCategoryId`) REFERENCES `riddlecategories` (`RiddleCategoryId`)
-ON DELETE RESTRICT ON UPDATE CASCADE;
-
-ALTER TABLE `userriddles`
-ADD CONSTRAINT `FK_UserRiddles_Users`
-FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`)
-ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `userriddles`
-ADD CONSTRAINT `FK_UserRiddles_Riddles`
-FOREIGN KEY (`RiddleId`) REFERENCES `riddles` (`RiddleId`)
-ON DELETE CASCADE ON UPDATE CASCADE;
-
-ALTER TABLE `userriddlestats`
-ADD CONSTRAINT `FK_UserRiddleStats_Users`
-FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`)
-ON DELETE CASCADE ON UPDATE CASCADE;
--- --------------------------------------------------------
--- Procédures Stockées
--- --------------------------------------------------------
 DELIMITER $$
-
+--
+-- Procédures
+--
 DROP PROCEDURE IF EXISTS `sp_DeleteUserAccount`$$
-CREATE PROCEDURE `sp_DeleteUserAccount` (IN `p_UserId` INT)
-proc: BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_DeleteUserAccount` (IN `p_UserId` INT)   proc: BEGIN
     DECLARE v_user_exists INT DEFAULT 0;
+
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -685,46 +40,697 @@ proc: BEGIN
     END IF;
 
     START TRANSACTION;
-    SELECT COUNT(*) INTO v_user_exists FROM Users WHERE UserId = p_UserId FOR UPDATE;
+
+    SELECT COUNT(*)
+    INTO v_user_exists
+    FROM Users
+    WHERE UserId = p_UserId
+    FOR UPDATE;
+
     IF v_user_exists = 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Compte introuvable.';
     END IF;
 
-    DELETE FROM OrderItems WHERE OrderId IN (SELECT OrderId FROM Orders WHERE UserId = p_UserId);
-    DELETE FROM Orders WHERE UserId = p_UserId;
-    DELETE FROM Carts WHERE UserId = p_UserId;
-    DELETE FROM Reviews WHERE UserId = p_UserId;
-    DELETE FROM Inventory WHERE UserId = p_UserId;
-    DELETE FROM Users WHERE UserId = p_UserId;
+    DELETE FROM OrderItems
+    WHERE OrderId IN (
+        SELECT OrderId
+        FROM Orders
+        WHERE UserId = p_UserId
+    );
+
+    DELETE FROM Orders
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Carts
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Reviews
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Inventory
+    WHERE UserId = p_UserId;
+
+    DELETE FROM Users
+    WHERE UserId = p_UserId;
 
     IF ROW_COUNT() <> 1 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Suppression du compte echouee.';
     END IF;
+
     COMMIT;
 END$$
 
 DROP PROCEDURE IF EXISTS `sp_GetUserByAlias`$$
-CREATE PROCEDURE `sp_GetUserByAlias` (IN `p_Alias` VARCHAR(30))
-BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_GetUserByAlias` (IN `p_Alias` VARCHAR(30))   BEGIN
+    DECLARE v_alias VARCHAR(30);
+    SET v_alias = TRIM(CONVERT(p_Alias USING utf8mb4)) COLLATE utf8mb4_unicode_ci;
+
     SELECT UserId, Alias, Password, Role, Gold, Silver, Bronze, IsBanned
     FROM Users
-    WHERE TRIM(Alias) COLLATE utf8mb4_unicode_ci = TRIM(p_Alias) COLLATE utf8mb4_unicode_ci
+    WHERE TRIM(Alias) COLLATE utf8mb4_unicode_ci = v_alias COLLATE utf8mb4_unicode_ci
     LIMIT 1;
 END$$
 
 DROP PROCEDURE IF EXISTS `sp_RegisterUser`$$
-CREATE PROCEDURE `sp_RegisterUser` (IN `p_Alias` VARCHAR(30), IN `p_Password` VARCHAR(255))
-BEGIN
-    IF p_Alias IS NULL OR TRIM(p_Alias) = '' THEN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_RegisterUser` (IN `p_Alias` VARCHAR(30), IN `p_Password` VARCHAR(255))   BEGIN
+    DECLARE v_alias VARCHAR(30);
+
+    SET v_alias = TRIM(CONVERT(p_Alias USING utf8mb4)) COLLATE utf8mb4_unicode_ci;
+
+    IF v_alias IS NULL OR v_alias = '' THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Alias invalide.';
     END IF;
 
-    IF EXISTS (SELECT 1 FROM Users WHERE TRIM(Alias) = TRIM(p_Alias) LIMIT 1) THEN
+    IF p_Password IS NULL OR TRIM(p_Password) = '' THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Mot de passe invalide.';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM Users
+        WHERE TRIM(Alias) COLLATE utf8mb4_unicode_ci = v_alias COLLATE utf8mb4_unicode_ci
+        LIMIT 1
+    ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cet alias est deja utilise.';
     ELSE
         INSERT INTO Users (Alias, Password, Role, Gold, Silver, Bronze)
-        VALUES (TRIM(p_Alias), p_Password, 'Player', 1000, 1000, 1000);
+        VALUES (v_alias, p_Password, 'Player', 1000, 1000, 1000);
     END IF;
 END$$
 
 DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `armorproperties`
+--
+
+DROP TABLE IF EXISTS `armorproperties`;
+CREATE TABLE IF NOT EXISTS `armorproperties` (
+  `ItemId` int NOT NULL,
+  `Defense` int NOT NULL,
+  `Durability` int NOT NULL DEFAULT '100',
+  `RequiredLevel` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`ItemId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `armorproperties`
+--
+
+INSERT INTO `armorproperties` (`ItemId`, `Defense`, `Durability`, `RequiredLevel`) VALUES
+(11, 8, 100, 1),
+(12, 15, 120, 2),
+(13, 20, 150, 3),
+(14, 35, 200, 5),
+(15, 12, 90, 2),
+(16, 24, 170, 4),
+(17, 18, 110, 3),
+(18, 30, 180, 5),
+(19, 6, 70, 1),
+(20, 40, 220, 7);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `cartitems`
+--
+
+DROP TABLE IF EXISTS `cartitems`;
+CREATE TABLE IF NOT EXISTS `cartitems` (
+  `CartItemId` int NOT NULL AUTO_INCREMENT,
+  `CartId` int NOT NULL,
+  `ItemId` int NOT NULL,
+  `Quantity` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`CartItemId`),
+  UNIQUE KEY `UQ_CartItems_Cart_Item` (`CartId`,`ItemId`),
+  KEY `FK_CartItems_Items` (`ItemId`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `carts`
+--
+
+DROP TABLE IF EXISTS `carts`;
+CREATE TABLE IF NOT EXISTS `carts` (
+  `CartId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`CartId`),
+  UNIQUE KEY `UQ_Carts_User` (`UserId`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+--
+-- Déchargement des données de la table `carts`
+--
+
+INSERT INTO `carts` (`CartId`, `UserId`, `CreatedAt`) VALUES
+(8, 3, '2026-04-08 10:29:49');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `inventory`
+--
+
+DROP TABLE IF EXISTS `inventory`;
+CREATE TABLE IF NOT EXISTS `inventory` (
+  `InventoryId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
+  `ItemId` int NOT NULL,
+  `Quantity` int NOT NULL DEFAULT '1',
+  PRIMARY KEY (`InventoryId`),
+  UNIQUE KEY `UQ_Inventory_User_Item` (`UserId`,`ItemId`),
+  KEY `FK_Inventory_Items` (`ItemId`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `inventory`
+--
+
+INSERT INTO `inventory` (`InventoryId`, `UserId`, `ItemId`, `Quantity`) VALUES
+(3, 3, 1, 1),
+(4, 3, 14, 1),
+(5, 3, 2, 1),
+(6, 3, 15, 1),
+(7, 3, 16, 2),
+(9, 3, 22, 1),
+(10, 3, 25, 1),
+(11, 3, 17, 1),
+(12, 3, 3, 1);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `items`
+--
+
+DROP TABLE IF EXISTS `items`;
+CREATE TABLE IF NOT EXISTS `items` (
+  `ItemId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Description` text COLLATE utf8mb4_unicode_ci,
+  `PriceGold` int NOT NULL DEFAULT '0',
+  `PriceSilver` int NOT NULL DEFAULT '0',
+  `PriceBronze` int NOT NULL DEFAULT '0',
+  `Stock` int NOT NULL DEFAULT '0',
+  `ItemTypeId` int NOT NULL,
+  `Rarity` enum('Commun','Rare','Épique','Légendaire','Mythique') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Commun',
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`ItemId`),
+  UNIQUE KEY `UQ_Items_Name` (`Name`),
+  KEY `FK_Items_ItemTypes` (`ItemTypeId`)
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `items`
+--
+
+INSERT INTO `items` (`ItemId`, `Name`, `Description`, `PriceGold`, `PriceSilver`, `PriceBronze`, `Stock`, `ItemTypeId`, `Rarity`, `IsActive`) VALUES
+(1, 'Basic Sword', 'Épée simple pour débutant.', 50, 20, 10, 5, 1, 'Commun', 1),
+(2, 'Knight Blade', 'Épée robuste de chevalier.', 120, 40, 15, 4, 1, 'Rare', 1),
+(3, 'Dagger', 'Petite lame rapide et légère.', 30, 10, 5, 14, 1, 'Commun', 1),
+(4, 'War Axe', 'Hache lourde à fort impact.', 140, 60, 25, 4, 1, 'Rare', 1),
+(5, 'Golden Sword', 'Épée rare avec une belle finition.', 300, 150, 50, 2, 1, 'Épique', 1),
+(6, 'Hunter Bow', 'Arc précis pour les longues distances.', 100, 35, 12, 6, 1, 'Rare', 1),
+(7, 'Iron Hammer', 'Marteau puissant mais lent.', 160, 70, 30, 3, 1, 'Épique', 1),
+(8, 'Shadow Dagger', 'Dague noire très rapide.', 180, 80, 25, 4, 1, 'Épique', 1),
+(9, 'Royal Spear', 'Lance équilibrée pour combattants avancés.', 220, 95, 35, 3, 1, 'Épique', 1),
+(10, 'Dragon Slayer', 'Grande épée conçue pour les monstres.', 500, 250, 90, 1, 1, 'Légendaire', 1),
+(11, 'Leather Armor', 'Armure légère en cuir.', 40, 15, 5, 10, 2, 'Commun', 1),
+(12, 'Chainmail', 'Armure intermédiaire en mailles.', 90, 40, 15, 6, 2, 'Rare', 1),
+(13, 'Steel Armor', 'Armure lourde en acier.', 150, 60, 20, 4, 2, 'Rare', 1),
+(14, 'Golden Armor', 'Armure prestigieuse et résistante.', 400, 200, 80, 1, 2, 'Légendaire', 1),
+(15, 'Mage Robe', 'Robe conçue pour les utilisateurs de magie.', 80, 30, 10, 7, 2, 'Rare', 1),
+(16, 'Iron Shield Armor', 'Protection lourde pour tank.', 210, 90, 30, 1, 2, 'Épique', 1),
+(17, 'Shadow Cloak', 'Cape défensive et discrète.', 170, 75, 25, 3, 2, 'Épique', 1),
+(18, 'Paladin Armor', 'Armure sacrée de paladin.', 320, 140, 50, 2, 2, 'Légendaire', 1),
+(19, 'Traveler Vest', 'Veste légère pour aventurier.', 35, 12, 4, 12, 2, 'Commun', 1),
+(20, 'Dragon Scale Armor', 'Armure forgée avec des écailles rares.', 550, 260, 100, 1, 2, 'Mythique', 1),
+(21, 'Small Health Potion', 'Restaure un peu de vie.', 10, 5, 2, 50, 3, 'Commun', 1),
+(22, 'Medium Health Potion', 'Restaure une quantité moyenne de vie.', 20, 10, 5, 39, 3, 'Commun', 1),
+(23, 'Big Health Potion', 'Restaure beaucoup de vie.', 35, 15, 8, 30, 3, 'Commun', 1),
+(24, 'Mana Potion', 'Restaure du mana.', 15, 7, 3, 40, 3, 'Commun', 1),
+(25, 'Strength Potion', 'Augmente la force temporairement.', 25, 12, 6, 19, 3, 'Rare', 1),
+(26, 'Defense Potion', 'Augmente la défense temporairement.', 25, 12, 6, 20, 3, 'Rare', 1),
+(27, 'Speed Potion', 'Augmente la vitesse temporairement.', 22, 11, 5, 20, 3, 'Rare', 1),
+(28, 'Elixir of Life', 'Potion rare de soin supérieur.', 80, 35, 15, 10, 3, 'Rare', 1),
+(29, 'Antidote', 'Supprime les effets de poison.', 8, 4, 1, 35, 3, 'Commun', 1),
+(30, 'Mega Mana Potion', 'Restaure énormément de mana.', 40, 18, 9, 15, 3, 'Rare', 1),
+(31, 'Fireball', 'Sort de feu basique.', 80, 30, 10, 10, 4, 'Rare', 1),
+(32, 'Ice Spike', 'Projectile magique de glace.', 90, 35, 12, 10, 4, 'Rare', 1),
+(33, 'Lightning Bolt', 'Éclair puissant.', 110, 50, 20, 8, 4, 'Épique', 1),
+(34, 'Earthquake', 'Sort de terre à large impact.', 150, 70, 30, 5, 4, 'Épique', 1),
+(35, 'Wind Slash', 'Lame de vent rapide.', 70, 25, 10, 12, 4, 'Rare', 1),
+(36, 'Inferno Blast', 'Explosion de flammes avancée.', 220, 100, 40, 4, 4, 'Épique', 1),
+(37, 'Frost Nova', 'Onde de glace autour du lanceur.', 170, 80, 30, 5, 4, 'Épique', 1),
+(38, 'Thunder Storm', 'Tempête électrique destructrice.', 260, 120, 45, 3, 4, 'Légendaire', 1),
+(39, 'Stone Wall', 'Mur protecteur de pierre.', 95, 40, 15, 6, 4, 'Rare', 1),
+(40, 'Holy Light', 'Magie sacrée lumineuse.', 140, 60, 20, 7, 4, 'Épique', 1);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `itemtypes`
+--
+
+DROP TABLE IF EXISTS `itemtypes`;
+CREATE TABLE IF NOT EXISTS `itemtypes` (
+  `ItemTypeId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`ItemTypeId`),
+  UNIQUE KEY `UQ_ItemTypes_Name` (`Name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `itemtypes`
+--
+
+INSERT INTO `itemtypes` (`ItemTypeId`, `Name`) VALUES
+(2, 'Armor'),
+(4, 'MagicSpell'),
+(3, 'Potion'),
+(1, 'Weapon');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `magicspellproperties`
+--
+
+DROP TABLE IF EXISTS `magicspellproperties`;
+CREATE TABLE IF NOT EXISTS `magicspellproperties` (
+  `ItemId` int NOT NULL,
+  `SpellDamage` int NOT NULL DEFAULT '0',
+  `ManaCost` int NOT NULL,
+  `ElementType` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `RequiredLevel` int NOT NULL DEFAULT '1',
+  `CooldownSeconds` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`ItemId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `magicspellproperties`
+--
+
+INSERT INTO `magicspellproperties` (`ItemId`, `SpellDamage`, `ManaCost`, `ElementType`, `RequiredLevel`, `CooldownSeconds`) VALUES
+(31, 30, 15, 'Fire', 1, 3),
+(32, 35, 18, 'Ice', 2, 4),
+(33, 45, 22, 'Lightning', 3, 5),
+(34, 60, 30, 'Earth', 4, 6),
+(35, 25, 12, 'Wind', 1, 2),
+(36, 80, 40, 'Fire', 5, 8),
+(37, 65, 32, 'Ice', 4, 7),
+(38, 95, 50, 'Lightning', 6, 10),
+(39, 10, 20, 'Earth', 3, 12),
+(40, 50, 25, 'Holy', 3, 5);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `orderitems`
+--
+
+DROP TABLE IF EXISTS `orderitems`;
+CREATE TABLE IF NOT EXISTS `orderitems` (
+  `OrderItemId` int NOT NULL AUTO_INCREMENT,
+  `OrderId` int NOT NULL,
+  `ItemId` int NOT NULL,
+  `Quantity` int NOT NULL DEFAULT '1',
+  `PriceGold` int NOT NULL DEFAULT '0',
+  `PriceSilver` int NOT NULL DEFAULT '0',
+  `PriceBronze` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`OrderItemId`),
+  KEY `FK_OrderItems_Orders` (`OrderId`),
+  KEY `FK_OrderItems_Items` (`ItemId`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `orderitems`
+--
+
+INSERT INTO `orderitems` (`OrderItemId`, `OrderId`, `ItemId`, `Quantity`, `PriceGold`, `PriceSilver`, `PriceBronze`) VALUES
+(3, 3, 1, 1, 50, 20, 10),
+(4, 4, 14, 1, 400, 200, 80),
+(5, 5, 2, 1, 120, 40, 15),
+(6, 6, 15, 1, 80, 30, 10),
+(7, 7, 16, 1, 210, 90, 30),
+(8, 8, 16, 1, 210, 90, 30),
+(9, 9, 22, 1, 20, 10, 5),
+(10, 10, 25, 1, 25, 12, 6),
+(11, 11, 17, 1, 170, 75, 25),
+(12, 12, 3, 1, 30, 10, 5);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `orders`
+--
+
+DROP TABLE IF EXISTS `orders`;
+CREATE TABLE IF NOT EXISTS `orders` (
+  `OrderId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
+  `OrderDate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `TotalGold` int NOT NULL DEFAULT '0',
+  `TotalSilver` int NOT NULL DEFAULT '0',
+  `TotalBronze` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`OrderId`),
+  KEY `FK_Orders_Users` (`UserId`)
+) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `orders`
+--
+
+INSERT INTO `orders` (`OrderId`, `UserId`, `OrderDate`, `TotalGold`, `TotalSilver`, `TotalBronze`) VALUES
+(3, 3, '2026-04-08 10:30:31', 50, 20, 10),
+(4, 3, '2026-04-08 11:42:27', 400, 200, 80),
+(5, 3, '2026-04-15 09:15:39', 120, 40, 15),
+(6, 3, '2026-04-15 09:36:42', 80, 30, 10),
+(7, 3, '2026-04-15 09:37:11', 210, 90, 30),
+(8, 3, '2026-04-15 09:38:56', 210, 90, 30),
+(9, 3, '2026-04-15 09:39:24', 20, 10, 5),
+(10, 3, '2026-04-15 09:39:44', 25, 12, 6),
+(11, 3, '2026-04-15 10:18:09', 170, 75, 25),
+(12, 3, '2026-04-20 15:52:41', 30, 10, 5);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `potionproperties`
+--
+
+DROP TABLE IF EXISTS `potionproperties`;
+CREATE TABLE IF NOT EXISTS `potionproperties` (
+  `ItemId` int NOT NULL,
+  `EffectType` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `EffectValue` int NOT NULL,
+  `DurationSeconds` int DEFAULT NULL,
+  PRIMARY KEY (`ItemId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `potionproperties`
+--
+
+INSERT INTO `potionproperties` (`ItemId`, `EffectType`, `EffectValue`, `DurationSeconds`) VALUES
+(21, 'Heal', 25, NULL),
+(22, 'Heal', 50, NULL),
+(23, 'Heal', 100, NULL),
+(24, 'Mana', 40, NULL),
+(25, 'Strength', 10, 30),
+(26, 'Defense', 10, 30),
+(27, 'Speed', 10, 25),
+(28, 'Heal', 200, NULL),
+(29, 'CurePoison', 1, NULL),
+(30, 'Mana', 100, NULL);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `reviews`
+--
+
+DROP TABLE IF EXISTS `reviews`;
+CREATE TABLE IF NOT EXISTS `reviews` (
+  `ReviewId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
+  `ItemId` int NOT NULL,
+  `Rating` decimal(2,1) NOT NULL,
+  `Comment` text COLLATE utf8mb4_unicode_ci,
+  `CreatedAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`ReviewId`),
+  UNIQUE KEY `UQ_Reviews_User_Item` (`UserId`,`ItemId`),
+  KEY `FK_Reviews_Items` (`ItemId`)
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `reviews`
+--
+
+INSERT INTO `reviews` (`ReviewId`, `UserId`, `ItemId`, `Rating`, `Comment`, `CreatedAt`) VALUES
+(1, 3, 1, 3.0, NULL, '2026-04-08 11:40:54'),
+(2, 3, 2, 1.0, NULL, '2026-04-15 09:16:36'),
+(3, 3, 14, 1.5, NULL, '2026-04-15 09:16:40'),
+(4, 3, 15, 2.5, NULL, '2026-04-15 09:36:48'),
+(5, 3, 16, 4.5, NULL, '2026-04-15 09:37:24'),
+(6, 3, 22, 1.5, NULL, '2026-04-15 09:39:31'),
+(7, 3, 25, 3.5, NULL, '2026-04-15 09:50:57'),
+(8, 3, 17, 2.5, NULL, '2026-04-15 10:25:23'),
+(9, 3, 3, 2.0, NULL, '2026-04-20 15:53:01');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `riddlecategories`
+--
+
+DROP TABLE IF EXISTS `riddlecategories`;
+CREATE TABLE IF NOT EXISTS `riddlecategories` (
+  `RiddleCategoryId` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  PRIMARY KEY (`RiddleCategoryId`),
+  UNIQUE KEY `UQ_RiddleCategories_Name` (`Name`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `riddlecategories`
+--
+
+INSERT INTO `riddlecategories` (`RiddleCategoryId`, `Name`) VALUES
+(3, 'Armes'),
+(4, 'Armures'),
+(5, 'Autres'),
+(1, 'Magie'),
+(2, 'Potions');
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `riddles`
+--
+
+DROP TABLE IF EXISTS `riddles`;
+CREATE TABLE IF NOT EXISTS `riddles` (
+  `RiddleId` int NOT NULL AUTO_INCREMENT,
+  `QuestionText` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `AnswerText` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `HintText` text COLLATE utf8mb4_unicode_ci,
+  `Difficulty` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `RiddleCategoryId` int NOT NULL,
+  `RewardGold` int NOT NULL DEFAULT '0',
+  `RewardSilver` int NOT NULL DEFAULT '0',
+  `RewardBronze` int NOT NULL DEFAULT '0',
+  `IsActive` tinyint(1) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`RiddleId`),
+  KEY `FK_Riddles_RiddleCategories` (`RiddleCategoryId`)
+) ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `userriddles`
+--
+
+DROP TABLE IF EXISTS `userriddles`;
+CREATE TABLE IF NOT EXISTS `userriddles` (
+  `UserRiddleId` int NOT NULL AUTO_INCREMENT,
+  `UserId` int NOT NULL,
+  `RiddleId` int NOT NULL,
+  `GivenAnswer` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `IsSuccess` tinyint(1) NOT NULL,
+  `AnsweredAt` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`UserRiddleId`),
+  KEY `FK_UserRiddles_Users` (`UserId`),
+  KEY `FK_UserRiddles_Riddles` (`RiddleId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `userriddlestats`
+--
+
+DROP TABLE IF EXISTS `userriddlestats`;
+CREATE TABLE IF NOT EXISTS `userriddlestats` (
+  `UserId` int NOT NULL,
+  `SolvedCount` int NOT NULL DEFAULT '0',
+  `FailedCount` int NOT NULL DEFAULT '0',
+  `MagicSolvedCount` int NOT NULL DEFAULT '0',
+  PRIMARY KEY (`UserId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `userriddlestats`
+--
+
+INSERT INTO `userriddlestats` (`UserId`, `SolvedCount`, `FailedCount`, `MagicSolvedCount`) VALUES
+(3, 0, 0, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `UserId` int NOT NULL AUTO_INCREMENT,
+  `Alias` varchar(30) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `FullName` varchar(80) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Email` varchar(190) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `AvatarUrl` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `Password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Role` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `Gold` int NOT NULL DEFAULT '1000',
+  `Silver` int NOT NULL DEFAULT '1000',
+  `Bronze` int NOT NULL DEFAULT '1000',
+  `ProfileIsDeleted` tinyint(1) NOT NULL DEFAULT '0',
+  `ProfileDeletedAt` datetime DEFAULT NULL,
+  `IsBanned` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`UserId`),
+  UNIQUE KEY `UQ_Users_Alias` (`Alias`),
+  UNIQUE KEY `UQ_Users_Email` (`Email`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `users`
+--
+
+INSERT INTO `users` (`UserId`, `Alias`, `FullName`, `Email`, `AvatarUrl`, `Password`, `Role`, `Gold`, `Silver`, `Bronze`, `ProfileIsDeleted`, `ProfileDeletedAt`, `IsBanned`) VALUES
+(3, 'test123', 'Testual', 'testual@yopmail.com', 'https://images.twinkl.co.uk/tw1n/image/private/t_630/u/ux/screenshot-2023-04-18-at-09.43.39_ver_1.png', '$2y$10$0X4W/We1RjcRARt/J0fvmuttALMkud5Y07M6KSVbKOoouQOsd7dFy', 'Player', 13545, 61803, 85429, 0, NULL, 0);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `weaponproperties`
+--
+
+DROP TABLE IF EXISTS `weaponproperties`;
+CREATE TABLE IF NOT EXISTS `weaponproperties` (
+  `ItemId` int NOT NULL,
+  `DamageMin` int NOT NULL,
+  `DamageMax` int NOT NULL,
+  `Durability` int NOT NULL DEFAULT '100',
+  `RequiredLevel` int NOT NULL DEFAULT '1',
+  `AttackSpeed` decimal(4,2) NOT NULL DEFAULT '1.00',
+  PRIMARY KEY (`ItemId`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Déchargement des données de la table `weaponproperties`
+--
+
+INSERT INTO `weaponproperties` (`ItemId`, `DamageMin`, `DamageMax`, `Durability`, `RequiredLevel`, `AttackSpeed`) VALUES
+(1, 5, 10, 100, 1, 1.00),
+(2, 12, 20, 120, 2, 0.90),
+(3, 3, 8, 80, 1, 1.50),
+(4, 15, 25, 110, 3, 0.70),
+(5, 25, 40, 200, 5, 1.10),
+(6, 10, 18, 90, 2, 1.20),
+(7, 18, 30, 140, 3, 0.65),
+(8, 14, 22, 85, 4, 1.70),
+(9, 20, 32, 130, 4, 1.00),
+(10, 35, 55, 250, 7, 0.85);
+
+--
+-- Contraintes pour les tables déchargées
+--
+
+--
+-- Contraintes pour la table `armorproperties`
+--
+ALTER TABLE `armorproperties`
+  ADD CONSTRAINT `FK_ArmorProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `cartitems`
+--
+ALTER TABLE `cartitems`
+  ADD CONSTRAINT `FK_CartItems_Carts` FOREIGN KEY (`CartId`) REFERENCES `carts` (`CartId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_CartItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `carts`
+--
+ALTER TABLE `carts`
+  ADD CONSTRAINT `FK_Carts_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `inventory`
+--
+ALTER TABLE `inventory`
+  ADD CONSTRAINT `FK_Inventory_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Inventory_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `items`
+--
+ALTER TABLE `items`
+  ADD CONSTRAINT `FK_Items_ItemTypes` FOREIGN KEY (`ItemTypeId`) REFERENCES `itemtypes` (`ItemTypeId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `magicspellproperties`
+--
+ALTER TABLE `magicspellproperties`
+  ADD CONSTRAINT `FK_MagicSpellProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `orderitems`
+--
+ALTER TABLE `orderitems`
+  ADD CONSTRAINT `FK_OrderItems_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_OrderItems_Orders` FOREIGN KEY (`OrderId`) REFERENCES `orders` (`OrderId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `orders`
+--
+ALTER TABLE `orders`
+  ADD CONSTRAINT `FK_Orders_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `potionproperties`
+--
+ALTER TABLE `potionproperties`
+  ADD CONSTRAINT `FK_PotionProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `reviews`
+--
+ALTER TABLE `reviews`
+  ADD CONSTRAINT `FK_Reviews_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_Reviews_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `riddles`
+--
+ALTER TABLE `riddles`
+  ADD CONSTRAINT `FK_Riddles_RiddleCategories` FOREIGN KEY (`RiddleCategoryId`) REFERENCES `riddlecategories` (`RiddleCategoryId`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `userriddles`
+--
+ALTER TABLE `userriddles`
+  ADD CONSTRAINT `FK_UserRiddles_Riddles` FOREIGN KEY (`RiddleId`) REFERENCES `riddles` (`RiddleId`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `FK_UserRiddles_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `userriddlestats`
+--
+ALTER TABLE `userriddlestats`
+  ADD CONSTRAINT `FK_UserRiddleStats_Users` FOREIGN KEY (`UserId`) REFERENCES `users` (`UserId`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Contraintes pour la table `weaponproperties`
+--
+ALTER TABLE `weaponproperties`
+  ADD CONSTRAINT `FK_WeaponProperties_Items` FOREIGN KEY (`ItemId`) REFERENCES `items` (`ItemId`) ON DELETE CASCADE ON UPDATE CASCADE;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

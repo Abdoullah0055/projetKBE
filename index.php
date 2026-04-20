@@ -32,7 +32,11 @@ if (isset($_SESSION['user'])) {
 }
 
 // 2. RÃ‰CUPÃ‰RATION DES ITEMS DEPUIS LA BD (PDO)
-$stmt = $pdo->query("
+$itemsPerPage = 24;
+$currentPage = max(1, (int)($_GET['page'] ?? 1));
+$offset = ($currentPage - 1) * $itemsPerPage;
+
+$stmt = $pdo->prepare(" 
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
@@ -832,5 +836,3 @@ function buildPageUrl(int $targetPage): string
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
-
