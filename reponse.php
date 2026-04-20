@@ -1,6 +1,7 @@
 <?php
 $title = 'Reponse - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css'];
+$bodyClass = 'enigmes-page reponse-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
 
@@ -113,10 +114,6 @@ $abandonUrl = build_enigmes_page_url('reponse.php', array_merge($context['query'
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
-<script>
-    document.body.classList.add('enigmes-page');
-    document.body.classList.add('reponse-page');
-</script>
 
 <main class="enigmes-main">
     <section

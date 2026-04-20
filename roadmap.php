@@ -1,6 +1,7 @@
 <?php
 $title = 'Roadmap des enigmes - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css', 'assets/css/roadmap.css'];
+$bodyClass = 'enigmes-page roadmap-page';
 
 require_once __DIR__ . '/includes/enigmes_progression.php';
 require_once __DIR__ . '/includes/enigmes_request.php';
@@ -16,9 +17,6 @@ $postRoadmapDialoguesJson = htmlspecialchars(
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
-<script>
-    document.body.classList.add('roadmap-page');
-</script>
 
 <main class="roadmap-main">
     <section

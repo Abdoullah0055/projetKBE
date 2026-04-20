@@ -8,14 +8,18 @@
   --enigme-bg-deep: #2a123f;
 }
 
-body.enigmes-page {
+body.enigmes-page,
+body.roadmap-page,
+body.random-page {
   overflow: hidden;
   min-height: 100vh;
   margin: 0;
-  padding: 0;
+  padding: 0 !important;
 }
 
-body.enigmes-page main {
+body.enigmes-page main,
+body.roadmap-page main,
+body.random-page main {
   padding: 0 !important;
   margin: 0 !important;
 }

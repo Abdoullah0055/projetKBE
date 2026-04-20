@@ -14,7 +14,7 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-// DÃ©finition de l'utilisateur pour le header
+// Définition de l'utilisateur pour le header
 $user = [
     'isConnected' => true,
     'id'          => $_SESSION['user']['id'],
@@ -27,17 +27,19 @@ $user = [
     ]
 ];
 
-// 2. RÃ‰CUPÃ‰RATION DU THÃˆME ET DE L'IMAGE DE FOND   
+// 2. RÉCUPÉRATION DU THÈME ET DE L'IMAGE DE FOND
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-// 3. RÃ‰CUPÃ‰RATION DES ITEMS DU PANIER
+// 3. RÉCUPÉRATION DES ITEMS DU PANIER
 $stmt = $pdo->prepare("
     SELECT 
         ci.ItemId AS id,
         i.Name AS nom,
-        i.PriceGold AS prix,
+        i.PriceGold AS prix_gold,
+        i.PriceSilver AS prix_silver,
+        i.PriceBronze AS prix_bronze,
         ci.Quantity AS quantite,
         i.Stock AS stock_max,
         t.Name AS type
@@ -50,12 +52,15 @@ $stmt = $pdo->prepare("
 $stmt->execute([$user['id']]);
 $cartItems = $stmt->fetchAll();
 
-$totalGeneral = 0;
+$totalGeneral = ['gold' => 0, 'silver' => 0, 'bronze' => 0];
 foreach ($cartItems as $item) {
-    $totalGeneral += ($item['prix'] * $item['quantite']);
+    $qty = (int)$item['quantite'];
+    $totalGeneral['gold'] += ((int)$item['prix_gold'] * $qty);
+    $totalGeneral['silver'] += ((int)$item['prix_silver'] * $qty);
+    $totalGeneral['bronze'] += ((int)$item['prix_bronze'] * $qty);
 }
 
-// En haut de panier.php, aprÃ¨s avoir rÃ©cupÃ©rÃ© $cartItems
+// En haut de panier.php, après avoir récupéré $cartItems
 $hasStockError = false;
 foreach ($cartItems as $item) {
     if ($item['quantite'] > $item['stock_max']) {
@@ -66,7 +71,7 @@ foreach ($cartItems as $item) {
 
 $title = "L'Arsenal - Ma Besace";
 
-// --- DÃ‰BUT DU RENDU HTML ---
+// --- DÉBUT DU RENDU HTML ---
 
 // Inclusion du head (Contient <!DOCTYPE>, <html>, <head> et l'ouverture du <body>)
 include __DIR__ . '/templates/head.php';
@@ -107,7 +112,7 @@ $rightImages = [
 <div class="page-banner banner-left">
     <div class="banner-flip" id="leftFlip">
         <div class="banner-scroll banner-clickable" id="leftBanner">
-            <img src="assets/img/kratos.png" alt="DÃ©co Gauche" id="leftBannerImg">
+            <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
         </div>
     </div>
 </div>
@@ -115,7 +120,7 @@ $rightImages = [
 <div class="page-banner banner-right">
     <div class="banner-flip" id="rightFlip">
         <div class="banner-scroll banner-clickable" id="rightBanner">
-            <img src="assets/img/bull.png" alt="DÃ©co Droite" id="rightBannerImg">
+            <img src="assets/img/bull.png" alt="Déco Droite" id="rightBannerImg">
         </div>
     </div>
 </div>
@@ -236,18 +241,18 @@ $rightImages = [
 <main class="cart-page">
     <?php if (empty($cartItems)): ?>
         <div class="empty-cart-box">
-            <h2 style="font-size: 2rem; color: var(--accent);">Ta besace est vide...</h2>
-            <p style="margin: 20px 0;">Va remplir ton equipement avant l'aventure !</p>
+            <h2 style="font-size: 2rem; color: var(--accent);">Votre besace est vide...</h2>
+            <p style="margin: 20px 0;">Allez remplir votre équipement avant l'aventure !</p>
             <br>
-            <a href="index.php" class="btn-confirm" style="text-decoration:none;">Retour Ã  l'Ã©choppe</a>
+            <a href="index.php" class="btn-confirm" style="text-decoration:none;">Retour à l'échoppe</a>
         </div>
     <?php else: ?>
         <div class="cart-title-box">
-            <h2 style="margin:0;">Contenu de ta besace</h2>
+            <h2 style="margin:0;">Contenu de votre besace</h2>
         </div>
 
         <?php foreach ($cartItems as $item):
-            // VÃ©rification du stock
+            // Vérification du stock
             $isOverstock = $item['quantite'] > $item['stock_max'];
         ?>
             <div class="cart-row <?= $isOverstock ? 'row-overstock' : '' ?>">
@@ -265,7 +270,7 @@ $rightImages = [
                         <?php if ($isOverstock): ?>
                             <div class="stock-alert">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                QuantitÃ© max : <?= $item['stock_max'] ?>
+                                Quantité max : <?= $item['stock_max'] ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -273,7 +278,9 @@ $rightImages = [
 
                 <div class="qty-controls"
                     data-item-id="<?= $item['id'] ?>"
-                    data-prix="<?= $item['prix'] ?>"
+                    data-prix-gold="<?= (int)$item['prix_gold'] ?>"
+                    data-prix-silver="<?= (int)$item['prix_silver'] ?>"
+                    data-prix-bronze="<?= (int)$item['prix_bronze'] ?>"
                     data-stock-max="<?= $item['stock_max'] ?>">
                     <button class="btn-qty btn-minus">-</button>
                     <div class="qty-val <?= $isOverstock ? 'text-danger-pulse' : '' ?>">
@@ -283,7 +290,9 @@ $rightImages = [
                 </div>
 
                 <div class="item-total-box">
-                    <?= number_format($item['prix'] * $item['quantite'], 0) ?> GP
+                    <?= number_format((int)$item['prix_gold'] * (int)$item['quantite'], 0) ?> GP |
+                    <?= number_format((int)$item['prix_silver'] * (int)$item['quantite'], 0) ?> SP |
+                    <?= number_format((int)$item['prix_bronze'] * (int)$item['quantite'], 0) ?> BP
                 </div>
             </div>
         <?php endforeach; ?>
@@ -295,7 +304,7 @@ $rightImages = [
                 <h3 id="modal-title">Message de l'Arsenal</h3>
             </div>
             <div class="modal-body">
-                <p id="modal-message">Tu veux vraiment faire cela ?</p>
+                <p id="modal-message">Voulez-vous vraiment faire cela ?</p>
             </div>
             <div class="modal-footer">
                 <button id="modal-btn-cancel" class="btn-secondary">Annuler</button>
@@ -312,7 +321,7 @@ $rightImages = [
         </a>
 
         <div class="total-summary">
-            TOTAL : <?= number_format($totalGeneral, 0) ?> GP
+            TOTAL : <?= number_format($totalGeneral['gold'], 0) ?> GP | <?= number_format($totalGeneral['silver'], 0) ?> SP | <?= number_format($totalGeneral['bronze'], 0) ?> BP
         </div>
 
         <button class="btn-confirm"
@@ -325,14 +334,27 @@ $rightImages = [
 <?php endif; ?>
 
 <script>
+    function formatPriceTriplet(gold, silver, bronze) {
+        return `${gold.toLocaleString()} GP | ${silver.toLocaleString()} SP | ${bronze.toLocaleString()} BP`;
+    }
+
+    function setRowTotal(row, qty, priceGold, priceSilver, priceBronze) {
+        const totalItemBox = row.querySelector('.item-total-box');
+        const totalGold = qty * priceGold;
+        const totalSilver = qty * priceSilver;
+        const totalBronze = qty * priceBronze;
+        totalItemBox.innerText = formatPriceTriplet(totalGold, totalSilver, totalBronze);
+    }
+
     document.querySelectorAll('.qty-controls').forEach(control => {
         const itemId = control.dataset.itemId;
-        const prix = parseFloat(control.dataset.prix);
-        const stockMax = parseInt(control.dataset.stockMax);
+        const priceGold = parseInt(control.dataset.prixGold || '0', 10);
+        const priceSilver = parseInt(control.dataset.prixSilver || '0', 10);
+        const priceBronze = parseInt(control.dataset.prixBronze || '0', 10);
+        const stockMax = parseInt(control.dataset.stockMax || '0', 10);
 
         const qtyValDiv = control.querySelector('.qty-val');
         const row = control.closest('.cart-row');
-        const totalItemBox = row.querySelector('.item-total-box');
         const alertWrapper = row.querySelector('.stock-alert-wrapper');
 
         control.addEventListener('click', async (e) => {
@@ -340,7 +362,7 @@ $rightImages = [
             const isMinus = e.target.classList.contains('btn-minus');
             if (!isPlus && !isMinus) return;
 
-            let currentQty = parseInt(qtyValDiv.innerText);
+            let currentQty = parseInt(qtyValDiv.innerText, 10);
             let newQty = isPlus ? currentQty + 1 : currentQty - 1;
             if (newQty < 0) return;
 
@@ -357,45 +379,44 @@ $rightImages = [
 
                 if (data.success) {
                     if (newQty === 0) {
-                        row.style.transform = "translateX(100px)";
-                        row.style.opacity = "0";
+                        row.style.transform = 'translateX(100px)';
+                        row.style.opacity = '0';
                         setTimeout(() => {
                             row.remove();
-                            if (document.querySelectorAll('.cart-row').length === 0) location.reload();
-                            updateCartState();
+                            if (document.querySelectorAll('.cart-row').length === 0) {
+                                location.reload();
+                            } else {
+                                updateCartState();
+                            }
                         }, 300);
                     } else {
-                        // 1. Mise Ã  jour des chiffres
                         qtyValDiv.innerText = newQty;
-                        totalItemBox.innerText = (newQty * prix).toLocaleString() + " GP";
+                        setRowTotal(row, newQty, priceGold, priceSilver, priceBronze);
 
-                        // 2. GESTION DYNAMIQUE DE L'ERREUR DE STOCK
                         if (newQty > stockMax) {
                             row.classList.add('row-overstock');
                             qtyValDiv.classList.add('text-danger-pulse');
-                            // On ajoute l'alerte si elle n'existe pas dÃ©jÃ 
                             alertWrapper.innerHTML = `
                             <div class="stock-alert">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                QuantitÃ© max : ${stockMax}
+                                Quantite max : ${stockMax}
                             </div>`;
                         } else {
                             row.classList.remove('row-overstock');
                             qtyValDiv.classList.remove('text-danger-pulse');
-                            alertWrapper.innerHTML = ""; // On efface l'erreur instantanÃ©ment
+                            alertWrapper.innerHTML = '';
                         }
 
                         updateCartState();
                     }
                 }
             } catch (error) {
-                console.error("Erreur:", error);
+                console.error('Erreur:', error);
             }
         });
     });
- 
-    // Loop
 
+    // Loop
     function changeLeftBanner() {
         leftIndex++;
         if (leftIndex >= leftImages.length) {
@@ -426,50 +447,54 @@ $rightImages = [
         }, 350);
     }
 
-    // ðŸ” AUTO LOOP
     setInterval(() => {
         changeLeftBanner();
         changeRightBanner();
     }, 5000);
 
-    
-
     function updateCartState() {
-        let grandTotal = 0;
+        let totalGold = 0;
+        let totalSilver = 0;
+        let totalBronze = 0;
         let hasGlobalError = false;
-        const confirmBtn = document.querySelector('.btn-confirm');
+
+        const confirmBtn = document.getElementById('btn-confirm-purchase');
+        if (!confirmBtn) return;
 
         document.querySelectorAll('.cart-row').forEach(row => {
-            // Recalcul du Total
-            const priceText = row.querySelector('.item-total-box').innerText;
-            grandTotal += parseFloat(priceText.replace(/[^0-9.-]+/g, ""));
+            const qty = parseInt(row.querySelector('.qty-val')?.innerText || '0', 10);
+            const qtyControl = row.querySelector('.qty-controls');
 
-            // VÃ©rification si au moins une ligne est en erreur
+            if (qtyControl) {
+                totalGold += qty * parseInt(qtyControl.dataset.prixGold || '0', 10);
+                totalSilver += qty * parseInt(qtyControl.dataset.prixSilver || '0', 10);
+                totalBronze += qty * parseInt(qtyControl.dataset.prixBronze || '0', 10);
+            }
+
             if (row.classList.contains('row-overstock')) {
                 hasGlobalError = true;
             }
         });
 
-        document.querySelector('.total-summary').innerText = `TOTAL : ${grandTotal.toLocaleString()} GP`;
+        const summary = document.querySelector('.total-summary');
+        if (summary) {
+            summary.innerText = `TOTAL : ${formatPriceTriplet(totalGold, totalSilver, totalBronze)}`;
+        }
 
-        // Activation/DÃ©sactivation du bouton
         if (hasGlobalError) {
             confirmBtn.disabled = true;
-            confirmBtn.style.opacity = "0.5";
-            confirmBtn.style.cursor = "not-allowed";
-            confirmBtn.innerText = "Stock insuffisant";
+            confirmBtn.style.opacity = '0.5';
+            confirmBtn.style.cursor = 'not-allowed';
+            confirmBtn.innerText = 'Stock insuffisant';
         } else {
             confirmBtn.disabled = false;
-            confirmBtn.style.opacity = "1";
-            confirmBtn.style.cursor = "pointer";
+            confirmBtn.style.opacity = '1';
+            confirmBtn.style.cursor = 'pointer';
             confirmBtn.innerText = "Confirmer l'achat";
         }
     }
 
-    /**
-     * Affiche une modale de confirmation personnalisÃ©e
-     */
-    function showCustomConfirm(message, title = "Confirmation") {
+    function showCustomConfirm(message, title = 'Confirmation') {
         return new Promise((resolve) => {
             const modal = document.getElementById('custom-modal');
             const msgPara = document.getElementById('modal-message');
@@ -491,21 +516,16 @@ $rightImages = [
             btnConfirm.onclick = () => close(true);
             btnCancel.onclick = () => close(false);
 
-            // Fermer si on clique en dehors de la modale
             modal.onclick = (e) => {
                 if (e.target === modal) close(false);
             };
         });
     }
 
-    // MISE Ã€ JOUR de ta fonction de suppression
     async function deleteItemFromCart(itemId, button) {
-        // ON REMPLACE LE confirm() PAR NOTRE MODALE
-        const confirmed = await showCustomConfirm("Tu veux retirer cet objet de ta besace ?", "Retirer l'objet");
-
+        const confirmed = await showCustomConfirm("Voulez-vous retirer cet objet de votre besace ?", "Retirer l'objet");
         if (!confirmed) return;
 
-        // ... reste du code fetch inchangÃ© ...
         const row = button.closest('.cart-row');
         const formData = new FormData();
         formData.append('item_id', itemId);
@@ -516,52 +536,68 @@ $rightImages = [
                 body: formData
             });
             const data = await response.json();
+
             if (data.success) {
-                row.style.transform = "translateX(-100px)";
-                row.style.opacity = "0";
+                row.style.transform = 'translateX(-100px)';
+                row.style.opacity = '0';
                 setTimeout(() => {
                     row.remove();
-                    if (document.querySelectorAll('.cart-row').length === 0) location.reload();
-                    else updateCartState();
+                    if (document.querySelectorAll('.cart-row').length === 0) {
+                        location.reload();
+                    } else {
+                        updateCartState();
+                    }
                 }, 400);
             }
         } catch (error) {
             console.error(error);
         }
     }
+
     async function processPurchase() {
         const confirmBtn = document.getElementById('btn-confirm-purchase');
+        if (!confirmBtn || confirmBtn.disabled) return;
 
-        if (confirmBtn.disabled) return;
-
-        // Utilisation de TA modale personnalisÃ©e ici
         const confirmed = await showCustomConfirm(
-            "Tu veux sceller cet echange et depenser tes pieces d'or ?",
-            "Sceller l'Ã©change"
+            'Voulez-vous sceller cet echange et payer en GP, SP et BP ?',
+            "Sceller l'echange"
         );
-
         if (!confirmed) return;
 
         confirmBtn.disabled = true;
-        confirmBtn.innerText = "Traitement...";
+        confirmBtn.innerText = 'Traitement...';
 
         try {
-            // Simulation d'appel backend
-            // const response = await fetch('backend/confirmer_achat.php', { method: 'POST' });
+            const response = await fetch('backend/confirmer_achat.php', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await response.json();
 
-            // On remplace aussi l'alert() final par un petit message temporaire sur le bouton
-            confirmBtn.innerText = "Ã‰change conclu !";
+            if (!response.ok || !data.success) {
+                confirmBtn.disabled = false;
+                confirmBtn.innerText = data?.message || "Confirmer l'achat";
+                console.error('Erreur transaction:', data);
+                setTimeout(() => {
+                    confirmBtn.innerText = "Confirmer l'achat";
+                }, 1800);
+                return;
+            }
 
+            confirmBtn.innerText = `Echange conclu ! #${data.order_id}`;
             setTimeout(() => {
                 window.location.href = 'index.php';
             }, 1500);
-
         } catch (error) {
-            console.error("Erreur transaction:", error);
+            console.error('Erreur transaction:', error);
             confirmBtn.disabled = false;
             confirmBtn.innerText = "Confirmer l'achat";
         }
     }
+
+    updateCartState();
 </script>
 
 <?php

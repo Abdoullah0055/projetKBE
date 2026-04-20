@@ -1,6 +1,7 @@
 <?php
 $title = 'Enigme - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css'];
+$bodyClass = 'enigmes-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
 
@@ -43,9 +44,6 @@ $mainDialoguesJson = htmlspecialchars(
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
-<script>
-    document.body.classList.add('enigmes-page');
-</script>
 
 <main class="enigmes-main">
     <section

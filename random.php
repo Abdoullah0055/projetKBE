@@ -1,6 +1,7 @@
 <?php
 $title = 'Choix Aleatoires - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css', 'assets/css/random.css'];
+$bodyClass = 'enigmes-page random-page';
 $randomCategories = [
     ['id' => 1, 'label' => 'Magie', 'image' => 'magie.png', 'modifier' => 'magie'],
     ['id' => 2, 'label' => 'Potions', 'image' => 'potion.png', 'modifier' => 'potion'],
@@ -11,9 +12,6 @@ $randomCategories = [
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
-<script>
-    document.body.classList.add('random-page');
-</script>
 
 <main class="random-main">
     <section class="random-stage is-intro-active random-stage--pages-focus" aria-label="Selection magique aleatoire">
