@@ -1,9 +1,9 @@
 <?php
-// On garde le config de votre ami et on ajoute votre connexion BD test
+// On garde le config de l'ami et on ajoute la connexion BD test
 require_once __DIR__ . '/config/config.php';
 require_once 'AlgosBD.php';
 
-// On s'assure que la session est démarrée
+// On s'assure que la session est dÃ©marrÃ©e
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -31,7 +31,7 @@ if (isset($_SESSION['user'])) {
     ];
 }
 
-// 2. RÉCUPÉRATION DES ITEMS DEPUIS LA BD (PDO)
+// 2. RÃ‰CUPÃ‰RATION DES ITEMS DEPUIS LA BD (PDO)
 $stmt = $pdo->query("
     SELECT 
         i.ItemId as id, 
@@ -50,12 +50,12 @@ $stmt = $pdo->query("
 ");
 $items = $stmt->fetchAll();
 
-$title = "L'Arsenal - Marché Noir";
+$title = "L'Arsenal - MarchÃ© Noir";
 
-// Gestion du thème via Cookie (30 jours)
+// Gestion du thÃ¨me via Cookie (30 jours)
 $currentTheme = $_COOKIE['theme'] ?? 'light';
-$bgNum = $_COOKIE['bgNumber'] ?? '1'; // On récupère le numéro sauvegardé
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgNum = $_COOKIE['bgNumber'] ?? '1'; // On rÃ©cupÃ¨re le numÃ©ro sauvegardÃ©
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 ?>
@@ -74,7 +74,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
         z-index: 0;
     }
 
-    /* On s'assure que le dégradé sombre ne cache pas l'image */
+    /* On s'assure que le dÃ©gradÃ© sombre ne cache pas l'image */
     body::before {
         content: "";
         position: fixed;
@@ -83,7 +83,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
         width: 100%;
         height: 100%;
         background: rgba(0, 0, 0, 0.5);
-        /* Ajuste l'obscurité du fond ici */
+        /* Ajuste l'obscuritÃ© du fond ici */
         z-index: -1;
         pointer-events: none;
     }
@@ -100,16 +100,16 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 <div class="wrapper">
     <aside id="sidebar">
         <button id="toggle-btn" onclick="toggleMenu()">
-            <span id="arrow-icon">«</span>
+            <span id="arrow-icon">Â«</span>
         </button>
 
         <div class="sidebar-content">
-            <div class="show-icon">🔍</div>
+            <div class="show-icon">ðŸ”</div>
 
             <div class="hide-text">
                 <form class="filter-section">
                     <div class="filter-group">
-                        <label>Catégorie</label>
+                        <label>CatÃ©gorie</label>
                         <select name="type">
                             <option value="all">Tous les items</option>
                             <option value="arme">Armes</option>
@@ -125,24 +125,28 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
                     </button>
                 </form>
 
-                <a href="enigmes.php"
-                    style="display:inline-flex; align-items:center; justify-content:center; width:100%; margin-top:14px; padding:11px 14px; background:rgba(25,133,161,0.16); color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.9rem; border:1px solid rgba(25,133,161,0.45); border-radius:999px;">
-                    &Eacute;nigme
+                <a href="roadmap.php" class="enigme-door-button" aria-label="Acc&eacute;der aux &eacute;nigmes">
+                    <span class="enigme-door-button__frame">
+                        <img
+                            src="assets/img/doors/opened.png"
+                            alt=""
+                            class="enigme-door-button__image">
+                    </span>
                 </a>
             </div>
 
             <div class="cta-box">
                 <div class="hide-text">
                     <?php if ($user['isConnected']): ?>
-                        <p style="margin:0 0 8px 0; font-size:0.9rem;">Essais énigmes : <b style="color:var(--accent)">5 /
+                        <p style="margin:0 0 8px 0; font-size:0.9rem;">Essais Ã©nigmes : <b style="color:var(--accent)">5 /
                                 5</b></p>
                     <?php else: ?>
                         <p style="margin:0 0 8px 0; font-size:0.9rem;">Besoin d'or ?</p>
                     <?php endif; ?>
 
-                    <a href="#"
-                        style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre
-                        des énigmes</a>
+                    <a href="roadmap.php"
+                        style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">RÃ©soudre
+                        des Ã©nigmes</a>
                 </div>
             </div>
         </div>
@@ -151,7 +155,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
     <main>
         <div class="catalog-banner">
             <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
-                <?= $user['isConnected'] ? "Content de vous revoir, " . $user['alias'] : "Catalogue des Reliques" ?>
+                <?= $user['isConnected'] ? "Content de te revoir, " . $user['alias'] : "Catalogue des Reliques" ?>
             </h2>
 
         </div>
@@ -172,7 +176,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 
                         <div style="margin-top: 5px;">
-                            <span style="color: var(--gold);">★ ★ ★ ★ ☆</span>
+                            <span style="color: var(--gold);">â˜… â˜… â˜… â˜… â˜†</span>
                             <small style="color: var(--text-silver); margin-left: 5px;">(<?= $item['reviews'] ?>
                                 aventuriers)</small>
                         </div>
@@ -191,7 +195,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
                     <div class="item-action-btns" style="margin-left: 20px;">
                         <?php if ($user['isConnected']): ?>
                             <?php if ($item['stock'] == 0): ?>
-                                <button disabled style="background:#444; cursor:not-allowed;">Épuisé</button>
+                                <button disabled style="background:#444; cursor:not-allowed;">Ã‰puisÃ©</button>
                             <?php elseif ($item['type'] == 'sort' && !$user['isMage']): ?>
                                 <button disabled title="Niveau Mage requis" style="background:#666; font-size:0.7rem;">Mage
                                     Requis</button>
@@ -201,7 +205,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
                             <?php endif; ?>
                         <?php else: ?>
                             <a href="details.php?id=<?= $item['id'] ?>"
-                                style="text-decoration:none; color:var(--accent); font-size:1.5rem;">➔</a>
+                                style="text-decoration:none; color:var(--accent); font-size:1.5rem;">âž”</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -209,7 +213,7 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
         </div>
 
         <div class="pagination">
-            <a href="#">&laquo; Précédent</a>
+            <a href="#">&laquo; PrÃ©cÃ©dent</a>
             <span>Page <strong>1</strong> sur 12</span>
             <a href="#">Suivant &raquo;</a>
         </div>
@@ -218,3 +222,5 @@ $iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
+
+

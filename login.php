@@ -8,10 +8,10 @@ if (session_status() === PHP_SESSION_NONE) {
 $pdo = get_pdo();
 
 if (!$pdo) {
-    die("Erreur critique : Impossible de se connecter à la base de données.");
+    die("Erreur critique : Impossible de se connecter Ã  la base de donnÃ©es.");
 }
 
-// --- TON CODE PHP DE SESSION ET TRAITEMENT (GARDÉ TEL QUEL) ---
+// --- TON CODE PHP DE SESSION ET TRAITEMENT (GARDÃ‰ TEL QUEL) ---
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
             $stmt->execute([$alias, $hashedPassword]);
-            $success = "Compte forgé avec succès ! Vous pouvez maintenant vous connecter.";
+            $success = "Compte forge avec succes ! Tu peux maintenant te connecter.";
         } catch (PDOException $e) {
             $error = "Erreur : " . $e->getMessage();
         }
@@ -74,12 +74,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = "Alias ou mot de passe incorrect.";
             }
         } catch (PDOException $e) {
-            $error = "Erreur système : " . $e->getMessage();
+            $error = "Erreur systÃ¨me : " . $e->getMessage();
         }
     }
 }
 
-$title = "L'Arsenal - Sanctuaire d'Accès";
+$title = "L'Arsenal - Sanctuaire d'AccÃ¨s";
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -88,7 +88,7 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 <main class="auth-page">
     <div class="auth-container fade-in" id="auth-card">
         <div class="auth-header">
-            <div style="font-size: 3rem; margin-bottom: 10px;">🗝️</div>
+            <div style="font-size: 3rem; margin-bottom: 10px;">ðŸ—ï¸</div>
             <h2 id="form-title">Connexion</h2>
             <p id="form-subtitle" style="font-size: 0.8rem; color: #5C5F66;">Entrez dans l'Arsenal de Sombre-Donjon</p>
         </div>
@@ -111,12 +111,12 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 
             <div class="form-group">
                 <label for="password">Mot de passe</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" required minlength="6">
+                <input type="password" id="password" name="password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" required minlength="6">
             </div>
 
             <div class="form-group" id="confirm-group" style="display: none;">
                 <label for="confirm-password">Confirmer le mot de passe</label>
-                <input type="password" id="confirm-password" name="confirm_password" placeholder="••••••••">
+                <input type="password" id="confirm-password" name="confirm_password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
                 <div id="confirm-error" style="display:none; color: var(--error); font-size: 0.8rem; margin-top:5px;">
                     Les mots de passe ne correspondent pas.
                 </div>
@@ -127,9 +127,10 @@ $title = "L'Arsenal - Sanctuaire d'Accès";
 
         <div class="switch-mode">
             <span id="switch-text">Nouveau ici ?</span>
-            <a href="#" id="switch-link">Créer un compte</a>
+            <a href="#" id="switch-link">CrÃ©er un compte</a>
         </div>
     </div>
 </main>
 <script src="assets/js/auth.js"></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
+

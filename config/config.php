@@ -20,7 +20,7 @@ if (isset($_SESSION['user'])) {
         ]
     ];
 } else {
-    // Visiteur non connecté
+    // Visiteur non connectÃ©
     $user = [
         'isConnected' => false,
         'alias' => '',
@@ -34,15 +34,16 @@ function getItemImage($type)
 {
     switch (strtolower($type)) {
         case 'arme':
-            return '⚔️';
+            return 'âš”ï¸';
         case 'armure':
-            return '🛡️';
+            return 'ðŸ›¡ï¸';
         case 'potion':
-            return '🧪';
+            return 'ðŸ§ª';
         case 'sort':
-            return '✨';
+            return 'âœ¨';
         default:
-            return '❓';
+            return 'â“';
     }
 }
 ?>
+

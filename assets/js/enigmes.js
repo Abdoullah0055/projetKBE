@@ -1,4 +1,4 @@
-﻿(function () {
+(function () {
   "use strict";
 
   document.addEventListener("DOMContentLoaded", () => {
@@ -7,12 +7,20 @@
     const mageButton = document.getElementById("enigmesMage");
     const mageImage = document.getElementById("enigmesMageImage");
     const dialogText = document.getElementById("enigmesDialogText");
-    const replayButton = document.getElementById("enigmesReplayBtn");
+    const hintButton = document.getElementById("enigmesHintBtn");
     const responseInput = document.getElementById("enigmesResponseInput");
+    const backLink = stage.querySelector(".enigmes-back");
+    const backImage = stage.querySelector(".enigmes-back-image");
 
     if (!stage || !intro || !mageButton || !mageImage || !dialogText) {
       return;
     }
+
+    const startMode = stage.dataset.startMode === "riddle" ? "riddle" : "main";
+    const hintUnlockStep = Number.parseInt(stage.dataset.hintUnlockStep || "3", 10);
+    const responseUrl = stage.dataset.responseUrl || "reponse.php";
+    const abandonUrl = stage.dataset.abandonUrl || (backLink ? backLink.getAttribute("href") || "" : "");
+    const abandonBackImage = "assets/img/Magicien/abandon.png";
 
     const mageFrames = [
       "assets/img/Magicien/mage1.png",
@@ -25,15 +33,10 @@
       "assets/img/Magicien/mage8.png"
     ];
 
-    const dialogues = [
-      "Bienvenue, voyageur. Avant de repondre, je vais vous expliquer comment cette enigme se resout.",
-      "Premier principe: lis chaque indice lentement, parce qu'un seul mot peut changer tout le sens.",
-      "Deuxieme principe: elimine les reponses faciles qui ne respectent pas tous les indices en meme temps.",
-      "Troisieme principe: quand tu hesites entre deux pistes, garde celle qui reste logique du debut a la fin.",
-      "Si vous avez besoin de revoir l'enigme, cliquez sur l'icone i en haut a gauche de la page de reponse.",
-      "Enigme, partie 1: Je parle sans bouche et j'entends sans oreilles.",
-      "Enigme, partie 2: Je n'ai pas de corps, mais je prends vie avec le vent. Qui suis-je?",
-      "L'enigme est maintenant entre vos mains... il est a vous de jouer."
+    const hintFrames = [
+      "assets/img/Magicien/mage_rigole.png",
+      "assets/img/Magicien/mage_grimoire.png",
+      "assets/img/Magicien/mage8.png"
     ];
 
     const backgroundFrames = [
@@ -46,61 +49,109 @@
       "assets/img/Magicien/info.png"
     ];
 
-    const riddleStartIndex = 5;
-    const riddleEndIndex = 7;
+    const fallbackMainDialogues = [
+      "Bienvenue dans Enigme. Le but du jeu est de repondre correctement a une question qui te sera posee.",
+      "Les reponses peuvent se trouver directement sur le site, dans les descriptions d’objets, ou concerner des evenements historiques de notre monde.",
+      "Tu peux cliquer en tout temps sur l’icone I en haut a droite afin d’obtenir un indice. Dans le message suivant se trouvera l’enigme a resoudre.",
+      "Une enigme devrait se presenter ici.",
+      "Il est maintenant a toi de jouer, jeune vagabond. Je te souhaite la meilleure des chances."
+    ];
+
+    const fallbackHintDialogues = [
+      "Ah... je savais bien que tu aurais besoin d’un indice. Cette enigme semblait deja trop grande pour toi.",
+      "Les grimoires demeurent muets pour l’instant.",
+      "J’espere que cela suffira a eclairer ton esprit, jeune vagabond."
+    ];
+
+    const mainDialogues = parseDialogues(stage.dataset.mainDialogues, fallbackMainDialogues);
+    const hintDialogues = parseDialogues(stage.dataset.hintDialogues, fallbackHintDialogues);
 
     preloadAssets([...mageFrames, ...backgroundFrames, ...uiAssets]);
 
-    let mode = "intro";
+    let mode = startMode;
     let currentIndex = 0;
-    let replayIndex = riddleStartIndex;
     let isTransitioning = false;
     let switchTimerId = null;
     let typeTimerId = null;
+    let settleTimerId = null;
     let typeRunId = 0;
+    let activeTypeText = "";
+    let isTyping = false;
 
     const typeDelay = 35;
     const fogDuration = 1050;
     const introFadeDuration = 500;
+    const settleDelay = 650;
 
-    stage.classList.add("is-intro-active");
-    stage.classList.remove("is-riddle-active", "is-replay-active");
+    stage.classList.remove("is-riddle-active", "is-replay-active", "is-intro-active", "is-hint-available");
 
-    if (responseInput) {
-      responseInput.disabled = true;
+    if (startMode === "riddle") {
+      stage.classList.add("is-riddle-active", "is-hint-available");
+      intro.setAttribute("aria-hidden", "true");
+
+      if (responseInput) {
+        responseInput.disabled = false;
+        responseInput.focus({ preventScroll: true });
+      }
+
+      setHintButtonEnabled(true);
+      syncBackLink();
+    } else {
+      stage.classList.add("is-intro-active");
+      setHintButtonEnabled(false);
+
+      if (responseInput) {
+        responseInput.disabled = true;
+      }
+
+      setMageFrame(currentIndex);
+      typeDialogue(mainDialogues[currentIndex], handleSequenceCompletion);
+      syncBackLink();
     }
-
-    if (replayButton) {
-      replayButton.setAttribute("aria-hidden", "true");
-    }
-
-    setMageFrame(currentIndex);
-    typeDialogue(dialogues[currentIndex]);
 
     mageButton.addEventListener("click", () => {
       if (isTransitioning) {
         return;
       }
 
-      if (mode === "intro") {
-        handleIntroClick();
-        return;
-      }
-
-      if (mode === "replay") {
-        handleReplayClick();
-      }
-    });
-
-    if (replayButton) {
-      replayButton.addEventListener("click", () => {
-        if (isTransitioning || mode !== "riddle") {
+      if (mode === "main") {
+        if (isTyping && currentIndex >= mainDialogues.length - 1) {
+          activateRiddleMode();
           return;
         }
 
-        startRiddleReplay();
+        handleSequenceClick(mainDialogues);
+        return;
+      }
+
+      if (mode === "hint") {
+        if (isTyping && currentIndex >= hintDialogues.length - 1) {
+          activateRiddleMode();
+          return;
+        }
+
+        handleSequenceClick(hintDialogues);
+      }
+    });
+
+    if (hintButton) {
+      hintButton.addEventListener("click", () => {
+        if (isTransitioning || !isHintAvailable()) {
+          return;
+        }
+
+        startHintSequence();
       });
     }
+
+    window.triggerEnigmeHint = () => {
+      if (isTransitioning || !isHintAvailable()) {
+        return false;
+      }
+
+      startHintSequence();
+      return true;
+    };
 
     function preloadAssets(paths) {
       paths.forEach((path) => {
@@ -109,8 +160,22 @@
       });
     }
 
+    function parseDialogues(rawValue, fallback) {
+      if (!rawValue) {
+        return fallback;
+      }
+
+      try {
+        const parsed = JSON.parse(rawValue);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
     function cancelTypewriter() {
       typeRunId += 1;
+      isTyping = false;
 
       if (typeTimerId !== null) {
         window.clearTimeout(typeTimerId);
@@ -120,8 +185,18 @@
       dialogText.classList.remove("is-typing");
     }
 
-    function typeDialogue(text) {
+    function clearSettleTimer() {
+      if (settleTimerId !== null) {
+        window.clearTimeout(settleTimerId);
+        settleTimerId = null;
+      }
+    }
+
+    function typeDialogue(text, onComplete) {
       cancelTypewriter();
+      clearSettleTimer();
+      activeTypeText = text;
+      isTyping = true;
 
       const runId = typeRunId;
       let charIndex = 0;
@@ -137,6 +212,12 @@
         if (charIndex >= text.length) {
           dialogText.classList.remove("is-typing");
           typeTimerId = null;
+          isTyping = false;
+
+          if (typeof onComplete === "function") {
+            onComplete();
+          }
+
           return;
         }
 
@@ -149,8 +230,16 @@
     }
 
     function setMageFrame(frameIndex) {
-      mageImage.src = mageFrames[frameIndex];
-      mageImage.alt = `Mage phase ${frameIndex + 1}`;
+      const safeIndex = Math.min(frameIndex, mageFrames.length - 1);
+
+      if (mode === "hint" && safeIndex < hintFrames.length) {
+        mageImage.src = hintFrames[safeIndex];
+        mageImage.alt = `Mage indice phase ${safeIndex + 1}`;
+        return;
+      }
+
+      mageImage.src = mageFrames[safeIndex];
+      mageImage.alt = `Mage phase ${safeIndex + 1}`;
     }
 
     function swapMageFrame(nextIndex) {
@@ -168,32 +257,46 @@
       }, 120);
     }
 
-    function handleIntroClick() {
+    function handleSequenceClick(dialogues) {
+      clearSettleTimer();
+
       if (currentIndex < dialogues.length - 1) {
         currentIndex += 1;
         swapMageFrame(currentIndex);
-        typeDialogue(dialogues[currentIndex]);
-        return;
+        syncHintAvailability();
+        typeDialogue(dialogues[currentIndex], handleSequenceCompletion);
       }
-
-      activateRiddleMode();
     }
 
-    function handleReplayClick() {
-      if (replayIndex < riddleEndIndex) {
-        replayIndex += 1;
-        swapMageFrame(replayIndex);
-        typeDialogue(dialogues[replayIndex]);
+    function handleSequenceCompletion() {
+      syncHintAvailability();
+
+      if (mode !== "main" && mode !== "hint") {
         return;
       }
 
-      finishRiddleReplay();
+      const activeDialogues = mode === "main" ? mainDialogues : hintDialogues;
+
+      if (currentIndex !== activeDialogues.length - 1) {
+        return;
+      }
+
+      settleTimerId = window.setTimeout(() => {
+        settleTimerId = null;
+
+        if (mode === "main" || mode === "hint") {
+          activateRiddleMode();
+        }
+      }, settleDelay);
     }
 
     function activateRiddleMode() {
       isTransitioning = true;
       mode = "transition";
+      syncBackLink();
       cancelTypewriter();
+      clearSettleTimer();
+      dialogText.textContent = activeTypeText;
 
       if (switchTimerId !== null) {
         window.clearTimeout(switchTimerId);
@@ -206,7 +309,7 @@
 
       window.setTimeout(() => {
         stage.classList.remove("is-intro-active", "is-replay-active");
-        stage.classList.add("is-riddle-active");
+        stage.classList.add("is-riddle-active", "is-hint-available");
 
         intro.setAttribute("aria-hidden", "true");
 
@@ -215,30 +318,44 @@
           responseInput.focus({ preventScroll: true });
         }
 
-        if (replayButton) {
-          replayButton.setAttribute("aria-hidden", "false");
-        }
+        setHintButtonEnabled(true);
 
         window.setTimeout(() => {
           stage.classList.remove("is-fogging");
           isTransitioning = false;
           mode = "riddle";
+          syncBackLink();
         }, introFadeDuration);
       }, fogDuration);
     }
 
-    function startRiddleReplay() {
-      isTransitioning = true;
-      mode = "transition";
-      replayIndex = riddleStartIndex;
-
+    function startHintSequence() {
       cancelTypewriter();
+      clearSettleTimer();
+      setHintButtonEnabled(false);
 
       if (switchTimerId !== null) {
         window.clearTimeout(switchTimerId);
         switchTimerId = null;
       }
 
+      if (mode === "main") {
+        mode = "hint";
+        syncBackLink();
+        currentIndex = 0;
+        stage.classList.remove("is-hint-available");
+        setMageFrame(0);
+        typeDialogue(hintDialogues[currentIndex], handleSequenceCompletion);
+        return;
+      }
+
+      if (mode !== "riddle") {
+        return;
+      }
+
+      isTransitioning = true;
+      mode = "transition";
+      stage.classList.remove("is-hint-available");
       stage.classList.add("is-fogging");
       mageButton.disabled = true;
 
@@ -246,61 +363,82 @@
         responseInput.disabled = true;
       }
 
-      if (replayButton) {
-        replayButton.setAttribute("aria-hidden", "true");
-      }
-
       window.setTimeout(() => {
+        currentIndex = 0;
         stage.classList.remove("is-riddle-active");
         stage.classList.add("is-intro-active", "is-replay-active");
         intro.setAttribute("aria-hidden", "false");
 
         mageButton.disabled = false;
-        setMageFrame(replayIndex);
-        typeDialogue(dialogues[replayIndex]);
+        mode = "hint";
+        syncBackLink();
+        setMageFrame(0);
+        typeDialogue(hintDialogues[currentIndex], handleSequenceCompletion);
 
         window.setTimeout(() => {
           stage.classList.remove("is-fogging");
           isTransitioning = false;
-          mode = "replay";
         }, introFadeDuration);
       }, fogDuration);
     }
 
-    function finishRiddleReplay() {
-      isTransitioning = true;
-      mode = "transition";
-      cancelTypewriter();
-
-      mageButton.disabled = true;
-      stage.classList.add("is-fogging");
-
-      if (switchTimerId !== null) {
-        window.clearTimeout(switchTimerId);
-        switchTimerId = null;
+    function syncBackLink() {
+      if (!backLink) {
+        return;
       }
 
-      window.setTimeout(() => {
-        stage.classList.remove("is-intro-active", "is-replay-active");
-        stage.classList.add("is-riddle-active");
+      // During dialogue/hint phases, keep back disabled and visibly grayed out.
+      if (mode === "main" || mode === "hint" || mode === "transition") {
+        backLink.removeAttribute("href");
+        backLink.setAttribute("aria-disabled", "true");
+        backLink.setAttribute("aria-label", "Retour indisponible pendant la sequence");
+        backLink.style.pointerEvents = "none";
 
-        intro.setAttribute("aria-hidden", "true");
-
-        if (responseInput) {
-          responseInput.disabled = false;
-          responseInput.focus({ preventScroll: true });
+        if (backImage) {
+          backImage.src = "assets/img/Magicien/retour_off.png";
         }
 
-        if (replayButton) {
-          replayButton.setAttribute("aria-hidden", "false");
-        }
+        return;
+      }
 
-        window.setTimeout(() => {
-          stage.classList.remove("is-fogging");
-          isTransitioning = false;
-          mode = "riddle";
-        }, introFadeDuration);
-      }, fogDuration);
+      backLink.setAttribute("href", abandonUrl || responseUrl);
+      backLink.removeAttribute("aria-disabled");
+      backLink.setAttribute("aria-label", "Abandonner l enigme");
+      backLink.style.pointerEvents = "";
+
+      if (backImage) {
+        backImage.src = abandonBackImage;
+      }
+    }
+
+    function syncHintAvailability() {
+      if (mode === "riddle") {
+        setHintButtonEnabled(true);
+        return;
+      }
+
+      if (mode === "main" && currentIndex >= hintUnlockStep) {
+        setHintButtonEnabled(true);
+        return;
+      }
+
+      setHintButtonEnabled(false);
+    }
+
+    function setHintButtonEnabled(isEnabled) {
+      if (!hintButton) {
+        return;
+      }
+
+      hintButton.disabled = !isEnabled;
+      hintButton.setAttribute("aria-hidden", isEnabled ? "false" : "true");
+      stage.classList.toggle("is-hint-available", isEnabled);
+    }
+
+    function isHintAvailable() {
+      return mode === "riddle" || (mode === "main" && currentIndex >= hintUnlockStep);
     }
   });
 })();
+
+

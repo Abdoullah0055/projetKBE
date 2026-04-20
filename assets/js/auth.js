@@ -13,6 +13,20 @@ document.addEventListener("DOMContentLoaded", function () {
 
   let isLoginMode = true;
 
+  if (
+    !authForm ||
+    !authMode ||
+    !title ||
+    !subtitle ||
+    !labelAlias ||
+    !submitBtn ||
+    !confirmGroup ||
+    !switchText ||
+    !confirmInput
+  ) {
+    return;
+  }
+
   if (switchLink) {
     switchLink.addEventListener("click", function (e) {
       e.preventDefault();
@@ -25,7 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.innerText = "Se connecter";
         confirmGroup.style.display = "none";
         switchText.innerText = "Nouveau ici ?";
-        switchLink.innerText = "Créer un compte";
+        switchLink.innerText = "CrÃ©er un compte";
         authMode.value = "login";
         confirmInput.required = false;
       } else {
@@ -34,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function () {
         labelAlias.innerText = "Choisir un Alias Unique";
         submitBtn.innerText = "Forger mon compte";
         confirmGroup.style.display = "block";
-        switchText.innerText = "Déjà membre ?";
+        switchText.innerText = "DÃ©jÃ  membre ?";
         switchLink.innerText = "Se connecter";
         authMode.value = "register";
         confirmInput.required = true;
@@ -55,3 +69,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   });
 });
+
+

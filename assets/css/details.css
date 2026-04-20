@@ -40,7 +40,7 @@
   }
 }
 
-/* Icône Principale */
+/* IcÃ´ne Principale */
 .main-icon {
   font-size: 9.5rem;
   display: inline-block;
@@ -300,7 +300,7 @@
 }
 
 .alert-box {
-  /* Change 'absolute' par 'fixed' ou 'margin-bottom' selon ta préférence */
+  /* Change 'absolute' par 'fixed' ou 'margin-bottom' selon ta prÃ©fÃ©rence */
   /* Voici une version "Flottante en haut" qui ne casse pas ton design : */
   position: fixed;
   top: 90px; /* Juste sous ton header */
@@ -349,7 +349,7 @@
   opacity: 0.9;
 }
 
-/* Petit effet de secousse sur le panier quand il reçoit l'objet */
+/* Petit effet de secousse sur le panier quand il reÃ§oit l'objet */
 .cart-shake {
   animation: cartBounce 0.4s ease;
 }
@@ -550,7 +550,7 @@
     opacity: 0;
 }
 
-/* FEU - bannière gauche */
+/* FEU - banniÃ¨re gauche */
 .banner-left .banner-scroll::after {
     background:
         radial-gradient(circle at 20% 15%, rgba(255,255,255,0.95) 0%, transparent 18%),
@@ -576,7 +576,7 @@
         10px 20px 40px rgba(0,0,0,0.8);
 }
 
-/* ÉLECTRICITÉ - bannière droite */
+/* Ã‰LECTRICITÃ‰ - banniÃ¨re droite */
 .banner-right .banner-scroll::after {
     background:
         linear-gradient(115deg,
@@ -750,3 +750,4 @@
         transform: rotateY(0deg);
     }
 }
+

@@ -37,7 +37,7 @@ body {
   padding: 40px 20px;
 }
 
-/* Neutralisation du main pour éviter les scrolls internes */
+/* Neutralisation du main pour Ã©viter les scrolls internes */
 main.auth-page,
 .auth-page {
   width: 100%;
@@ -51,13 +51,13 @@ main.auth-page,
 .auth-container {
   background: var(--card-bg);
   width: 100%;
-  max-width: 550px; /* Largeur augmentée pour l'inscription */
+  max-width: 550px; /* Largeur augmentÃ©e pour l'inscription */
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(25, 133, 161, 0.2);
   margin: auto;
-  flex-shrink: 0; /* Empêche l'écrasement au zoom */
+  flex-shrink: 0; /* EmpÃªche l'Ã©crasement au zoom */
   transition: max-width 0.3s ease;
 }
 
@@ -190,7 +190,7 @@ button.btn-primary:active {
   }
 }
 
-/* --- RESPONSIVITÉ MOBILE --- */
+/* --- RESPONSIVITÃ‰ MOBILE --- */
 @media (max-width: 480px) {
   .auth-container {
     padding: 25px 20px;
@@ -201,3 +201,5 @@ button.btn-primary:active {
     font-size: 1.5rem;
   }
 }
+
+

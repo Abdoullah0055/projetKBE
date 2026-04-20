@@ -4,9 +4,9 @@ session_start();
 
 header('Content-Type: application/json');
 
-// Vérification de sécurité
+// VÃ©rification de sÃ©curitÃ©
 if (!isset($_SESSION['user'])) {
-    echo json_encode(['success' => false, 'message' => 'Utilisateur non connecté']);
+    echo json_encode(['success' => false, 'message' => 'Utilisateur non connectÃ©']);
     exit;
 }
 
@@ -20,3 +20,5 @@ if ($itemId > 0) {
 } else {
     echo json_encode(['success' => false, 'message' => 'ID d\'item invalide']);
 }
+
+

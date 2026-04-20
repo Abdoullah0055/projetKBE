@@ -16,8 +16,8 @@ enum Page
             Page::Products => 'Produits',
             Page::Contact => 'Contact',
             Page::Connexion => 'Connexion',
-            Page::Creation => 'Création',
-            Page::Logout => 'Déconnexion',
+            Page::Creation => 'CrÃ©ation',
+            Page::Logout => 'DÃ©connexion',
         };
     }
 
@@ -33,3 +33,4 @@ enum Page
         };
     }
 }
+

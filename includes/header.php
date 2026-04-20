@@ -1,6 +1,6 @@
 <header>
     <div class="logo-area">
-        <a href="index.php"> <img src="img/logo.png" class="logo-circle" alt="Logo">
+        <a href="index.php"> <img src="assets/img/logo.png" class="logo-circle" alt="Logo">
         </a>
         <h1>L'Arsenal</h1>
     </div>
@@ -33,3 +33,5 @@
         <?php endif; ?>
     </div>
 </header>
+
+

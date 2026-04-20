@@ -14,7 +14,7 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-// Définition de l'utilisateur pour le header
+// DÃ©finition de l'utilisateur pour le header
 $user = [
     'isConnected' => true,
     'id'          => $_SESSION['user']['id'],
@@ -27,12 +27,12 @@ $user = [
     ]
 ];
 
-// 2. RÉCUPÉRATION DU THÈME ET DE L'IMAGE DE FOND   
+// 2. RÃ‰CUPÃ‰RATION DU THÃˆME ET DE L'IMAGE DE FOND   
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-// 3. RÉCUPÉRATION DES ITEMS DU PANIER
+// 3. RÃ‰CUPÃ‰RATION DES ITEMS DU PANIER
 $stmt = $pdo->prepare("
     SELECT 
         ci.ItemId AS id,
@@ -55,7 +55,7 @@ foreach ($cartItems as $item) {
     $totalGeneral += ($item['prix'] * $item['quantite']);
 }
 
-// En haut de panier.php, après avoir récupéré $cartItems
+// En haut de panier.php, aprÃ¨s avoir rÃ©cupÃ©rÃ© $cartItems
 $hasStockError = false;
 foreach ($cartItems as $item) {
     if ($item['quantite'] > $item['stock_max']) {
@@ -66,7 +66,7 @@ foreach ($cartItems as $item) {
 
 $title = "L'Arsenal - Ma Besace";
 
-// --- DÉBUT DU RENDU HTML ---
+// --- DÃ‰BUT DU RENDU HTML ---
 
 // Inclusion du head (Contient <!DOCTYPE>, <html>, <head> et l'ouverture du <body>)
 include __DIR__ . '/templates/head.php';
@@ -107,7 +107,7 @@ $rightImages = [
 <div class="page-banner banner-left">
     <div class="banner-flip" id="leftFlip">
         <div class="banner-scroll banner-clickable" id="leftBanner">
-            <img src="assets/img/kratos.png" alt="Déco Gauche" id="leftBannerImg">
+            <img src="assets/img/kratos.png" alt="DÃ©co Gauche" id="leftBannerImg">
         </div>
     </div>
 </div>
@@ -115,7 +115,7 @@ $rightImages = [
 <div class="page-banner banner-right">
     <div class="banner-flip" id="rightFlip">
         <div class="banner-scroll banner-clickable" id="rightBanner">
-            <img src="assets/img/bull.png" alt="Déco Droite" id="rightBannerImg">
+            <img src="assets/img/bull.png" alt="DÃ©co Droite" id="rightBannerImg">
         </div>
     </div>
 </div>
@@ -236,18 +236,18 @@ $rightImages = [
 <main class="cart-page">
     <?php if (empty($cartItems)): ?>
         <div class="empty-cart-box">
-            <h2 style="font-size: 2rem; color: var(--accent);">Votre besace est vide...</h2>
-            <p style="margin: 20px 0;">Allez remplir votre équipement avant l'aventure !</p>
+            <h2 style="font-size: 2rem; color: var(--accent);">Ta besace est vide...</h2>
+            <p style="margin: 20px 0;">Va remplir ton equipement avant l'aventure !</p>
             <br>
-            <a href="index.php" class="btn-confirm" style="text-decoration:none;">Retour à l'échoppe</a>
+            <a href="index.php" class="btn-confirm" style="text-decoration:none;">Retour Ã  l'Ã©choppe</a>
         </div>
     <?php else: ?>
         <div class="cart-title-box">
-            <h2 style="margin:0;">Contenu de votre besace</h2>
+            <h2 style="margin:0;">Contenu de ta besace</h2>
         </div>
 
         <?php foreach ($cartItems as $item):
-            // Vérification du stock
+            // VÃ©rification du stock
             $isOverstock = $item['quantite'] > $item['stock_max'];
         ?>
             <div class="cart-row <?= $isOverstock ? 'row-overstock' : '' ?>">
@@ -265,7 +265,7 @@ $rightImages = [
                         <?php if ($isOverstock): ?>
                             <div class="stock-alert">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                Quantité max : <?= $item['stock_max'] ?>
+                                QuantitÃ© max : <?= $item['stock_max'] ?>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -295,7 +295,7 @@ $rightImages = [
                 <h3 id="modal-title">Message de l'Arsenal</h3>
             </div>
             <div class="modal-body">
-                <p id="modal-message">Voulez-vous vraiment faire cela ?</p>
+                <p id="modal-message">Tu veux vraiment faire cela ?</p>
             </div>
             <div class="modal-footer">
                 <button id="modal-btn-cancel" class="btn-secondary">Annuler</button>
@@ -365,7 +365,7 @@ $rightImages = [
                             updateCartState();
                         }, 300);
                     } else {
-                        // 1. Mise à jour des chiffres
+                        // 1. Mise Ã  jour des chiffres
                         qtyValDiv.innerText = newQty;
                         totalItemBox.innerText = (newQty * prix).toLocaleString() + " GP";
 
@@ -373,16 +373,16 @@ $rightImages = [
                         if (newQty > stockMax) {
                             row.classList.add('row-overstock');
                             qtyValDiv.classList.add('text-danger-pulse');
-                            // On ajoute l'alerte si elle n'existe pas déjà
+                            // On ajoute l'alerte si elle n'existe pas dÃ©jÃ 
                             alertWrapper.innerHTML = `
                             <div class="stock-alert">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                Quantité max : ${stockMax}
+                                QuantitÃ© max : ${stockMax}
                             </div>`;
                         } else {
                             row.classList.remove('row-overstock');
                             qtyValDiv.classList.remove('text-danger-pulse');
-                            alertWrapper.innerHTML = ""; // On efface l'erreur instantanément
+                            alertWrapper.innerHTML = ""; // On efface l'erreur instantanÃ©ment
                         }
 
                         updateCartState();
@@ -426,7 +426,7 @@ $rightImages = [
         }, 350);
     }
 
-    // 🔁 AUTO LOOP
+    // ðŸ” AUTO LOOP
     setInterval(() => {
         changeLeftBanner();
         changeRightBanner();
@@ -444,7 +444,7 @@ $rightImages = [
             const priceText = row.querySelector('.item-total-box').innerText;
             grandTotal += parseFloat(priceText.replace(/[^0-9.-]+/g, ""));
 
-            // Vérification si au moins une ligne est en erreur
+            // VÃ©rification si au moins une ligne est en erreur
             if (row.classList.contains('row-overstock')) {
                 hasGlobalError = true;
             }
@@ -452,7 +452,7 @@ $rightImages = [
 
         document.querySelector('.total-summary').innerText = `TOTAL : ${grandTotal.toLocaleString()} GP`;
 
-        // Activation/Désactivation du bouton
+        // Activation/DÃ©sactivation du bouton
         if (hasGlobalError) {
             confirmBtn.disabled = true;
             confirmBtn.style.opacity = "0.5";
@@ -467,7 +467,7 @@ $rightImages = [
     }
 
     /**
-     * Affiche une modale de confirmation personnalisée
+     * Affiche une modale de confirmation personnalisÃ©e
      */
     function showCustomConfirm(message, title = "Confirmation") {
         return new Promise((resolve) => {
@@ -498,14 +498,14 @@ $rightImages = [
         });
     }
 
-    // MISE À JOUR de ta fonction de suppression
+    // MISE Ã€ JOUR de ta fonction de suppression
     async function deleteItemFromCart(itemId, button) {
         // ON REMPLACE LE confirm() PAR NOTRE MODALE
-        const confirmed = await showCustomConfirm("Voulez-vous retirer cet objet de votre besace ?", "Retirer l'objet");
+        const confirmed = await showCustomConfirm("Tu veux retirer cet objet de ta besace ?", "Retirer l'objet");
 
         if (!confirmed) return;
 
-        // ... reste du code fetch inchangé ...
+        // ... reste du code fetch inchangÃ© ...
         const row = button.closest('.cart-row');
         const formData = new FormData();
         formData.append('item_id', itemId);
@@ -534,10 +534,10 @@ $rightImages = [
 
         if (confirmBtn.disabled) return;
 
-        // Utilisation de TA modale personnalisée ici
+        // Utilisation de TA modale personnalisÃ©e ici
         const confirmed = await showCustomConfirm(
-            "Voulez-vous sceller cet échange et dépenser vos pièces d'or ?",
-            "Sceller l'échange"
+            "Tu veux sceller cet echange et depenser tes pieces d'or ?",
+            "Sceller l'Ã©change"
         );
 
         if (!confirmed) return;
@@ -550,7 +550,7 @@ $rightImages = [
             // const response = await fetch('backend/confirmer_achat.php', { method: 'POST' });
 
             // On remplace aussi l'alert() final par un petit message temporaire sur le bouton
-            confirmBtn.innerText = "Échange conclu !";
+            confirmBtn.innerText = "Ã‰change conclu !";
 
             setTimeout(() => {
                 window.location.href = 'index.php';
@@ -568,3 +568,5 @@ $rightImages = [
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
+
+
