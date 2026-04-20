@@ -5,7 +5,7 @@ session_start();
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['user'])) {
-    echo json_encode(['success' => false, 'message' => 'Non connecte']);
+    echo json_encode(['success' => false, 'message' => 'Non connectÃ©']);
     exit;
 }
 
@@ -20,5 +20,7 @@ if ($itemId > 0 && $newQty >= 0) {
         'message' => $success ? 'Quantite mise a jour.' : 'Mise a jour impossible (stock ou item indisponible).'
     ]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Donnees invalides']);
+    echo json_encode(['success' => false, 'message' => 'DonnÃ©es invalides']);
 }
+
+

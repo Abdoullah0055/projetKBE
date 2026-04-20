@@ -341,6 +341,41 @@ aside.collapsed {
   border-radius: 5px;
 }
 
+.enigme-door-button {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+.enigme-door-button__frame {
+  position: relative;
+  display: block;
+  width: min(100%, 132px);
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+.enigme-door-button:hover .enigme-door-button__frame,
+.enigme-door-button:focus-visible .enigme-door-button__frame {
+  transform: translateY(-4px) scale(1.02);
+  filter: drop-shadow(0 0 22px rgba(171, 106, 255, 0.28));
+}
+
+.enigme-door-button:focus-visible {
+  outline: none;
+}
+
+.enigme-door-button__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.38));
+}
+
 /* --- MAIN CONTENT & ITEMS --- */
 main {
   flex: 1;
@@ -408,24 +443,24 @@ main {
   font-size: 1.4rem;
 }
 
-/* --- ÉTAT ÉPUISÉ (BOURGOGNE) --- */
+/* --- Ã‰TAT Ã‰PUISÃ‰ (BOURGOGNE) --- */
 .item-out-of-stock {
-  /* Fond bourgogne foncé avec transparence pour garder l'effet glassmorphism */
+  /* Fond bourgogne foncÃ© avec transparence pour garder l'effet glassmorphism */
   background: rgba(74, 4, 4, 0.5) !important;
 
-  /* Bordure assortie pour bien marquer l'état épuisé */
+  /* Bordure assortie pour bien marquer l'Ã©tat Ã©puisÃ© */
   border-color: rgba(139, 0, 0, 0.3) !important;
 
-  /* On garde une légère transparence globale */
+  /* On garde une lÃ©gÃ¨re transparence globale */
   opacity: 0.8;
 }
 
-/* Optionnel : changer la couleur du texte du prix quand c'est épuisé */
+/* Optionnel : changer la couleur du texte du prix quand c'est Ã©puisÃ© */
 .item-out-of-stock .item-price {
   color: var(--text-silver);
 }
 
-/* Désactiver l'effet de translation au survol pour les items épuisés */
+/* DÃ©sactiver l'effet de translation au survol pour les items Ã©puisÃ©s */
 .item-out-of-stock:hover {
   transform: none;
   box-shadow: none;
@@ -478,3 +513,5 @@ aside.collapsed .show-icon {
 .show-icon {
   display: none;
 }
+
+

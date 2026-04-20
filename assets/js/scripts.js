@@ -1,6 +1,6 @@
-// Initialisation globale
-let currentImgNum = parseInt(getCookie("bgNumber"), 10) || 1;
-const SIDEBAR_STATE_KEY = "arsenal.sidebar.collapsed";
+// 1. Initialisation des variables
+// On rÃ©cupÃ¨re le numÃ©ro ET le thÃ¨me directement des cookies pour Ãªtre raccord avec le PHP
+let currentImgNum = parseInt(getCookie("bgNumber")) || 1;
 
 function getCookie(name) {
   const value = `; ${document.cookie}`;
@@ -11,30 +11,12 @@ function getCookie(name) {
   return undefined;
 }
 
-function getSidebarElements() {
-  return {
-    sidebar: document.getElementById("sidebar"),
-    arrow: document.getElementById("arrow-icon"),
-    toggleButton: document.getElementById("toggle-btn"),
-  };
-}
-
-function setSidebarState(sidebar, arrow, toggleButton, collapsed) {
-  sidebar.classList.toggle("collapsed", collapsed);
-
-  if (arrow) {
-    arrow.textContent = collapsed ? "»" : "«";
-  }
-
-  if (toggleButton) {
-    toggleButton.setAttribute("aria-expanded", collapsed ? "false" : "true");
-    toggleButton.setAttribute(
-      "aria-label",
-      collapsed ? "Ouvrir la sidebar" : "Réduire la sidebar",
-    );
-    toggleButton.title = collapsed
-      ? "Déplier la sidebar"
-      : "Replier la sidebar";
+function toggleMenu() {
+  const sidebar = document.getElementById("sidebar");
+  const arrow = document.getElementById("arrow-icon");
+  if (sidebar && arrow) {
+    sidebar.classList.toggle("collapsed");
+    arrow.innerHTML = sidebar.classList.contains("collapsed") ? "Â»" : "Â«";
   }
 }
 
@@ -525,23 +507,28 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function applyChanges(theme, num) {
-    const path = `img/${theme}theme/${theme}${num}.png`;
+    const path = `assets/img/${theme}theme/${theme}${num}.png`;
     const urlValue = `url('${path}')`;
 
+    // Mise Ã  jour CSS
     document.documentElement.style.setProperty("--main-bg", urlValue);
     document.body.style.setProperty("background-image", urlValue, "important");
 
+    // Mise Ã  jour Cookies (30 jours)
     const expires = "; max-age=" + 30 * 24 * 60 * 60;
     document.cookie = `theme=${theme}${expires}; path=/`;
     document.cookie = `bgNumber=${num}${expires}; path=/`;
 
+    // On met Ã  jour la variable globale pour que le prochain clic soit correct
     currentImgNum = num;
   }
 
+  // --- CLIC SUR LE THÃˆME ---
   if (themeToggle && themeIcon) {
     themeToggle.addEventListener("click", (event) => {
       event.preventDefault();
 
+      // On dÃ©tecte le thÃ¨me via le cookie plutÃ´t que l'icÃ´ne pour Ã©viter les dÃ©calages
       const savedTheme = getCookie("theme") || "light";
       const newTheme = savedTheme === "dark" ? "light" : "dark";
       const newIcon = newTheme === "dark" ? "fa-sun" : "fa-moon";
@@ -562,3 +549,5 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+

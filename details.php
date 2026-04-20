@@ -7,10 +7,10 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $pdo = get_pdo();
 
-// 1. RECUPERATION DU THEME
+// 1. RÃ‰CUPÃ‰RATION DU THÃˆME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 // Gestion de l'utilisateur
 if (isset($_SESSION['user'])) {
@@ -52,31 +52,9 @@ if (!$item) {
     exit();
 }
 
-$item['image'] = getItemImage($item['type']);
-$properties = getItemProperties($pdo, (int) $item['id'], $item['type']);
-$title = "Details - " . $item['nom'];
-$itemRatingText = formatRatingValue((float) $item['rating']);
-
-$detailAlert = null;
-if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
-    $candidate = $_SESSION['alerte'];
-    $alertTypeRaw = (string) ($candidate['type'] ?? '');
-    $alertType = in_array($alertTypeRaw, ['succes', 'erreur'], true) ? $alertTypeRaw : '';
-    $alertMessage = trim((string) ($candidate['message'] ?? ''));
-
-    $isExpectedSource = (($candidate['source'] ?? '') === 'add_to_cart');
-    $isSameItem = ((int) ($candidate['item_id'] ?? 0) === $itemId);
-    $isFresh = (isset($candidate['ts']) && (time() - (int) $candidate['ts']) <= 30);
-
-    if ($isExpectedSource && $isSameItem && $isFresh && $alertType !== '' && $alertMessage !== '') {
-        $detailAlert = [
-            'type' => $alertType,
-            'message' => $alertMessage,
-        ];
-    }
-
-    unset($_SESSION['alerte']);
-}
+$icons = ['arme' => 'âš”ï¸', 'armure' => 'ðŸ›¡ï¸', 'potion' => 'ðŸ§ª', 'sort' => 'âœ¨'];
+$item['image'] = $icons[strtolower($item['type'])] ?? 'â“';
+$title = "DÃ©tails - " . $item['nom'];
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -120,7 +98,7 @@ $rightImages = [
 <div class="page-banner banner-left">
     <div class="banner-flip" id="leftFlip">
         <div class="banner-scroll banner-clickable" id="leftBanner">
-            <img src="assets/img/kratos.png" alt="Deco Gauche" id="leftBannerImg">
+            <img src="assets/img/kratos.png" alt="DÃ©co Gauche" id="leftBannerImg">
         </div>
     </div>
 </div>
@@ -128,7 +106,7 @@ $rightImages = [
 <div class="page-banner banner-right">
     <div class="banner-flip" id="rightFlip">
         <div class="banner-scroll banner-clickable" id="rightBanner">
-            <img src="assets/img/bull.png" alt="Deco Droite" id="rightBannerImg">
+            <img src="assets/img/bull.png" alt="DÃ©co Droite" id="rightBannerImg">
         </div>
     </div>
 </div>
@@ -158,15 +136,15 @@ $rightImages = [
             <div class="stats-grid">
                 <div class="stat-box">
                     <span class="stat-label">Avis</span>
-                    <span class="stat-value details-rating-stars-wrap"><?= renderRatingStars((float) $item['rating'], 'details-rating-stars') ?></span>
-                    <span class="stat-sub"><?= $itemRatingText ?>/5 • <?= (int) $item['nb_avis'] ?> avis</span>
+                    <span class="stat-value">â˜… <?= number_format($item['rating'], 1) ?></span>
+                    <span class="stat-sub"><?= $item['nb_avis'] ?> avis</span>
                 </div>
                 <div class="stat-box">
                     <span class="stat-label">Stock</span>
                     <span class="stat-value <?= ((int) $item['stock'] === 0) ? 'text-danger' : 'text-success' ?>">
                         <?= (int) $item['stock'] ?>
                     </span>
-                    <span class="stat-sub">unites</span>
+                    <span class="stat-sub">unitÃ©s</span>
                 </div>
             </div>
         </div>
@@ -179,14 +157,14 @@ $rightImages = [
             </div>
 
             <div class="description-section">
-                <h3><i class="fa-solid fa-scroll"></i> Lore & Proprietes</h3>
+                <h3><i class="fa-solid fa-scroll"></i> Lore & PropriÃ©tÃ©s</h3>
                 <p><?= nl2br(htmlspecialchars($item['description'])) ?></p>
                 <?= renderItemProperties($item, $properties) ?>
             </div>
 
             <div class="spec-grid">
-                <div class="spec-item"><span>Categorie</span><strong><?= htmlspecialchars(ucfirst($item['type'])) ?></strong></div>
-                <div class="spec-item"><span>Authenticite</span><strong>Certifiee</strong></div>
+                <div class="spec-item"><span>CatÃ©gorie</span><strong><?= ucfirst($item['type']) ?></strong></div>
+                <div class="spec-item"><span>AuthenticitÃ©</span><strong>CertifiÃ©e</strong></div>
                 <div class="spec-item"><span>Origine</span><strong>Inconnue</strong></div>
             </div>
 
@@ -198,7 +176,7 @@ $rightImages = [
 
                         <div class="purchase-controls">
                             <div class="quantity-wrapper">
-                                <label for="qty">Quantite :</label>
+                                <label for="qty">QuantitÃ© :</label>
                                 <select name="quantity" id="qty" class="qty-select">
                                     <?php for ($i = 1; $i <= min((int) $item['stock'], 10); $i++): ?>
                                         <option value="<?= $i ?>"><?= $i ?></option>
@@ -217,7 +195,7 @@ $rightImages = [
                         <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
                     </form>
                 <?php else: ?>
-                    <button class="btn-buy-large btn-out" disabled>Stock Epuise</button>
+                    <button class="btn-buy-large btn-out" disabled>Stock Ã‰puisÃ©</button>
                 <?php endif; ?>
 
                 <a href="index.php" class="back-link">Retour au catalogue</a>
@@ -335,6 +313,7 @@ $rightImages = [
         }, 350);
     }
 
+    // ðŸ” AUTO LOOP
     setInterval(() => {
         changeLeftBanner();
         changeRightBanner();
@@ -453,20 +432,8 @@ $rightImages = [
                 body: formData
             });
 
-            let data = null;
-            try {
-                data = await response.json();
-            } catch (_error) {
-                data = null;
-            }
-
-            if (response.ok && data && data.success) {
-                showDetailAlert(data.message || "Objet ajoute au panier.", 'succes');
-            } else {
-                const errorMessage = data && data.message ?
-                    data.message :
-                    "Echec de l'ajout au panier.";
-                showDetailAlert(errorMessage, 'erreur');
+            if (response.ok) {
+                console.log("AjoutÃ© avec succÃ¨s");
             }
         } catch (error) {
             console.error("Erreur:", error);
@@ -479,3 +446,5 @@ $rightImages = [
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
+
+

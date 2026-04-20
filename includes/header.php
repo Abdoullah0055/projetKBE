@@ -1,6 +1,6 @@
 <header>
     <div class="logo-area">
-        <a href="index.php"> <img src="img/logo.png" class="logo-circle" alt="Logo">
+        <a href="index.php"> <img src="assets/img/logo.png" class="logo-circle" alt="Logo">
         </a>
         <h1>L'Arsenal</h1>
     </div>
@@ -54,56 +54,4 @@
     </div>
 </header>
 
-<!-- Mobile Drawer Menu -->
-<div id="mobile-drawer-overlay" class="mobile-drawer-overlay" role="presentation"></div>
-<nav id="mobile-drawer" class="mobile-drawer" role="navigation" aria-label="Menu">
-    <div class="mobile-drawer-content">
-        <!-- Search in drawer -->
-        <form class="mobile-drawer-search" id="drawer-search-form" action="inventory.php" method="get" role="search" novalidate>
-            <input
-                type="text"
-                name="search"
-                id="drawer-search-input"
-                placeholder="Rechercher..."
-                aria-label="Recherche dans le menu"
-                autocomplete="off"
-                aria-autocomplete="list"
-                aria-expanded="false"
-                aria-controls="drawer-search-suggestions-list">
-            <div class="search-suggestions mobile-search-suggestions" id="drawer-search-suggestions" hidden>
-                <ul id="drawer-search-suggestions-list" class="search-suggestion-list"></ul>
-            </div>
-        </form>
 
-        <!-- Wallet info in drawer (mobile only) -->
-        <?php if ($user['isConnected']): ?>
-            <div class="user-wallet" style="display: flex; gap: 15px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-                <span title="Or" style="color:var(--gold)"><?= $user['balance']['gold'] ?> G</span>
-                <span title="Argent" style="color:var(--text-silver)"><?= $user['balance']['silver'] ?> S</span>
-                <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
-            </div>
-        <?php endif; ?>
-
-        <!-- Main actions -->
-        <div class="mobile-drawer-actions">
-            <?php if ($user['isConnected']): ?>
-                <button onclick="window.location.href='profile.php'" class="drawer-action">
-                    <i class="fa-solid fa-user-gear"></i> Mon Profil
-                </button>
-                <button onclick="window.location.href='panier.php'" class="drawer-action">
-                    <i class="fa-solid fa-cart-shopping"></i> Panier
-                </button>
-                <button onclick="window.location.href='logout.php'" class="drawer-action">
-                    <i class="fa-solid fa-right-from-bracket"></i> Déconnexion
-                </button>
-            <?php else: ?>
-                <button onclick="window.location.href='login.php?mode=register'" class="drawer-action">
-                    <i class="fa-solid fa-user-plus"></i> Inscription
-                </button>
-                <button onclick="window.location.href='login.php'" class="drawer-action">
-                    <i class="fa-solid fa-sign-in-alt"></i> Connexion
-                </button>
-            <?php endif; ?>
-        </div>
-    </div>
-</nav>

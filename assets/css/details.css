@@ -40,7 +40,7 @@
   }
 }
 
-/* Icône Principale */
+/* IcÃ´ne Principale */
 .main-icon {
   font-size: 9.5rem;
   display: inline-block;
@@ -348,7 +348,7 @@
 }
 
 .alert-box {
-  /* Change 'absolute' par 'fixed' ou 'margin-bottom' selon ta préférence */
+  /* Change 'absolute' par 'fixed' ou 'margin-bottom' selon ta prÃ©fÃ©rence */
   /* Voici une version "Flottante en haut" qui ne casse pas ton design : */
   position: fixed;
   top: 90px; /* Juste sous ton header */
@@ -397,7 +397,7 @@
   opacity: 0.9;
 }
 
-/* Petit effet de secousse sur le panier quand il reçoit l'objet */
+/* Petit effet de secousse sur le panier quand il reÃ§oit l'objet */
 .cart-shake {
   animation: cartBounce 0.4s ease;
 }
@@ -775,7 +775,7 @@
   opacity: 0;
 }
 
-/* FEU - bannière gauche */
+/* FEU - banniÃ¨re gauche */
 .banner-left .banner-scroll::after {
   background:
     radial-gradient(
@@ -821,7 +821,7 @@
     10px 20px 40px rgba(0, 0, 0, 0.8);
 }
 
-/* ÉLECTRICITÉ - bannière droite */
+/* Ã‰LECTRICITÃ‰ - banniÃ¨re droite */
 .banner-right .banner-scroll::after {
   background:
     linear-gradient(
@@ -984,13 +984,14 @@
 }
 
 @keyframes pageTurnRight {
-  0% {
-    transform: rotateY(0deg);
-  }
-  50% {
-    transform: rotateY(80deg);
-  }
-  100% {
-    transform: rotateY(0deg);
-  }
+    0% {
+        transform: rotateY(0deg);
+    }
+    50% {
+        transform: rotateY(80deg);
+    }
+    100% {
+        transform: rotateY(0deg);
+    }
 }
+

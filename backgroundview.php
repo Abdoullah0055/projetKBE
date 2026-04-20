@@ -6,10 +6,10 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 1. RÉCUPÉRATION DU THÈME
+// 1. RÃ‰CUPÃ‰RATION DU THÃˆME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 // Gestion de l'utilisateur pour le header
 if (isset($_SESSION['user'])) {
@@ -44,7 +44,7 @@ $title = "Vue d'Ambiance - L'Arsenal";
         min-height: 100vh;
         margin: 0;
         overflow: hidden;
-        /* Empêche le scroll pour garder le focus sur le fond */
+        /* EmpÃªche le scroll pour garder le focus sur le fond */
     }
 
     .background-content {
@@ -76,3 +76,5 @@ $title = "Vue d'Ambiance - L'Arsenal";
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
+
+

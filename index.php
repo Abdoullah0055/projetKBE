@@ -1,7 +1,9 @@
 <?php
+// On garde le config de l'ami et on ajoute la connexion BD test
 require_once __DIR__ . '/config/config.php';
 require_once 'AlgosBD.php';
 
+// On s'assure que la session est dÃ©marrÃ©e
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -29,26 +31,8 @@ if (isset($_SESSION['user'])) {
     ];
 }
 
-// 2. RÉCUPÉRATION DES ITEMS (Ta requête SQL d'origine)
-$itemsPerPage = 25;
-$countStmt = $pdo->query("
-    SELECT COUNT(*)
-    FROM Items i
-    WHERE i.IsActive = TRUE
-");
-$totalItems = (int) $countStmt->fetchColumn();
-$totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
-
-$pageFromQuery = filter_input(
-    INPUT_GET,
-    'page',
-    FILTER_VALIDATE_INT,
-    ['options' => ['default' => 1, 'min_range' => 1]]
-);
-$currentPage = min((int) ($pageFromQuery ?: 1), $totalPages);
-$offset = ($currentPage - 1) * $itemsPerPage;
-
-$stmt = $pdo->prepare("
+// 2. RÃ‰CUPÃ‰RATION DES ITEMS DEPUIS LA BD (PDO)
+$stmt = $pdo->query("
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
@@ -71,12 +55,13 @@ $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$title = "L'Arsenal - Marché Noir";
+$title = "L'Arsenal - MarchÃ© Noir";
 
-// Gestion du thème
+// Gestion du thÃ¨me via Cookie (30 jours)
 $currentTheme = $_COOKIE['theme'] ?? 'light';
-$bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgNum = $_COOKIE['bgNumber'] ?? '1'; // On rÃ©cupÃ¨re le numÃ©ro sauvegardÃ©
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$iconClass = ($currentTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 
 /**
  * Normalisation pour le filtrage JS
@@ -123,11 +108,13 @@ function buildPageUrl(int $targetPage): string
         display: none;
     }
 
+    /* On s'assure que le dÃ©gradÃ© sombre ne cache pas l'image */
     body::before {
         content: "";
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.5);
+        /* Ajuste l'obscuritÃ© du fond ici */
         z-index: -1;
         pointer-events: none;
     }
@@ -598,23 +585,18 @@ function buildPageUrl(int $targetPage): string
 
 <div class="wrapper">
     <aside id="sidebar">
-        <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
-            <span id="arrow-icon">«</span>
+        <button id="toggle-btn" onclick="toggleMenu()">
+            <span id="arrow-icon">Â«</span>
         </button>
 
         <div class="sidebar-content">
-            <div class="show-icon">🔍</div>
+            <div class="show-icon">ðŸ”</div>
 
             <div class="hide-text">
                 <form class="filter-section" onsubmit="return false;">
                     <div class="filter-group">
-                        <label>Recherche</label>
-                        <input type="text" id="search-filter" class="filter-input" placeholder="Nom de l'objet...">
-                    </div>
-
-                    <div class="filter-group" style="margin-top:15px;">
-                        <label>Catégorie</label>
-                        <select id="type-filter" class="filter-select">
+                        <label>CatÃ©gorie</label>
+                        <select name="type">
                             <option value="all">Tous les items</option>
                             <option value="weapon">Armes</option>
                             <option value="armor">Armures</option>
@@ -628,16 +610,29 @@ function buildPageUrl(int $targetPage): string
                         Réinitialiser
                     </button>
                 </form>
+
+                <a href="roadmap.php" class="enigme-door-button" aria-label="Acc&eacute;der aux &eacute;nigmes">
+                    <span class="enigme-door-button__frame">
+                        <img
+                            src="assets/img/doors/opened.png"
+                            alt=""
+                            class="enigme-door-button__image">
+                    </span>
+                </a>
             </div>
 
-            <div class="sidebar-bottom-actions">
-                <div class="cta-box">
-                    <div class="hide-text">
-                        <p style="margin:0 0 8px 0; font-size:0.9rem;">
-                            <?= $user['isConnected'] ? "Essais énigmes : <b style='color:var(--accent)'>5 / 5</b>" : "Besoin d'or ?" ?>
-                        </p>
-                        <a href="#" style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre des énigmes</a>
-                    </div>
+            <div class="cta-box">
+                <div class="hide-text">
+                    <?php if ($user['isConnected']): ?>
+                        <p style="margin:0 0 8px 0; font-size:0.9rem;">Essais Ã©nigmes : <b style="color:var(--accent)">5 /
+                                5</b></p>
+                    <?php else: ?>
+                        <p style="margin:0 0 8px 0; font-size:0.9rem;">Besoin d'or ?</p>
+                    <?php endif; ?>
+
+                    <a href="roadmap.php"
+                        style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">RÃ©soudre
+                        des Ã©nigmes</a>
                 </div>
 
                 <?php if ($user['isConnected']): ?>
@@ -653,7 +648,7 @@ function buildPageUrl(int $targetPage): string
     <main>
         <div class="catalog-banner">
             <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
-                <?= $user['isConnected'] ? "Content de vous revoir, " . htmlspecialchars($user['alias']) : "Catalogue des Reliques" ?>
+                <?= $user['isConnected'] ? "Content de te revoir, " . $user['alias'] : "Catalogue des Reliques" ?>
             </h2>
         </div>
 
@@ -688,57 +683,49 @@ function buildPageUrl(int $targetPage): string
                             <p class="item-price"><?= number_format($item['prix'], 0) ?> GP</p>
                         </div>
 
-                        <div class="item-rating">
-                            <?= renderRatingStars((float) $item['rating']) ?>
-                            <small>
-                                <?= formatRatingValue((float) $item['rating']) ?>/5
-                            </small>
+
+                        <div style="margin-top: 5px;">
+                            <span style="color: var(--gold);">â˜… â˜… â˜… â˜… â˜†</span>
+                            <small style="color: var(--text-silver); margin-left: 5px;">(<?= $item['reviews'] ?>
+                                aventuriers)</small>
                         </div>
+                    </div>
+
+                    <div style="text-align: right;">
+                        <div class="item-price"><?= number_format($item['prix'], 0) ?> GP</div>
+
+                        <?php if ($item['stock'] > 0): ?>
+                            <small style="color: #2ECC71; font-weight: bold;">En stock: <?= $item['stock'] ?></small>
+                        <?php else: ?>
+                            <small style="color: #E74C3C; font-weight: bold;">Rupture de stock</small>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="item-action-btns" style="margin-left: 20px;">
+                        <?php if ($user['isConnected']): ?>
+                            <?php if ($item['stock'] == 0): ?>
+                                <button disabled style="background:#444; cursor:not-allowed;">Ã‰puisÃ©</button>
+                            <?php elseif ($item['type'] == 'sort' && !$user['isMage']): ?>
+                                <button disabled title="Niveau Mage requis" style="background:#666; font-size:0.7rem;">Mage
+                                    Requis</button>
+                            <?php else: ?>
+                                <button onclick="window.location.href='details.php?id=<?= $item['id'] ?>'"
+                                    style="padding: 5px 12px; font-size: 0.8rem; background:var(--accent); color:white; border:none; border-radius:4px; cursor:pointer;">Acheter</button>
+                            <?php endif; ?>
+                        <?php else: ?>
+                            <a href="details.php?id=<?= $item['id'] ?>"
+                                style="text-decoration:none; color:var(--accent); font-size:1.5rem;">âž”</a>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
         </div>
 
-        <div id="no-results-message">Aucun objet trouvé dans les archives...</div>
-
-        <?php if ($totalPages > 1): ?>
-            <nav class="catalog-pagination" id="catalog-pagination" aria-label="Pagination des items">
-                <?php if ($currentPage > 1): ?>
-                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage - 1)) ?>">&laquo; Prec.</a>
-                <?php endif; ?>
-
-                <?php
-                $windowStart = max(1, $currentPage - 2);
-                $windowEnd = min($totalPages, $currentPage + 2);
-                ?>
-
-                <?php if ($windowStart > 1): ?>
-                    <a class="page-link" href="<?= htmlspecialchars(buildPageUrl(1)) ?>">1</a>
-                    <?php if ($windowStart > 2): ?>
-                        <span class="page-ellipsis">...</span>
-                    <?php endif; ?>
-                <?php endif; ?>
-
-                <?php for ($page = $windowStart; $page <= $windowEnd; $page++): ?>
-                    <?php if ($page === $currentPage): ?>
-                        <span class="page-current"><?= $page ?></span>
-                    <?php else: ?>
-                        <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($page)) ?>"><?= $page ?></a>
-                    <?php endif; ?>
-                <?php endfor; ?>
-
-                <?php if ($windowEnd < $totalPages): ?>
-                    <?php if ($windowEnd < ($totalPages - 1)): ?>
-                        <span class="page-ellipsis">...</span>
-                    <?php endif; ?>
-                    <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($totalPages)) ?>"><?= $totalPages ?></a>
-                <?php endif; ?>
-
-                <?php if ($currentPage < $totalPages): ?>
-                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage + 1)) ?>">Suiv. &raquo;</a>
-                <?php endif; ?>
-            </nav>
-        <?php endif; ?>
+        <div class="pagination">
+            <a href="#">&laquo; PrÃ©cÃ©dent</a>
+            <span>Page <strong>1</strong> sur 12</span>
+            <a href="#">Suivant &raquo;</a>
+        </div>
     </main>
 </div>
 
@@ -845,3 +832,5 @@ function buildPageUrl(int $targetPage): string
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>
+
+
