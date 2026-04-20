@@ -107,6 +107,10 @@ body {
     font-size: var(--font-size-button);
   }
 
+  .admin-header-link {
+    display: none;
+  }
+
   /* Hide wallet text on mobile, show icons only */
   .user-wallet {
     display: none;

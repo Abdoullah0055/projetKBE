@@ -74,19 +74,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flushProcedureResults($stmt);
 
             if ($foundUser && password_verify($password, $foundUser['Password'])) {
-                $_SESSION['user'] = [
-                    'id' => (int)$foundUser['UserId'],
-                    'alias' => $foundUser['Alias'],
-                    'role' => $foundUser['Role'],
-                    'gold' => (int)$foundUser['Gold'],
-                    'silver' => (int)$foundUser['Silver'],
-                    'bronze' => (int)$foundUser['Bronze']
-                ];
-                header("Location: index.php");
-                exit();
+                if ((int)($foundUser['IsBanned'] ?? 0) === 1) {
+                    $error = "Ce compte est bloque par un administrateur.";
+                } else {
+                    $_SESSION['user'] = [
+                        'id' => (int)$foundUser['UserId'],
+                        'alias' => $foundUser['Alias'],
+                        'role' => $foundUser['Role'],
+                        'gold' => (int)$foundUser['Gold'],
+                        'silver' => (int)$foundUser['Silver'],
+                        'bronze' => (int)$foundUser['Bronze']
+                    ];
+                    header("Location: index.php");
+                    exit();
+                }
             }
 
-            $error = "Alias ou mot de passe incorrect.";
+            if ($error === "") {
+                $error = "Alias ou mot de passe incorrect.";
+            }
         } catch (PDOException $e) {
             $error = "Erreur systeme : " . $e->getMessage();
         }
@@ -94,9 +100,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = "L'Arsenal - Sanctuaire d'Acces";
+$currentTheme = $_COOKIE['theme'] ?? 'light';
+$bgNum = $_COOKIE['bgNumber'] ?? '1';
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
+<style>
+    :root {
+        --main-bg: url('<?= $bgImage ?>');
+    }
+</style>
 <link rel="stylesheet" href="assets/css/login.css">
 
 <main class="auth-page">

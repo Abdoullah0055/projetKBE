@@ -27,7 +27,7 @@ $user = [
 
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 $inventoryItems = [];
 $pendingReviewItems = [];

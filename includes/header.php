@@ -1,6 +1,12 @@
+<?php
+$headerTheme = $_COOKIE['theme'] ?? 'light';
+$headerIconClass = ($headerTheme === 'dark') ? 'fa-sun' : 'fa-moon';
+$isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Admin';
+?>
+
 <header>
     <div class="logo-area">
-        <a href="index.php"> <img src="img/logo.png" class="logo-circle" alt="Logo">
+        <a href="index.php"> <img src="assets/img/logo.png" class="logo-circle" alt="Logo">
         </a>
         <h1>L'Arsenal</h1>
     </div>
@@ -23,7 +29,7 @@
 
     <div class="header-actions">
         <button id="theme-toggle" class="btn-outline-custom" title="Changer le mode">
-            <i id="theme-icon" class="fa-solid <?= $iconClass ?? 'fa-moon' ?>"></i>
+            <i id="theme-icon" class="fa-solid <?= htmlspecialchars($iconClass ?? $headerIconClass, ENT_QUOTES, 'UTF-8') ?>"></i>
         </button>
 
         <?php if ($user['isConnected']): ?>
@@ -36,6 +42,11 @@
             <button class="btn-outline-custom" title="Mon profil" onclick="window.location.href='profile.php'">
                 <i class="fa-solid fa-user-gear"></i>
             </button>
+            <?php if ($isAdminUser): ?>
+                <button class="btn-outline-custom admin-header-link" title="Administration" onclick="window.location.href='admin.php'">
+                    <i class="fa-solid fa-crown"></i>
+                </button>
+            <?php endif; ?>
             <button id="cart-btn" class="btn-accent" onclick="window.location.href='panier.php'">
                 <i class="fa-solid fa-cart-shopping"></i>
             </button>
@@ -90,6 +101,11 @@
                 <button onclick="window.location.href='profile.php'" class="drawer-action">
                     <i class="fa-solid fa-user-gear"></i> Mon Profil
                 </button>
+                <?php if ($isAdminUser): ?>
+                    <button onclick="window.location.href='admin.php'" class="drawer-action">
+                        <i class="fa-solid fa-crown"></i> Administration
+                    </button>
+                <?php endif; ?>
                 <button onclick="window.location.href='panier.php'" class="drawer-action">
                     <i class="fa-solid fa-cart-shopping"></i> Panier
                 </button>

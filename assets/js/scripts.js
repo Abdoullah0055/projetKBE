@@ -525,7 +525,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function applyChanges(theme, num) {
-    const path = `img/${theme}theme/${theme}${num}.png`;
+    const path = `assets/img/${theme}theme/${theme}${num}.png`;
     const urlValue = `url('${path}')`;
 
     document.documentElement.style.setProperty("--main-bg", urlValue);

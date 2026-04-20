@@ -70,7 +70,7 @@ $csrfToken = profile_csrf_token();
 $title = "L'Arsenal - Mon Profil";
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 $avatarUrl = trim((string)($dbUser['AvatarUrl'] ?? ''));
 $hasAvatar = $avatarUrl !== '';
