@@ -39,15 +39,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         try {
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare("INSERT INTO Items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
+            $stmt = $pdo->prepare("INSERT INTO items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
             $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $typeId]);
             $newItemId = $pdo->lastInsertId();
 
-            $typeName = strtolower($pdo->query("SELECT Name FROM ItemTypes WHERE ItemTypeId = $typeId")->fetchColumn());
-            if ($typeName === 'weapon') $pdo->prepare("INSERT INTO WeaponProperties (ItemId, DamageMin, DamageMax) VALUES (?, 10, 20)")->execute([$newItemId]);
-            elseif ($typeName === 'armor') $pdo->prepare("INSERT INTO ArmorProperties (ItemId, Defense) VALUES (?, 15)")->execute([$newItemId]);
-            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO PotionProperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 50)")->execute([$newItemId]);
-            elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO MagicSpellProperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
+            $typeName = strtolower($pdo->query("SELECT Name FROM itemtypes WHERE ItemTypeId = $typeId")->fetchColumn());
+            if ($typeName === 'weapon') $pdo->prepare("INSERT INTO weaponproperties (ItemId, DamageMin, DamageMax) VALUES (?, 10, 20)")->execute([$newItemId]);
+            elseif ($typeName === 'armor') $pdo->prepare("INSERT INTO armorproperties (ItemId, Defense) VALUES (?, 15)")->execute([$newItemId]);
+            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO potionproperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 50)")->execute([$newItemId]);
+            elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO magicspellproperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
 
             $pdo->commit();
             $message_alerte = ["type" => "succes", "texte" => "L'artefact '$name' a été ajouté avec succès."];
@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
         $stock = (int)$_POST['stock'];
         
-        $stmt = $pdo->prepare("UPDATE Items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
+        $stmt = $pdo->prepare("UPDATE items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
         $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
         $message_alerte = ["type" => "succes", "texte" => "L'artefact a été modifié avec succès."];
     }
@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // 3. Activer / Désactiver Item
     elseif ($_POST['action'] === 'toggle_item') {
         $itemId = (int)$_POST['item_id'];
-        $stmt = $pdo->prepare("UPDATE Items SET IsActive = NOT IsActive WHERE ItemId=?");
+        $stmt = $pdo->prepare("UPDATE items SET IsActive = NOT IsActive WHERE ItemId=?");
         $stmt->execute([$itemId]);
         $message_alerte = ["type" => "succes", "texte" => "Le statut de disponibilité de l'artefact a été mis à jour."];
     }
@@ -81,55 +81,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     elseif ($_POST['action'] === 'delete_item') {
         $itemId = (int)$_POST['item_id'];
         try {
-            $pdo->prepare("DELETE FROM Items WHERE ItemId = ?")->execute([$itemId]);
+            $pdo->prepare("DELETE FROM items WHERE ItemId = ?")->execute([$itemId]);
             $message_alerte = ["type" => "succes", "texte" => "L'artefact a été détruit définitivement."];
         } catch (Exception $e) {
-            $pdo->prepare("UPDATE Items SET IsActive = 0 WHERE ItemId = ?")->execute([$itemId]);
+            $pdo->prepare("UPDATE items SET IsActive = 0 WHERE ItemId = ?")->execute([$itemId]);
             $message_alerte = ["type" => "succes", "texte" => "L'objet est lié à des achats passés, il a été désactivé (caché) au lieu d'être supprimé."];
         }
     }
 
-    // 5. Ajouter Fonds au Joueur
+    // --- GESTION DES ÉNIGMES (QUÊTES) ---
+
+    // 5. Ajouter Énigme
+    elseif ($_POST['action'] === 'add_riddle') {
+        $question = trim($_POST['question']);
+        $answer = trim($_POST['answer']);
+        $hint = trim($_POST['hint']) !== '' ? trim($_POST['hint']) : null;
+        $difficulty = $_POST['difficulty'];
+        $categoryId = (int)$_POST['category_id'];
+        $rewardGold = (int)$_POST['reward_gold'];
+        $rewardSilver = (int)$_POST['reward_silver'];
+        $rewardBronze = (int)$_POST['reward_bronze'];
+
+        try {
+            $stmt = $pdo->prepare("INSERT INTO riddles (QuestionText, AnswerText, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
+            $stmt->execute([$question, $answer, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze]);
+            $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
+        } catch (Exception $e) {
+            $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
+        }
+    }
+
+    // 6. Activer / Désactiver Énigme
+    elseif ($_POST['action'] === 'toggle_riddle') {
+        $riddleId = (int)$_POST['riddle_id'];
+        $stmt = $pdo->prepare("UPDATE riddles SET IsActive = NOT IsActive WHERE RiddleId=?");
+        $stmt->execute([$riddleId]);
+        $message_alerte = ["type" => "succes", "texte" => "Le statut de la quête a été mis à jour."];
+    }
+
+    // 7. Supprimer Énigme
+    elseif ($_POST['action'] === 'delete_riddle') {
+        $riddleId = (int)$_POST['riddle_id'];
+        try {
+            $pdo->prepare("DELETE FROM riddles WHERE RiddleId = ?")->execute([$riddleId]);
+            $message_alerte = ["type" => "succes", "texte" => "La quête a été définitivement effacée."];
+        } catch (Exception $e) {
+            $pdo->prepare("UPDATE riddles SET IsActive = 0 WHERE RiddleId = ?")->execute([$riddleId]);
+            $message_alerte = ["type" => "succes", "texte" => "Des joueurs ont déjà répondu à cette quête. Elle a été désactivée au lieu d'être supprimée."];
+        }
+    }
+
+    // --- GESTION DES JOUEURS ---
+
+    // 8. Ajouter Fonds au Joueur
     elseif ($_POST['action'] === 'add_funds') {
         $targetUserId = (int)$_POST['user_id'];
         $addGold = (int)$_POST['add_gold']; $addSilver = (int)$_POST['add_silver']; $addBronze = (int)$_POST['add_bronze'];
-        $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+        $pdo->prepare("UPDATE users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
         $message_alerte = ["type" => "succes", "texte" => "Les fonds du joueur ont été mis à jour."];
     }
 
-    // 6. Bannir / Débannir Joueur
+    // 9. Bannir / Débannir Joueur
     elseif ($_POST['action'] === 'toggle_ban') {
         $targetUserId = (int)$_POST['user_id'];
-        $pdo->prepare("UPDATE Users SET IsBanned = NOT IsBanned WHERE UserId = ?")->execute([$targetUserId]);
+        $pdo->prepare("UPDATE users SET IsBanned = NOT IsBanned WHERE UserId = ?")->execute([$targetUserId]);
         $message_alerte = ["type" => "succes", "texte" => "Le droit de connexion du joueur a été modifié."];
     }
 
-    // 7. Supprimer un Joueur
+    // 10. Supprimer un Joueur
     elseif ($_POST['action'] === 'delete_user') {
         $targetUserId = (int)$_POST['user_id'];
         try {
-            $pdo->beginTransaction();
-            // On supprime d'abord les commandes pour ne pas bloquer la suppression du joueur
-            $pdo->prepare("DELETE FROM Orders WHERE UserId = ?")->execute([$targetUserId]);
-            $pdo->prepare("DELETE FROM Users WHERE UserId = ?")->execute([$targetUserId]);
-            $pdo->commit();
+            $pdo->prepare("CALL sp_DeleteUserAccount(?)")->execute([$targetUserId]);
             $message_alerte = ["type" => "succes", "texte" => "Le joueur a été supprimé des archives."];
         } catch(Exception $e) {
-            $pdo->rollBack();
-            $message_alerte = ["type" => "erreur", "texte" => "Erreur inattendue lors de la suppression."];
+            $message_alerte = ["type" => "erreur", "texte" => "Erreur inattendue lors de la suppression. " . $e->getMessage()];
         }
     }
 }
 
 // --- RÉCUPÉRATION DES DONNÉES ---
-$items = $pdo->query("SELECT i.*, t.Name AS TypeName FROM Items i JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId ORDER BY i.ItemId DESC")->fetchAll();
-$itemTypes = $pdo->query("SELECT * FROM ItemTypes")->fetchAll();
+$items = $pdo->query("SELECT i.*, t.Name AS TypeName FROM items i JOIN itemtypes t ON i.ItemTypeId = t.ItemTypeId ORDER BY i.ItemId DESC")->fetchAll();
+$itemTypes = $pdo->query("SELECT * FROM itemtypes")->fetchAll();
 
-// On vérifie si la colonne IsBanned existe pour éviter que la page plante si le SQL n'est pas fait
+// Récupération des énigmes
+$riddleCategories = [];
+$riddles = [];
+try {
+    $riddleCategories = $pdo->query("SELECT * FROM riddlecategories")->fetchAll();
+    $riddles = $pdo->query("SELECT r.*, c.Name AS CategoryName FROM riddles r JOIN riddlecategories c ON r.RiddleCategoryId = c.RiddleCategoryId ORDER BY r.RiddleId DESC")->fetchAll();
+} catch (Exception $e) {}
+
 $hasBannedCol = false;
-try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
+try { $pdo->query("SELECT IsBanned FROM users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
 
-$query = "SELECT UserId, Alias, Role, Gold, Silver, Bronze " . ($hasBannedCol ? ", IsBanned" : "") . " FROM Users WHERE Role IN ('Player', 'Mage') ORDER BY Alias ASC";
+$query = "SELECT UserId, Alias, Role, Gold, Silver, Bronze " . ($hasBannedCol ? ", IsBanned" : "") . " FROM users WHERE Role IN ('Player', 'Mage') ORDER BY Alias ASC";
 $players = $pdo->query($query)->fetchAll();
 
 $title = "Administration - L'Arsenal";
@@ -206,6 +252,7 @@ include __DIR__ . '/templates/head.php';
         <div class="admin-container">
             <div class="admin-menu">
                 <button class="admin-tab-btn active" onclick="switchTab('items')"><i class="fa-solid fa-box-open"></i> Catalogue Items</button>
+                <button class="admin-tab-btn" onclick="switchTab('riddles')"><i class="fa-solid fa-scroll"></i> Quêtes & Énigmes</button>
                 <button class="admin-tab-btn" onclick="switchTab('users')"><i class="fa-solid fa-users"></i> Registre Joueurs</button>
             </div>
 
@@ -293,6 +340,108 @@ include __DIR__ . '/templates/head.php';
                                         <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('Voulez-vous vraiment détruire définitivement cet objet ?');">
                                             <input type="hidden" name="action" value="delete_item">
                                             <input type="hidden" name="item_id" value="<?= $it['ItemId'] ?>">
+                                            <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-riddles" class="admin-section details-glass-card">
+                    <h3><i class="fa-solid fa-plus-circle"></i> Créer une nouvelle Quête</h3>
+                    
+                    <form method="POST" action="admin.php">
+                        <input type="hidden" name="action" value="add_riddle">
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label>L'énigme / La question</label>
+                            <textarea name="question" class="admin-input" rows="2" required></textarea>
+                        </div>
+                        <div class="admin-form-grid">
+                            <div class="admin-form-group">
+                                <label>Réponse attendue</label>
+                                <input type="text" name="answer" class="admin-input" required>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Indice (Optionnel)</label>
+                                <input type="text" name="hint" class="admin-input">
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Catégorie</label>
+                                <select name="category_id" class="admin-input" required>
+                                    <?php foreach ($riddleCategories as $cat): ?>
+                                        <option value="<?= $cat['RiddleCategoryId'] ?>"><?= htmlspecialchars($cat['Name']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Difficulté</label>
+                                <select name="difficulty" class="admin-input" required>
+                                    <option value="Facile">Facile</option>
+                                    <option value="Moyenne">Moyenne</option>
+                                    <option value="Difficile">Difficile</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:15px; margin-top:15px; margin-bottom:15px;">
+                            <div class="admin-form-group">
+                                <label style="color:gold;">Récompense Or</label>
+                                <input type="number" min="0" name="reward_gold" class="admin-input" value="0">
+                            </div>
+                            <div class="admin-form-group">
+                                <label style="color:silver;">Récompense Argent</label>
+                                <input type="number" min="0" name="reward_silver" class="admin-input" value="0">
+                            </div>
+                            <div class="admin-form-group">
+                                <label style="color:#cd7f32;">Récompense Bronze</label>
+                                <input type="number" min="0" name="reward_bronze" class="admin-input" value="10">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="sidebar-inventory-btn" style="width:auto; padding: 10px 20px;">Ajouter la quête</button>
+                    </form>
+
+                    <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
+
+                    <h3><i class="fa-solid fa-list"></i> Liste des Quêtes</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="glass-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Énigme</th>
+                                    <th>Infos</th>
+                                    <th>Récompense</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($riddles as $r): ?>
+                                <tr>
+                                    <td>#<?= $r['RiddleId'] ?></td>
+                                    <td style="max-width: 250px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($r['QuestionText']) ?>">
+                                        <strong><?= htmlspecialchars($r['QuestionText']) ?></strong><br>
+                                        <small style="color:var(--accent);">Rép : <?= htmlspecialchars($r['AnswerText']) ?></small>
+                                    </td>
+                                    <td><?= htmlspecialchars($r['CategoryName']) ?><br><small><?= $r['Difficulty'] ?></small></td>
+                                    <td><?= $r['RewardGold'] ?> / <?= $r['RewardSilver'] ?> / <?= $r['RewardBronze'] ?></td>
+                                    <td><?= $r['IsActive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
+                                    <td>
+                                        <form style="display:inline;" method="POST" action="admin.php">
+                                            <input type="hidden" name="action" value="toggle_riddle">
+                                            <input type="hidden" name="riddle_id" value="<?= $r['RiddleId'] ?>">
+                                            <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $r['IsActive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $r['IsActive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $r['IsActive'] ? 'Désactiver' : 'Activer' ?>">
+                                                <i class="fa-solid <?= $r['IsActive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
+                                            </button>
+                                        </form>
+
+                                        <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('Voulez-vous vraiment supprimer cette énigme ?');">
+                                            <input type="hidden" name="action" value="delete_riddle">
+                                            <input type="hidden" name="riddle_id" value="<?= $r['RiddleId'] ?>">
                                             <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
                                         </form>
                                     </td>
