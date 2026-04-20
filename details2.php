@@ -62,6 +62,7 @@ if (!$item) {
 }
 
 $item['image'] = getItemImage($item['type']);
+$itemImagePath = getItemImagePath((string)$item['nom']);
 $properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
 $title = "Détails - " . $item['nom'];
 $itemRatingText = formatRatingValue((float)$item['rating']);
@@ -102,7 +103,7 @@ if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
     }
 </style>
 
-<link rel="stylesheet" href="assets/css/details.css">
+<link rel="stylesheet" href="assets/css/details.css?v=<?= filemtime(__DIR__ . '/assets/css/details.css') ?>">
 
 <?php include __DIR__ . '/includes/header.php'; ?>
 
@@ -157,7 +158,16 @@ $rightImages = [
                 <div class="rarity-tag"><?= htmlspecialchars($item['type']) ?></div>
 
                 <div class="floating-wrapper">
-                    <div class="main-icon" id="target-icon"><?= $item['image'] ?></div>
+                    <?php if ($itemImagePath !== null): ?>
+                        <div class="main-icon item-detail-image-frame" id="target-icon">
+                            <img
+                                class="item-detail-image"
+                                src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                alt="<?= htmlspecialchars($item['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                        </div>
+                    <?php else: ?>
+                        <div class="main-icon" id="target-icon"><?= $item['image'] ?></div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="glow-shadow"></div>
@@ -473,13 +483,15 @@ $rightImages = [
         const cartBtn = document.getElementById('cart-btn');
         const targetIcon = document.getElementById('target-icon');
 
-        const clone = document.createElement('div');
-        clone.innerHTML = targetIcon.innerHTML;
-        clone.className = 'flying-item';
+        const clone = targetIcon.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.classList.add('flying-item');
 
         const startRect = targetIcon.getBoundingClientRect();
         clone.style.left = startRect.left + 'px';
         clone.style.top = startRect.top + 'px';
+        clone.style.width = startRect.width + 'px';
+        clone.style.height = startRect.height + 'px';
         document.body.appendChild(clone);
 
         if (cartBtn) {

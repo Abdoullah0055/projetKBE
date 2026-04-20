@@ -52,6 +52,70 @@ function getItemImage($type)
     }
 }
 
+function normalizeItemImageKey(string $value): string
+{
+    $normalized = mb_strtolower(trim($value), 'UTF-8');
+    $normalized = str_replace(['’', '\'', '`', '´'], ' ', $normalized);
+    $normalized = strtr($normalized, [
+        'à' => 'a',
+        'á' => 'a',
+        'â' => 'a',
+        'ä' => 'a',
+        'ç' => 'c',
+        'è' => 'e',
+        'é' => 'e',
+        'ê' => 'e',
+        'ë' => 'e',
+        'î' => 'i',
+        'ï' => 'i',
+        'ô' => 'o',
+        'ö' => 'o',
+        'ù' => 'u',
+        'û' => 'u',
+        'ü' => 'u',
+        'œ' => 'oe',
+    ]);
+
+    if (function_exists('iconv')) {
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $normalized);
+
+        if ($ascii !== false) {
+            $normalized = $ascii;
+        }
+    }
+
+    $normalized = preg_replace('/[^a-z0-9]+/', '_', $normalized) ?? '';
+
+    return trim($normalized, '_');
+}
+
+function getItemImagePath(string $itemName): ?string
+{
+    $imageByItem = [
+        'arc_de_brume_lune' => 'arc_de_brume_lune.png',
+        'breuvage_du_sang_froid' => 'breuvage_du_sang_froid.png',
+        'cuirasse_du_bastion_gris' => 'cuirasse_du_bastion_gris.png',
+        'elixir_de_aube_claire' => 'elixir_de_aube_claire.png',
+        'elixir_de_l_aube_claire' => 'elixir_de_aube_claire.png',
+        'lame_du_corbeau_noir' => 'lame_du_corbeau_noir.png',
+        'marteau_des_ancetres' => 'marteau_des_ancetres.png',
+        'tempete_des_sept_eclairs' => 'grimoire_tempete_des_septs_eclairs.png',
+        'tempete_des_septs_eclairs' => 'grimoire_tempete_des_septs_eclairs.png',
+        'voile_acier_sacre' => 'voile_acier_sacre.png',
+        'voile_d_acier_sacre' => 'voile_acier_sacre.png',
+    ];
+
+    $key = normalizeItemImageKey($itemName);
+
+    if (!isset($imageByItem[$key])) {
+        return null;
+    }
+
+    $path = 'assets/images/items_enigme/' . $imageByItem[$key];
+
+    return is_file(dirname(__DIR__) . '/' . $path) ? $path : null;
+}
+
 function normalizeRarityValue(string $rarity): string
 {
     $normalized = mb_strtolower(trim($rarity), 'UTF-8');
