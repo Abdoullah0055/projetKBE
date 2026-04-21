@@ -86,7 +86,6 @@ $randomCategories = [
     </section>
 </main>
 
-<script src="/assets/js/random.js" defer></script>
+<script src="assets/js/random.js" defer></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
 

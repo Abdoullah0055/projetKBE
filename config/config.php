@@ -92,28 +92,55 @@ function normalizeItemImageKey(string $value): string
 function getItemImagePath(string $itemName): ?string
 {
     $imageByItem = [
-        'arc_de_brume_lune' => 'arc_de_brume_lune.png',
-        'breuvage_du_sang_froid' => 'breuvage_du_sang_froid.png',
-        'cuirasse_du_bastion_gris' => 'cuirasse_du_bastion_gris.png',
-        'elixir_de_aube_claire' => 'elixir_de_aube_claire.png',
-        'elixir_de_l_aube_claire' => 'elixir_de_aube_claire.png',
-        'lame_du_corbeau_noir' => 'lame_du_corbeau_noir.png',
-        'marteau_des_ancetres' => 'marteau_des_ancetres.png',
-        'tempete_des_sept_eclairs' => 'grimoire_tempete_des_septs_eclairs.png',
-        'tempete_des_septs_eclairs' => 'grimoire_tempete_des_septs_eclairs.png',
-        'voile_acier_sacre' => 'voile_acier_sacre.png',
-        'voile_d_acier_sacre' => 'voile_acier_sacre.png',
+        'arc_de_brume_lune' => 'assets/images/items_enigme/arc_de_brume_lune.png',
+        'breuvage_du_sang_froid' => 'assets/images/items_enigme/breuvage_du_sang_froid.png',
+        'cuirasse_du_bastion_gris' => 'assets/images/items_enigme/cuirasse_du_bastion_gris.png',
+        'elixir_de_aube_claire' => 'assets/images/items_enigme/elixir_de_aube_claire.png',
+        'elixir_de_l_aube_claire' => 'assets/images/items_enigme/elixir_de_aube_claire.png',
+        'lame_du_corbeau_noir' => 'assets/images/items_enigme/lame_du_corbeau_noir.png',
+        'marteau_des_ancetres' => 'assets/images/items_enigme/marteau_des_ancetres.png',
+        'tempete_des_sept_eclairs' => 'assets/images/items_enigme/grimoire_tempete_des_septs_eclairs.png',
+        'tempete_des_septs_eclairs' => 'assets/images/items_enigme/grimoire_tempete_des_septs_eclairs.png',
+        'voile_acier_sacre' => 'assets/images/items_enigme/voile_acier_sacre.png',
+        'voile_d_acier_sacre' => 'assets/images/items_enigme/voile_acier_sacre.png',
+
+        'basic_sword' => 'assets/images/armes/knight_longsword.png',
+        'knight_blade' => 'assets/images/armes/knight_longsword.png',
+        'golden_sword' => 'assets/images/armes/sultan_scimitar_and_shield.png',
+        'war_axe' => 'assets/images/armes/viking_battleaxe.png',
+        'hunter_bow' => 'assets/images/armes/elven_knight_bow.png',
+        'royal_spear' => 'assets/images/armes/spartan_spear_and_shield.png',
+        'dragon_slayer' => 'assets/images/armes/dragon_slayer_longsword.png',
+
+        'leather_armor' => 'assets/images/armure/chest/elf_chest.png',
+        'chainmail' => 'assets/images/armure/chest/elf_chest.png',
+        'steel_armor' => 'assets/images/armure/chest/daedra_chest.png',
+        'golden_armor' => 'assets/images/armure/chest/daedra_chest.png',
+        'paladin_armor' => 'assets/images/armure/chest/elf_chest.png',
+        'dragon_scale_armor' => 'assets/images/armure/chest/daedra_chest.png',
     ];
 
     $key = normalizeItemImageKey($itemName);
 
-    if (!isset($imageByItem[$key])) {
-        return null;
+    $candidatePaths = [];
+
+    if (isset($imageByItem[$key])) {
+        $candidatePaths[] = $imageByItem[$key];
     }
 
-    $path = 'assets/images/items_enigme/' . $imageByItem[$key];
+    $candidatePaths[] = 'assets/images/items_enigme/' . $key . '.png';
+    $candidatePaths[] = 'assets/images/armes/' . $key . '.png';
+    $candidatePaths[] = 'assets/images/armure/chest/' . $key . '.png';
+    $candidatePaths[] = 'assets/images/armure/helmet/' . $key . '.png';
+    $candidatePaths[] = 'assets/images/armure/legs/' . $key . '.png';
 
-    return is_file(dirname(__DIR__) . '/' . $path) ? $path : null;
+    foreach (array_unique($candidatePaths) as $path) {
+        if (is_file(dirname(__DIR__) . '/' . $path)) {
+            return $path;
+        }
+    }
+
+    return null;
 }
 
 function normalizeRarityValue(string $rarity): string

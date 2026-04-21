@@ -82,7 +82,6 @@ $mainDialoguesJson = htmlspecialchars(
     </section>
 </main>
 
-<script src="/assets/js/enigme_intro.js" defer></script>
+<script src="assets/js/enigme_intro.js" defer></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
 

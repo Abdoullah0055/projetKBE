@@ -134,7 +134,6 @@ $postRoadmapDialoguesJson = htmlspecialchars(
     </section>
 </main>
 
-<script src="/assets/js/roadmap.js" defer></script>
+<script src="assets/js/roadmap.js" defer></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
 

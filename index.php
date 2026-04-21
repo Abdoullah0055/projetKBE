@@ -148,16 +148,24 @@ function buildPageUrl(int $targetPage): string
     }
 
     .product-list {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr); 
-    gap: 14px;
-    }   
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 14px !important;
+    }
 
     .product-list .item-row {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        position: relative;
+        isolation: isolate;
         width: 100%;
         aspect-ratio: 4 / 5; /* 👈 carré propre */
         max-width: 240px;   /* 👈 limite taille */
         margin: 0 auto;     /* 👈 centre dans la colonne */
+        padding: 12px;
+        overflow: hidden;
     }
 
     .product-list .item-row::before {
@@ -315,6 +323,13 @@ function buildPageUrl(int $targetPage): string
         font-size: clamp(2rem, 3vw, 2.8rem);
         width: auto;
         line-height: 1;
+    }
+
+    .item-card-media .item-card-image {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
     }
 
     .item-info {
@@ -486,19 +501,19 @@ function buildPageUrl(int $targetPage): string
 
     @media (max-width: 1200px) {
         .product-list {
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         }
     }
 
     @media (max-width: 800px) {
         .product-list {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         }
     }
 
     @media (max-width: 500px) {
         .product-list {
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr !important;
         }
     }
 </style>
@@ -583,6 +598,7 @@ function buildPageUrl(int $targetPage): string
                 $normType = normalizeItemType($item['type']);
                 $rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
                 $rarityClass = getRarityClass($rarityLabel);
+                $itemImagePath = getItemImagePath((string)$item['nom']);
             ?>
                 <div
                     class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
@@ -602,7 +618,14 @@ function buildPageUrl(int $targetPage): string
                     </div>
 
                     <div class="item-card-media">
-                        <div class="item-icon"><?= getItemImage($item['type']) ?></div>
+                        <?php if ($itemImagePath !== null): ?>
+                            <img
+                                class="item-card-image"
+                                src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                alt="<?= htmlspecialchars($item['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                        <?php else: ?>
+                            <div class="item-icon"><?= getItemImage($item['type']) ?></div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="item-info">
