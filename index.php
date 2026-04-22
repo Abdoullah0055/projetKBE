@@ -622,17 +622,22 @@ main .product-list .item-row.hidden {
                     </button>
                 </form>
 
-                <a href="roadmap.php" class="enigme-door-button" aria-label="Acceder aux enigmes">
-                    <span class="enigme-door-button__frame">
-                        <img
-                            src="assets/img/doors/opened.png"
-                            alt=""
-                            class="enigme-door-button__image">
-                    </span>
-                </a>
             </div>
 
             <div class="sidebar-bottom-actions">
+                <a href="roadmap.php" class="enigme-door-button hide-text" aria-label="Acceder aux enigmes">
+                    <span class="enigme-door-button__frame" aria-hidden="true">
+                        <img
+                            src="assets/img/doors/closed.png"
+                            alt=""
+                            class="enigme-door-button__image enigme-door-button__image--off">
+                        <img
+                            src="assets/img/doors/opened.png"
+                            alt=""
+                            class="enigme-door-button__image enigme-door-button__image--on">
+                    </span>
+                </a>
+
                 <div class="cta-box">
                     <div class="hide-text">
                         <p style="margin:0 0 8px 0; font-size:0.9rem;">

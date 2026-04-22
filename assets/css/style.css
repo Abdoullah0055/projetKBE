@@ -344,6 +344,44 @@ aside.collapsed {
   overflow-y: auto;
 }
 
+.sidebar-bottom-actions {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-inventory-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(25, 133, 161, 0.45);
+  background: rgba(25, 133, 161, 0.18);
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  transition: 0.2s ease;
+}
+
+.sidebar-inventory-btn:hover {
+  background: rgba(25, 133, 161, 0.3);
+  border-color: var(--accent);
+}
+
+aside.collapsed .sidebar-inventory-btn {
+  padding: 12px 8px;
+}
+
+aside.collapsed .sidebar-inventory-btn .btn-label {
+  display: none;
+}
+
 .filter-group label {
   display: block;
   font-size: 0.75rem;
@@ -366,7 +404,8 @@ aside.collapsed {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-top: 14px;
+  margin: 0;
+  padding-top: 4px;
   text-decoration: none;
 }
 
@@ -377,12 +416,15 @@ aside.collapsed {
   transition:
     transform 0.25s ease,
     filter 0.25s ease;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.38));
 }
 
 .enigme-door-button:hover .enigme-door-button__frame,
 .enigme-door-button:focus-visible .enigme-door-button__frame {
   transform: translateY(-4px) scale(1.02);
-  filter: drop-shadow(0 0 22px rgba(171, 106, 255, 0.28));
+  filter:
+    drop-shadow(0 18px 24px rgba(0, 0, 0, 0.38))
+    drop-shadow(0 0 24px rgba(171, 106, 255, 0.42));
 }
 
 .enigme-door-button:focus-visible {
@@ -394,7 +436,32 @@ aside.collapsed {
   width: 100%;
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.38));
+  transition:
+    opacity 0.22s ease,
+    filter 0.22s ease;
+}
+
+.enigme-door-button__image--off {
+  opacity: 1;
+  filter: brightness(0.72) saturate(0.5);
+}
+
+.enigme-door-button__image--on {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  filter: brightness(1.06) saturate(1.18);
+}
+
+.enigme-door-button:hover .enigme-door-button__image--off,
+.enigme-door-button:focus-visible .enigme-door-button__image--off {
+  opacity: 0;
+}
+
+.enigme-door-button:hover .enigme-door-button__image--on,
+.enigme-door-button:focus-visible .enigme-door-button__image--on {
+  opacity: 1;
 }
 
 /* --- MAIN CONTENT & ITEMS --- */
