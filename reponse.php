@@ -185,7 +185,6 @@ $abandonUrl = build_enigmes_page_url('reponse.php', array_merge($context['query'
     </section>
 </main>
 
-<script src="/assets/js/enigmes.js" defer></script>
+<script src="assets/js/enigmes.js" defer></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
 
