@@ -39,6 +39,7 @@ $stmt = $pdo->prepare("
     SELECT 
         i.ItemId AS id,
         i.Name AS nom,
+        i.ImageUrl AS ImageUrl,
         i.PriceGold AS prix_gold,
         i.PriceSilver AS prix_silver,
         i.PriceBronze AS prix_bronze,
@@ -51,7 +52,7 @@ $stmt = $pdo->prepare("
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.ItemId = ?
-    GROUP BY i.ItemId, i.Name, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
+    GROUP BY i.ItemId, i.Name, i.ImageUrl, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
 ");
 $stmt->execute([$itemId]);
 $item = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -62,7 +63,7 @@ if (!$item) {
 }
 
 $item['image'] = getItemImage($item['type']);
-$itemImagePath = getItemImagePath((string)$item['nom']);
+$itemImagePath = getItemImagePathForItem($item);
 $properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
 $title = "Détails - " . $item['nom'];
 $itemRatingText = formatRatingValue((float)$item['rating']);

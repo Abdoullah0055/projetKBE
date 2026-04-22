@@ -37,6 +37,7 @@ $stmt = $pdo->prepare("
     SELECT 
         ci.ItemId AS id,
         i.Name AS nom,
+        i.ImageUrl AS ImageUrl,
         i.PriceGold AS prix_gold,
         i.PriceSilver AS prix_silver,
         i.PriceBronze AS prix_bronze,
@@ -254,6 +255,7 @@ $rightImages = [
         <?php foreach ($cartItems as $item):
             // Vérification du stock
             $isOverstock = $item['quantite'] > $item['stock_max'];
+            $itemImagePath = getItemImagePathForItem($item);
         ?>
             <div class="cart-row <?= $isOverstock ? 'row-overstock' : '' ?>">
                 <button class="btn-corbeille" title="Retirer l'objet" onclick="deleteItemFromCart(<?= $item['id'] ?>, this)">
@@ -261,7 +263,14 @@ $rightImages = [
                 </button>
 
                 <div class="item-image-box">
-                    <?= getItemImage($item['type']) ?>
+                    <?php if ($itemImagePath !== null): ?>
+                        <img
+                            class="cart-item-image"
+                            src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                            alt="<?= htmlspecialchars($item['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                    <?php else: ?>
+                        <?= getItemImage($item['type']) ?>
+                    <?php endif; ?>
                 </div>
 
                 <div class="item-name-box">
@@ -604,5 +613,4 @@ $rightImages = [
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
-
 

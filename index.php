@@ -52,6 +52,7 @@ $stmt = $pdo->prepare("
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
+        i.ImageUrl as ImageUrl,
         t.Name as type, 
         COALESCE(i.Rarity, 'Commun') as rarete,
         i.PriceGold as prix, 
@@ -62,7 +63,7 @@ $stmt = $pdo->prepare("
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.IsActive = TRUE
-    GROUP BY i.ItemId, i.Name, t.Name, i.Rarity, i.PriceGold, i.Stock
+    GROUP BY i.ItemId, i.Name, i.ImageUrl, t.Name, i.Rarity, i.PriceGold, i.Stock
     ORDER BY i.ItemId ASC
     LIMIT :limit OFFSET :offset
 ");
@@ -598,7 +599,7 @@ function buildPageUrl(int $targetPage): string
                 $normType = normalizeItemType($item['type']);
                 $rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
                 $rarityClass = getRarityClass($rarityLabel);
-                $itemImagePath = getItemImagePath((string)$item['nom']);
+                $itemImagePath = getItemImagePathForItem($item);
             ?>
                 <div
                     class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"

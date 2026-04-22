@@ -46,6 +46,7 @@ try {
             inv.ItemId AS item_id,
             inv.Quantity AS quantity,
             i.Name AS item_name,
+            i.ImageUrl AS ImageUrl,
             i.Description AS item_description,
             i.PriceGold AS item_price_gold,
             t.Name AS item_type,
@@ -87,6 +88,7 @@ if ($inventoryError === '') {
                 inv.ItemId AS item_id,
                 inv.Quantity AS quantity_owned,
                 i.Name AS item_name,
+                i.ImageUrl AS ImageUrl,
                 t.Name AS item_type,
                 IFNULL(AVG(all_reviews.Rating), 0) AS rating,
                 COUNT(all_reviews.ReviewId) AS review_count
@@ -101,7 +103,7 @@ if ($inventoryError === '') {
              WHERE inv.UserId = :user_id_for_inventory
                AND inv.Quantity > 0
                AND user_review.ReviewId IS NULL
-             GROUP BY inv.ItemId, inv.Quantity, i.Name, t.Name
+             GROUP BY inv.ItemId, inv.Quantity, i.Name, i.ImageUrl, t.Name
              ORDER BY i.Name ASC"
         );
 
@@ -214,6 +216,7 @@ $title = "L'Arsenal - Inventory";
                             $isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
                             $statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
                             $statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
+                            $itemImagePath = getItemImagePathForItem($entry);
                             ?>
 
                             <article class="inventory-slot"
@@ -226,7 +229,14 @@ $title = "L'Arsenal - Inventory";
 
                                 <div class="slot-top-row">
                                     <div class="slot-thumb" aria-hidden="true">
-                                        <span class="slot-icon"><?= getItemImage($itemType) ?></span>
+                                        <?php if ($itemImagePath !== null): ?>
+                                            <img
+                                                class="slot-image"
+                                                src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                                alt="">
+                                        <?php else: ?>
+                                            <span class="slot-icon"><?= getItemImage($itemType) ?></span>
+                                        <?php endif; ?>
                                     </div>
 
                                     <div class="slot-main-info">
@@ -291,6 +301,7 @@ $title = "L'Arsenal - Inventory";
                             $reviewItemId = (int) $reviewItem['item_id'];
                             $reviewItemType = (string) ($reviewItem['item_type'] ?? 'Inconnu');
                             $reviewItemName = (string) ($reviewItem['item_name'] ?? ('Item #' . $reviewItemId));
+                            $reviewItemImagePath = getItemImagePathForItem($reviewItem);
                             $ratingInputId = 'rating-input-' . $reviewItemId;
                             $ratingPreviewId = 'rating-preview-' . $reviewItemId;
                             ?>
@@ -298,7 +309,14 @@ $title = "L'Arsenal - Inventory";
                             <article class="pending-review-card" data-pending-item-id="<?= $reviewItemId ?>">
                                 <div class="pending-review-item-meta">
                                     <div class="pending-review-thumb" aria-hidden="true">
-                                        <?= getItemImage($reviewItemType) ?>
+                                        <?php if ($reviewItemImagePath !== null): ?>
+                                            <img
+                                                class="pending-review-image"
+                                                src="<?= htmlspecialchars($reviewItemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                                alt="">
+                                        <?php else: ?>
+                                            <?= getItemImage($reviewItemType) ?>
+                                        <?php endif; ?>
                                     </div>
 
                                     <div>
