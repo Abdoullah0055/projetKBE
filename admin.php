@@ -28,6 +28,29 @@ $user = [
 
 $message_alerte = null;
 
+// --- FONCTION POUR UPLOADER L'IMAGE ---
+function uploadItemImage($fileArray) {
+    if (isset($fileArray) && $fileArray['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . '/img/items/';
+        
+        // Créer le dossier s'il n'existe pas
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        
+        $ext = strtolower(pathinfo($fileArray['name'], PATHINFO_EXTENSION));
+        $allowedExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+        
+        if (in_array($ext, $allowedExtensions)) {
+            $filename = uniqid('item_') . '.' . $ext;
+            if (move_uploaded_file($fileArray['tmp_name'], $uploadDir . $filename)) {
+                return 'img/items/' . $filename;
+            }
+        }
+    }
+    return null;
+}
+
 // --- ACTIONS BACKEND ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     
@@ -37,10 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
         $stock = (int)$_POST['stock']; $typeId = (int)$_POST['type_id'];
 
+        // Gestion de l'image
+        $imageUrl = uploadItemImage($_FILES['item_image']) ?? 'img/default_item.png';
+
         try {
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare("INSERT INTO items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
-            $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $typeId]);
+            $stmt = $pdo->prepare("INSERT INTO items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive, ImageUrl) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)");
+            $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $typeId, $imageUrl]);
             $newItemId = $pdo->lastInsertId();
 
             $typeName = strtolower($pdo->query("SELECT Name FROM itemtypes WHERE ItemTypeId = $typeId")->fetchColumn());
@@ -53,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $message_alerte = ["type" => "succes", "texte" => "L'artefact '$name' a été ajouté avec succès."];
         } catch (Exception $e) {
             $pdo->rollBack();
-            $message_alerte = ["type" => "erreur", "texte" => "Erreur : Ce nom existe peut-être déjà."];
+            $message_alerte = ["type" => "erreur", "texte" => $e->getMessage() . "Erreur : Ce nom existe peut-être déjà."];
         }
     }
 
@@ -64,8 +90,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
         $stock = (int)$_POST['stock'];
         
-        $stmt = $pdo->prepare("UPDATE items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
-        $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
+        $newImageUrl = uploadItemImage($_FILES['item_image']);
+
+        if ($newImageUrl) {
+            $stmt = $pdo->prepare("UPDATE items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=?, ImageUrl=? WHERE ItemId=?");
+            $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $newImageUrl, $itemId]);
+        } else {
+            // On modifie tout sauf l'image (elle reste la même)
+            $stmt = $pdo->prepare("UPDATE items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
+            $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
+        }
+        
         $message_alerte = ["type" => "succes", "texte" => "L'artefact a été modifié avec succès."];
     }
 
@@ -90,8 +125,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     // --- GESTION DES ÉNIGMES (QUÊTES) ---
-
-    // 5. Ajouter Énigme
     elseif ($_POST['action'] === 'add_riddle') {
         $question = trim($_POST['question']);
         $answer = trim($_POST['answer']);
@@ -111,7 +144,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         }
     }
 
-    // 6. Activer / Désactiver Énigme
     elseif ($_POST['action'] === 'toggle_riddle') {
         $riddleId = (int)$_POST['riddle_id'];
         $stmt = $pdo->prepare("UPDATE riddles SET IsActive = NOT IsActive WHERE RiddleId=?");
@@ -119,7 +151,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $message_alerte = ["type" => "succes", "texte" => "Le statut de la quête a été mis à jour."];
     }
 
-    // 7. Supprimer Énigme
     elseif ($_POST['action'] === 'delete_riddle') {
         $riddleId = (int)$_POST['riddle_id'];
         try {
@@ -132,8 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     // --- GESTION DES JOUEURS ---
-
-    // 8. Ajouter Fonds au Joueur
     elseif ($_POST['action'] === 'add_funds') {
         $targetUserId = (int)$_POST['user_id'];
         $addGold = (int)$_POST['add_gold']; $addSilver = (int)$_POST['add_silver']; $addBronze = (int)$_POST['add_bronze'];
@@ -141,14 +170,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $message_alerte = ["type" => "succes", "texte" => "Les fonds du joueur ont été mis à jour."];
     }
 
-    // 9. Bannir / Débannir Joueur
     elseif ($_POST['action'] === 'toggle_ban') {
         $targetUserId = (int)$_POST['user_id'];
         $pdo->prepare("UPDATE users SET IsBanned = NOT IsBanned WHERE UserId = ?")->execute([$targetUserId]);
         $message_alerte = ["type" => "succes", "texte" => "Le droit de connexion du joueur a été modifié."];
     }
 
-    // 10. Supprimer un Joueur
     elseif ($_POST['action'] === 'delete_user') {
         $targetUserId = (int)$_POST['user_id'];
         try {
@@ -161,12 +188,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // --- RÉCUPÉRATION DES DONNÉES ---
-$items = $pdo->query("SELECT i.*, t.Name AS TypeName FROM items i JOIN itemtypes t ON i.ItemTypeId = t.ItemTypeId ORDER BY i.ItemId DESC")->fetchAll();
+// On essaie de récupérer ImageUrl. S'il n'existe pas encore (oubli de la commande SQL), on l'évite pour ne pas faire crasher
+$hasImageCol = false;
+try { $pdo->query("SELECT ImageUrl FROM items LIMIT 1"); $hasImageCol = true; } catch (Exception $e) {}
+
+$itemsQuery = "SELECT i.*, t.Name AS TypeName " . ($hasImageCol ? ", i.ImageUrl" : "") . " FROM items i JOIN itemtypes t ON i.ItemTypeId = t.ItemTypeId ORDER BY i.ItemId DESC";
+$items = $pdo->query($itemsQuery)->fetchAll();
+
 $itemTypes = $pdo->query("SELECT * FROM itemtypes")->fetchAll();
 
-// Récupération des énigmes
-$riddleCategories = [];
-$riddles = [];
+$riddleCategories = []; $riddles = [];
 try {
     $riddleCategories = $pdo->query("SELECT * FROM riddlecategories")->fetchAll();
     $riddles = $pdo->query("SELECT r.*, c.Name AS CategoryName FROM riddles r JOIN riddlecategories c ON r.RiddleCategoryId = c.RiddleCategoryId ORDER BY r.RiddleId DESC")->fetchAll();
@@ -205,7 +236,7 @@ include __DIR__ . '/templates/head.php';
     .admin-section.active { display: block; }
 
     .glass-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: rgba(0, 0, 0, 0.4); border-radius: 8px; overflow: hidden; }
-    .glass-table th, .glass-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--text-light); }
+    .glass-table th, .glass-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: var(--text-light); vertical-align: middle; }
     .glass-table th { background: rgba(25, 133, 161, 0.2); color: var(--accent); text-transform: uppercase; font-size: 0.85rem; }
     .glass-table tr:hover { background: rgba(255, 255, 255, 0.03); }
 
@@ -219,14 +250,11 @@ include __DIR__ . '/templates/head.php';
     }
     .admin-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 8px rgba(25, 133, 161, 0.3); }
     
-    /* FIX DU TEXTE INVISIBLE POUR LES COMBOBOX */
-    .admin-input option {
-        background-color: #1a1b1e;
-        color: white;
-    }
-
+    .admin-input option { background-color: #1a1b1e; color: white; }
     .btn-danger { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; border-radius: 4px; cursor: pointer; transition: 0.3s; }
     .btn-danger:hover { background: #e74c3c; color: white; }
+
+    .item-thumbnail { width: 40px; height: 40px; border-radius: 4px; object-fit: cover; border: 1px solid var(--accent); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -261,7 +289,7 @@ include __DIR__ . '/templates/head.php';
                 <div id="tab-items" class="admin-section active details-glass-card">
                     <h3><i class="fa-solid fa-plus-circle"></i> Forger un nouvel artefact</h3>
                     
-                    <form method="POST" action="admin.php">
+                    <form method="POST" action="admin.php" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="add_item">
                         <div class="admin-form-grid">
                             <div class="admin-form-group">
@@ -293,6 +321,12 @@ include __DIR__ . '/templates/head.php';
                                 <input type="number" min="1" name="stock" class="admin-input" value="1" required>
                             </div>
                         </div>
+
+                        <div class="admin-form-group" style="margin-bottom: 15px;">
+                            <label>Image de l'artefact (png, jpg, webp)</label>
+                            <input type="file" name="item_image" class="admin-input" accept="image/png, image/jpeg, image/webp, image/gif">
+                        </div>
+
                         <div class="admin-form-group" style="margin-bottom: 15px;">
                             <label>Description du Lore</label>
                             <textarea name="description" class="admin-input" rows="3" required></textarea>
@@ -307,7 +341,7 @@ include __DIR__ . '/templates/head.php';
                         <table class="glass-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Aperçu</th>
                                     <th>Nom</th>
                                     <th>Prix (G/S/B)</th>
                                     <th>Stock</th>
@@ -318,7 +352,13 @@ include __DIR__ . '/templates/head.php';
                             <tbody>
                                 <?php foreach ($items as $it): ?>
                                 <tr>
-                                    <td>#<?= $it['ItemId'] ?></td>
+                                    <td>
+                                        <?php if(isset($it['ImageUrl']) && $it['ImageUrl']): ?>
+                                            <img src="<?= htmlspecialchars($it['ImageUrl']) ?>" class="item-thumbnail" alt="Image">
+                                        <?php else: ?>
+                                            <div class="item-thumbnail" style="background:#333; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-image" style="color:#666;"></i></div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><strong><?= htmlspecialchars($it['Name']) ?></strong><br><small><?= htmlspecialchars($it['TypeName']) ?></small></td>
                                     <td><?= $it['PriceGold'] ?>/<?= $it['PriceSilver'] ?>/<?= $it['PriceBronze'] ?></td>
                                     <td style="color: <?= $it['Stock'] > 0 ? '#2ECC71' : '#E74C3C' ?>;"><?= $it['Stock'] ?></td>
@@ -542,7 +582,8 @@ include __DIR__ . '/templates/head.php';
 <div id="editModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
     <div class="modal-content details-glass-card" style="background:#1a1b1e; padding:30px; border-radius:8px; width:600px; max-width:90%; border: 1px solid var(--accent);">
         <h3 style="margin-top:0; color:var(--accent);"><i class="fa-solid fa-hammer"></i> Modifier l'Artefact</h3>
-        <form method="POST" action="admin.php">
+        
+        <form method="POST" action="admin.php" enctype="multipart/form-data">
             <input type="hidden" name="action" value="edit_item">
             <input type="hidden" name="item_id" id="edit_id">
             
@@ -568,6 +609,11 @@ include __DIR__ . '/templates/head.php';
                     <label>Stock</label>
                     <input type="number" min="0" name="stock" id="edit_stock" class="admin-input" required>
                 </div>
+            </div>
+
+            <div class="admin-form-group" style="margin-top:15px;">
+                <label>Nouvelle image (laisser vide pour conserver l'actuelle)</label>
+                <input type="file" name="item_image" class="admin-input" accept="image/png, image/jpeg, image/webp, image/gif">
             </div>
 
             <div class="admin-form-group" style="margin-top:15px;">
