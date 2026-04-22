@@ -13,7 +13,7 @@ if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'isMage' => ($_SESSION['user']['role'] === 'Mage') || $_SESSION['user']['role'] === 'Admin',
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],

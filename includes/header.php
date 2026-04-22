@@ -39,6 +39,12 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
                 <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
             </div>
 
+            <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Admin'): ?>
+                <button class="btn-outline-custom" style="color: var(--accent); border-color: var(--accent);" title="Panneau de Commandement" onclick="window.location.href='admin.php'">
+                    <i class="fa-solid fa-crown"></i>
+                </button>
+            <?php endif; ?>
+
             <button class="btn-outline-custom" title="Mon profil" onclick="window.location.href='profile.php'">
                 <i class="fa-solid fa-user-gear"></i>
             </button>
@@ -98,6 +104,11 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
         <!-- Main actions -->
         <div class="mobile-drawer-actions">
             <?php if ($user['isConnected']): ?>
+                <?php if (isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Admin'): ?>
+                    <button onclick="window.location.href='admin.php'" class="drawer-action" style="color: var(--accent);">
+                        <i class="fa-solid fa-crown"></i> Admin Panel
+                    </button>
+                <?php endif; ?>
                 <button onclick="window.location.href='profile.php'" class="drawer-action">
                     <i class="fa-solid fa-user-gear"></i> Mon Profil
                 </button>
