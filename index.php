@@ -29,34 +29,16 @@ if (isset($_SESSION['user'])) {
     ];
 }
 
-// 2. RÉCUPÉRATION DES ITEMS (Ta requête SQL d'origine)
-$itemsPerPage = 25;
-$countStmt = $pdo->query("
-    SELECT COUNT(*)
-    FROM Items i
-    WHERE i.IsActive = TRUE
-");
-$totalItems = (int) $countStmt->fetchColumn();
-$totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
-
-$pageFromQuery = filter_input(
-    INPUT_GET,
-    'page',
-    FILTER_VALIDATE_INT,
-    ['options' => ['default' => 1, 'min_range' => 1]]
-);
-$currentPage = min((int) ($pageFromQuery ?: 1), $totalPages);
-$offset = ($currentPage - 1) * $itemsPerPage;
-
+// 2. RÉCUPÉRATION DE TOUS LES ITEMS (pour filtrage côté client)
 $stmt = $pdo->prepare("
-    SELECT 
-        i.ItemId as id, 
-        i.Name as nom, 
-        t.Name as type, 
+    SELECT
+        i.ItemId as id,
+        i.Name as nom,
+        t.Name as type,
         i.Rarity as rarete,
-        i.PriceGold as prix, 
-        i.Stock as stock, 
-        IFNULL(AVG(r.Rating), 0) as rating, 
+        i.PriceGold as prix,
+        i.Stock as stock,
+        IFNULL(AVG(r.Rating), 0) as rating,
         COUNT(r.ReviewId) as reviews
     FROM Items i
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
@@ -64,12 +46,13 @@ $stmt = $pdo->prepare("
     WHERE i.IsActive = TRUE
     GROUP BY i.ItemId, i.Name, t.Name, i.Rarity, i.PriceGold, i.Stock
     ORDER BY i.ItemId ASC
-    LIMIT :limit OFFSET :offset
 ");
-$stmt->bindValue(':limit', $itemsPerPage, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Plus besoin de pagination côté serveur
+$totalPages = 1;
+$currentPage = 1;
 
 $title = "L'Arsenal - Marché Noir";
 
@@ -175,7 +158,12 @@ main .product-list .item-row {
     backdrop-filter: none !important;
 }
 
-    .product-list .item-row::before {
+/* Classe pour cacher les items filtrés */
+main .product-list .item-row.hidden {
+    display: none !important;
+}
+
+.product-list .item-row::before {
         content: "";
         position: absolute;
         inset: 0;
@@ -758,23 +746,46 @@ document.addEventListener("DOMContentLoaded", function() {
     const items = document.querySelectorAll(".item-row");
     const noResults = document.getElementById("no-results-message");
     const pagination = document.getElementById("catalog-pagination");
+    
+    // --- GESTION RESPONSIVE DU SIDEBAR ---
+    const sidebar = document.getElementById('sidebar');
+    const productList = document.getElementById('product-list');
 
     function applyFilters() {
         const selectedType = typeFilter.value;
         const searchValue = searchFilter.value.toLowerCase().trim();
         let count = 0;
+        let hiddenCount = 0;
 
-        items.forEach(item => {
+        console.log("=== FILTRAGE ===");
+        console.log("Type sélectionné:", selectedType);
+        console.log("Recherche:", searchValue);
+
+        items.forEach((item, index) => {
+            // Debug: afficher les valeurs des premiers items
+            if (index < 3) {
+                console.log(`Item ${index}:`, {
+                    name: item.dataset.name,
+                    type: item.dataset.type,
+                    display: item.style.display
+                });
+            }
+
             const matchesType = (selectedType === "all" || item.dataset.type === selectedType);
             const matchesSearch = (searchValue === "" || item.dataset.name.includes(searchValue));
 
-            if (matchesType && matchesSearch) {
-                item.style.display = "";
+            const shouldShow = matchesType && matchesSearch;
+
+            if (shouldShow) {
+                item.classList.remove('hidden');
                 count++;
             } else {
-                item.style.display = "none";
+                item.classList.add('hidden');
+                hiddenCount++;
             }
         });
+
+        console.log("Résultats:", { visible: count, hidden: hiddenCount, total: items.length });
 
         noResults.style.display = (count === 0) ? "block" : "none";
 
@@ -786,48 +797,65 @@ document.addEventListener("DOMContentLoaded", function() {
         updateCardsForSidebar();
     }
 
-    typeFilter.addEventListener("change", applyFilters);
-    searchFilter.addEventListener("input", applyFilters);
+    // Vérifier que les éléments existent
+    if (!typeFilter || !searchFilter || !resetBtn) {
+        console.error("Filtres non trouvés:", { typeFilter, searchFilter, resetBtn });
+        return;
+    }
+
+    console.log("Filtres initialisés:", {
+        itemsCount: items.length,
+        typeFilter: typeFilter.id,
+        searchFilter: searchFilter.id
+    });
+
+    typeFilter.addEventListener("change", function() {
+        console.log("Type filtre changé:", this.value);
+        applyFilters();
+    });
+    
+    searchFilter.addEventListener("input", function() {
+        console.log("Recherche:", this.value);
+        applyFilters();
+    });
+    
     resetBtn.addEventListener("click", () => {
+        console.log("Reset des filtres");
         typeFilter.value = "all";
         searchFilter.value = "";
         applyFilters();
     });
 
-    // Appliquer les filtres au chargement pour initialiser correctement
+// Appliquer les filtres au chargement pour initialiser correctement
     applyFilters();
 
-    // --- GESTION RESPONSIVE DU SIDEBAR ---
-    const sidebar = document.getElementById('sidebar');
-    const productList = document.getElementById('product-list');
-    
     function updateCardsForSidebar() {
         if (!sidebar || !productList) return;
-        
+
         const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
-        const mainWidth = window.innerWidth - sidebarWidth - 40; // 40px pour padding/margins
+        const mainWidth = window.innerWidth - sidebarWidth - 40;
         const gap = parseFloat(getComputedStyle(productList).gap) || 16;
         const cardMinWidth = 180;
         const cardMaxWidth = 240;
-        
-        // Calculer combien de cartes peuvent tenir
+
+        // Calculer l'espace disponible
         const availableSpace = mainWidth;
         const maxCardsPerRow = Math.floor((availableSpace + gap) / (cardMinWidth + gap));
-        
-        // Limiter à 7 cartes max
         const cardsPerRow = Math.min(maxCardsPerRow, 7);
-        
-        // Calculer la taille optimale des cartes pour remplir l'espace
+
+        // Calculer la taille des cartes
         const totalGapSpace = (cardsPerRow - 1) * gap;
         const cardWidth = Math.min(
             Math.max(cardMinWidth, (availableSpace - totalGapSpace) / cardsPerRow),
             cardMaxWidth
         );
-        
-        // Appliquer la taille calculée aux cartes
+
+        // Appliquer UNIQUEMENT aux cartes visibles
         document.querySelectorAll('.item-row').forEach(card => {
-            card.style.flex = `0 0 ${cardWidth}px`;
-            card.style.maxWidth = `${cardWidth}px`;
+            if (card.style.display !== 'none') {
+                card.style.flex = `0 0 ${cardWidth}px`;
+                card.style.maxWidth = `${cardWidth}px`;
+            }
         });
     }
     

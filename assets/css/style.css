@@ -1,15 +1,16 @@
 /* --- VARIABLES GLOBALES --- */
 :root {
-  --bg-dark: #46494c;
-  --bg-sidebar: #4c5c68;
-  --accent: #1985a1;
-  --text-light: #dcdcdd;
-  --text-silver: #c5c3c6;
-  --gold: #f1c40f;
-  --sidebar-width: 280px;
-  --sidebar-collapsed: 80px;
-  --header-height: 70px;
-  --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --bg-dark: #46494c;
+    --bg-sidebar: #4c5c68;
+    --accent: #1985a1;
+    --text-light: #dcdcdd;
+    --text-silver: #c5c3c6;
+    --gold: #f1c40f;
+    --sidebar-width: 280px;
+    --sidebar-collapsed: 80px;
+    --header-height: 70px;
+    --footer-height: 50px;
+    --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * {
