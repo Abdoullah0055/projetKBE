@@ -265,6 +265,113 @@ header {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.user-wallet-container {
+  position: relative;
+  margin-right: 20px;
+  width: 50px;
+  height: 50px;
+}
+
+.wallet-toggle-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+
+.wallet-pounch-img {
+  width: 40px;
+  height: auto;
+}
+
+.wallet-card-open {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 100px;
+  background-image: url('../img/coins/carte.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  padding: 15px 20px;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.user-wallet-container.is-open .wallet-toggle-btn {
+  display: none;
+}
+
+.user-wallet-container.is-open .wallet-card-open {
+  display: flex;
+}
+
+.wallet-close {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.wallet-items {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.wallet-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  cursor: default;
+}
+
+.wallet-item:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.wallet-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.wallet-amount {
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.wallet-item--gold .wallet-amount {
+  color: var(--gold);
+}
+
+.wallet-item--silver .wallet-amount {
+  color: var(--text-silver);
+}
+
+.wallet-item--bronze .wallet-amount {
+  color: #CD7F32;
+}
+
 /* --- STRUCTURE --- */
 .wrapper {
     display: flex;
@@ -469,6 +576,21 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
 .enigme-door-button:hover .enigme-door-button__image--on,
 .enigme-door-button:focus-visible .enigme-door-button__image--on {
   opacity: 1;
+}
+
+.enigme-door-button--locked {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.enigme-door-button--locked:hover .enigme-door-button__image--off,
+.enigme-door-button--locked:focus-visible .enigme-door-button__image--off {
+  opacity: 1;
+}
+
+.enigme-door-button--locked:hover .enigme-door-button__image--on,
+.enigme-door-button--locked:focus-visible .enigme-door-button__image--on {
+  opacity: 0;
 }
 
 /* --- MAIN CONTENT & ITEMS --- */

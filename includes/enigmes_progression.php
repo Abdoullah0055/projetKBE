@@ -7,6 +7,44 @@ if (session_status() === PHP_SESSION_NONE) {
 const ENIGMES_SESSION_KEY = 'enigmes_progression';
 const ENIGMES_MOCK_UNLOCKED_ID = 4;
 const ENIGMES_MOCK_APPLY_ONCE = true;
+const ENIGMES_MAX_DAILY_ATTEMPTS = 5;
+
+function get_remaining_attempts(): int
+{
+    $today = date('Y-m-d');
+    $progression = $_SESSION[ENIGMES_SESSION_KEY] ?? [];
+
+    if (($progression['attempts_date'] ?? '') !== $today) {
+        return ENIGMES_MAX_DAILY_ATTEMPTS;
+    }
+
+    $used = (int) ($progression['attempts_used'] ?? 0);
+    return max(0, ENIGMES_MAX_DAILY_ATTEMPTS - $used);
+}
+
+function consume_attempt(): bool
+{
+    $today = date('Y-m-d');
+    $progression = $_SESSION[ENIGMES_SESSION_KEY] ?? [];
+
+    if (($progression['attempts_date'] ?? '') !== $today) {
+        $progression = [
+            'completed' => $progression['completed'] ?? [],
+            'attempts_date' => $today,
+            'attempts_used' => 0,
+        ];
+    }
+
+    $used = (int) ($progression['attempts_used'] ?? 0);
+    if ($used >= ENIGMES_MAX_DAILY_ATTEMPTS) {
+        return false;
+    }
+
+    $progression['attempts_used'] = $used + 1;
+    $_SESSION[ENIGMES_SESSION_KEY] = $progression;
+
+    return true;
+}
 
 function get_enigmes_catalogue(): array
 {

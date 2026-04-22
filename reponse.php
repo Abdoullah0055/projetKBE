@@ -4,6 +4,7 @@ $extraStylesheets = ['assets/css/enigmes.css'];
 $bodyClass = 'enigmes-page reponse-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
+require_once __DIR__ . '/config/config.php';
 
 $context = resolve_enigme_request('reponse.php');
 $responseValue = '';
@@ -30,6 +31,8 @@ function build_reward_label(array $riddle): string
 }
 
 if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
+    // Consommer un essai pour l'abandon
+    consume_attempt();
     set_roadmap_flash_dialogues([
         [
             'text' => 'Womp womp, jeune vagabond... tu n’as pas reussi cette epreuve, et un essai vient de disparaitre dans la brume.',
@@ -41,6 +44,22 @@ if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verifier la limite d'essais
+    if (!consume_attempt()) {
+        set_enigmes_flash_dialogues([
+            [
+                'text' => 'Tu as epuise tous tes essais pour aujourd\'hui. Reviens demain, jeune vagabond.',
+                'frame' => 'assets/img/Magicien/furieux.png',
+            ],
+            [
+                'text' => 'Le magicien te souhaite bonne chance pour demain.',
+                'frame' => 'assets/img/Magicien/mage8.png',
+            ],
+        ]);
+        header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
+        exit;
+    }
+
     $responseValue = trim((string) ($_POST['reponse_enigme'] ?? ''));
 
     if ($responseValue === '') {
@@ -72,6 +91,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         if ($context['source'] === 'roadmap' && $context['roadmap_node_id'] !== null) {
             mark_enigme_completed($context['roadmap_node_id']);
+
+            // Ajouter la recompense en or au utilisateur
+            $rewardGold = (int) ($context['riddle']['reward_gold'] ?? 0);
+            $rewardSilver = (int) ($context['riddle']['reward_silver'] ?? 0);
+            $rewardBronze = (int) ($context['riddle']['reward_bronze'] ?? 0);
+
+            if ($rewardGold > 0 || $rewardSilver > 0 || $rewardBronze > 0) {
+                $userId = $_SESSION['user']['id'] ?? null;
+                if ($userId !== null) {
+                    $pdo->prepare("UPDATE users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")
+                        ->execute([$rewardGold, $rewardSilver, $rewardBronze, $userId]);
+
+                    // Mettre a jour la session
+                    $_SESSION['user']['gold'] = ($_SESSION['user']['gold'] ?? 0) + $rewardGold;
+                    $_SESSION['user']['silver'] = ($_SESSION['user']['silver'] ?? 0) + $rewardSilver;
+                    $_SESSION['user']['bronze'] = ($_SESSION['user']['bronze'] ?? 0) + $rewardBronze;
+                }
+            }
+
             $rewardLabel = build_reward_label($context['riddle']);
             set_roadmap_flash_dialogues([
                 [
@@ -81,6 +119,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             header('Location: roadmap.php');
             exit;
+        }
+
+        // Ajouter la recompense pour les enigmes random
+        $rewardGold = (int) ($context['riddle']['reward_gold'] ?? 0);
+        $rewardSilver = (int) ($context['riddle']['reward_silver'] ?? 0);
+        $rewardBronze = (int) ($context['riddle']['reward_bronze'] ?? 0);
+
+        if ($rewardGold > 0 || $rewardSilver > 0 || $rewardBronze > 0) {
+            $userId = $_SESSION['user']['id'] ?? null;
+            if ($userId !== null) {
+                $pdo->prepare("UPDATE users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")
+                    ->execute([$rewardGold, $rewardSilver, $rewardBronze, $userId]);
+
+                $_SESSION['user']['gold'] = ($_SESSION['user']['gold'] ?? 0) + $rewardGold;
+                $_SESSION['user']['silver'] = ($_SESSION['user']['silver'] ?? 0) + $rewardSilver;
+                $_SESSION['user']['bronze'] = ($_SESSION['user']['bronze'] ?? 0) + $rewardBronze;
+            }
         }
 
         header('Location: random.php');

@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/config/config.php';
 require_once 'AlgosBD.php';
+require_once __DIR__ . '/includes/enigmes_progression.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -626,23 +627,47 @@ main .product-list .item-row.hidden {
             </div>
 
             <div class="sidebar-bottom-actions">
-                <a href="roadmap.php" class="enigme-door-button hide-text" aria-label="Acceder aux enigmes">
-                    <span class="enigme-door-button__frame" aria-hidden="true">
-                        <img
-                            src="assets/img/doors/closed.png"
-                            alt=""
-                            class="enigme-door-button__image enigme-door-button__image--off">
-                        <img
-                            src="assets/img/doors/opened.png"
-                            alt=""
-                            class="enigme-door-button__image enigme-door-button__image--on">
-                    </span>
-                </a>
+                <?php
+                $hasAttempts = $user['isConnected'] && get_remaining_attempts() > 0;
+                if ($hasAttempts): ?>
+                    <a href="roadmap.php" class="enigme-door-button hide-text" aria-label="Acceder aux enigmes">
+                        <span class="enigme-door-button__frame" aria-hidden="true">
+                            <img
+                                src="assets/img/doors/closed.png"
+                                alt=""
+                                class="enigme-door-button__image enigme-door-button__image--off">
+                            <img
+                                src="assets/img/doors/opened.png"
+                                alt=""
+                                class="enigme-door-button__image enigme-door-button__image--on">
+                        </span>
+                    </a>
+                <?php else: ?>
+                    <button type="button" class="enigme-door-button hide-text enigme-door-button--locked" aria-label="Pas d'essais disponibles" disabled>
+                        <span class="enigme-door-button__frame" aria-hidden="true">
+                            <img
+                                src="assets/img/doors/closed.png"
+                                alt=""
+                                class="enigme-door-button__image enigme-door-button__image--off">
+                            <img
+                                src="assets/img/doors/opened.png"
+                                alt=""
+                                class="enigme-door-button__image enigme-door-button__image--on">
+                        </span>
+                    </button>
+                <?php endif; ?>
 
                 <div class="cta-box">
                     <div class="hide-text">
                         <p style="margin:0 0 8px 0; font-size:0.9rem;">
-                            <?= $user['isConnected'] ? "Essais énigmes : <b style='color:var(--accent)'>5 / 5</b>" : "Besoin d'or ?" ?>
+                            <?php
+                            if ($user['isConnected']) {
+                                $remaining = get_remaining_attempts();
+                                echo "Essais énigmes : <b style='color:var(--accent)'>" . $remaining . " / " . ENIGMES_MAX_DAILY_ATTEMPTS . "</b>";
+                            } else {
+                                echo "Besoin d'or ?";
+                            }
+                            ?>
                         </p>
                         <a href="roadmap.php" style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre des énigmes</a>
                     </div>

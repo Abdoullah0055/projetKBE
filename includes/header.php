@@ -63,6 +63,24 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
             <i class="fas fa-bars"></i>
         </button>
     </div>
+
+    <script>
+        document.getElementById('walletToggle').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('walletContainer').classList.add('is-open');
+        });
+
+        document.getElementById('walletClose').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('walletContainer').classList.remove('is-open');
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.user-wallet-container')) {
+                document.getElementById('walletContainer').classList.remove('is-open');
+            }
+        });
+    </script>
 </header>
 
 <!-- Mobile Drawer Menu -->
