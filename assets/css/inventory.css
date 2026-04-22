@@ -1,669 +1,947 @@
+/* ============================================================
+   INVENTORY PAGE - Elden Ring Style Layout
+   Structure: Sidebar | Main Content (Grid Left + Detail Right)
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   SIDEBAR STYLES (conservées)
+   ---------------------------------------------------------- */
 .inventory-side-box {
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 14px;
+    background: rgba(0, 0, 0, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 14px;
 }
 
 .inventory-side-box h3 {
-  margin: 0 0 8px;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-size: 0.85rem;
+    margin: 0 0 8px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.85rem;
 }
 
 .inventory-side-box p {
-  margin: 0;
-  color: var(--text-silver);
-  font-size: 0.85rem;
-  line-height: 1.5;
+    margin: 0;
+    color: var(--text-silver);
+    font-size: 0.85rem;
+    line-height: 1.5;
 }
 
 .sidebar-bottom-actions {
-  margin-top: auto;
+    margin-top: auto;
 }
 
 .sidebar-nav-btn {
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border-radius: 6px;
-  border: 1px solid rgba(25, 133, 161, 0.45);
-  background: rgba(25, 133, 161, 0.18);
-  color: var(--text-light);
-  text-decoration: none;
-  padding: 12px;
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.7px;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(25, 133, 161, 0.45);
+    background: rgba(25, 133, 161, 0.18);
+    color: var(--text-light);
+    text-decoration: none;
+    padding: 12px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
 }
 
 .sidebar-nav-btn:hover {
-  background: rgba(25, 133, 161, 0.3);
+    background: rgba(25, 133, 161, 0.3);
 }
 
 aside.collapsed .sidebar-nav-btn .btn-label {
-  display: none;
+    display: none;
 }
 
+/* ----------------------------------------------------------
+   STATE MESSAGES
+   ---------------------------------------------------------- */
 .inventory-state {
-  background: rgba(20, 22, 25, 0.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 10px;
-  border: 1px solid rgba(25, 133, 161, 0.2);
-  padding: 18px 22px;
-  margin-bottom: 18px;
+    background: rgba(20, 22, 25, 0.65);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 10px;
+    border: 1px solid rgba(25, 133, 161, 0.2);
+    padding: 18px 22px;
+    margin-bottom: 18px;
 }
 
 .loading-state {
-  color: var(--text-silver);
+    color: var(--text-silver);
 }
 
 .error-state {
-  color: #ffb3b3;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border-color: rgba(231, 76, 60, 0.35);
+    color: #ffb3b3;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-color: rgba(231, 76, 60, 0.35);
 }
 
 .success-state {
-  color: #b8ffd4;
-  border-color: rgba(46, 204, 113, 0.4);
-  background: rgba(28, 62, 46, 0.45);
+    color: #b8ffd4;
+    border-color: rgba(46, 204, 113, 0.4);
+    background: rgba(28, 62, 46, 0.45);
 }
 
 .empty-state {
-  color: var(--text-silver);
+    color: var(--text-silver);
 }
 
-.inventory-layout {
-  display: block;
+/* ----------------------------------------------------------
+   ELDEN RING LAYOUT - 2 COLUMNS
+   ---------------------------------------------------------- */
+.elden-ring-layout {
+    display: flex;
+    gap: 20px;
+    min-height: calc(100vh - 100px);
+    max-height: calc(100vh - 100px);
+    padding: 20px;
+    overflow: hidden;
+    align-items: flex-start;
 }
 
-.inventory-main-column {
-  min-width: 0;
+/* Colonne gauche: Grille d'items - scrollable */
+.items-grid-column {
+    flex: 0 0 50%;
+    max-width: 50%;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 10px;
 }
 
-.inventory-layout.has-review-panel {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
+/* Scrollbar personnalisée pour la grille d'items */
+.items-grid-column::-webkit-scrollbar {
+    width: 8px;
 }
 
-.inventory-layout.has-review-panel .inventory-main-column {
-  flex: 0 1 75%;
-  max-width: 75%;
+.items-grid-column::-webkit-scrollbar-track {
+    background: rgba(20, 20, 20, 0.5);
+    border-radius: 4px;
 }
 
-.inventory-layout.has-review-panel .pending-reviews-panel {
-  flex: 0 0 25%;
-  max-width: 25%;
-  width: 25%;
-  margin-bottom: 0;
-  align-self: flex-start;
+.items-grid-column::-webkit-scrollbar-thumb {
+    background: rgba(139, 125, 107, 0.4);
+    border-radius: 4px;
 }
 
-.inventory-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 18px;
-  align-items: stretch;
+.items-grid-column::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 125, 107, 0.6);
 }
 
-.inventory-slot {
-  position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(0, 0, 0, 0.28);
-  border-radius: 8px;
-  padding: 16px;
-  min-height: 320px;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 12px;
-  cursor: default;
-  transition:
-    transform 0.18s ease,
-    border-color 0.18s ease,
-    box-shadow 0.18s ease;
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+    padding: 10px;
 }
 
-.inventory-slot:hover {
-  transform: translateY(-2px);
-  border-color: rgba(25, 133, 161, 0.65);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35);
+/* Slot d'item (inspiré Elden Ring) */
+.item-slot {
+    position: relative;
+    aspect-ratio: 1;
+    background: rgba(15, 15, 15, 0.85);
+    border: 2px solid rgba(139, 125, 107, 0.4);
+    border-radius: 4px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
 }
 
-.slot-top-row {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding-right: 52px;
+.item-slot::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(139, 125, 107, 0.05) 0%,
+        transparent 50%,
+        rgba(139, 125, 107, 0.05) 100%
+    );
+    pointer-events: none;
 }
 
-.slot-thumb {
-  width: 84px;
-  height: 84px;
-  border-radius: 6px;
-  border: 1px solid rgba(25, 133, 161, 0.28);
-  background: linear-gradient(
-    180deg,
-    rgba(25, 133, 161, 0.16) 0%,
-    rgba(0, 0, 0, 0.26) 100%
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.item-slot:hover {
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+    transform: translateY(-2px);
 }
 
-.slot-icon {
-  font-size: 2.2rem;
-  line-height: 1;
+.item-slot.selected {
+    border-color: var(--gold, #d4af37);
+    box-shadow: 
+        0 0 20px rgba(212, 175, 55, 0.3),
+        inset 0 0 30px rgba(212, 175, 55, 0.1);
+    background: rgba(25, 20, 15, 0.95);
 }
 
-.slot-main-info {
-  min-width: 0;
-  flex: 1;
+.item-slot.selected::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold, #d4af37), transparent);
 }
 
-.slot-label {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--text-light);
-  text-align: left;
-  line-height: 1.28;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.item-slot-icon {
+    font-size: 2rem;
+    line-height: 1;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
-.slot-type,
-.slot-owned {
-  margin: 6px 0 0;
-  color: var(--text-silver);
-  font-size: 0.82rem;
+.item-slot-name {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    text-align: center;
+    line-height: 1.2;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.slot-qty-badge {
-  position: absolute;
-  top: 0;
-  right: 0;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  border-radius: 20px;
-  background: rgba(20, 22, 25, 0.95);
-  border: 1px solid rgba(25, 133, 161, 0.65);
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 0.8rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.item-slot-qty {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.8);
+    color: var(--text-light);
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 1px solid rgba(139, 125, 107, 0.3);
 }
 
-.slot-description-text {
-  margin: 0;
-  font-size: 0.84rem;
-  color: var(--text-silver);
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 3.6rem;
+/* ----------------------------------------------------------
+   DETAIL PANEL - Elden Ring Style
+   ---------------------------------------------------------- */
+.detail-panel-column {
+    flex: 0 0 50%;
+    max-width: 50%;
+    height: 100%;
+    position: sticky;
+    top: 0;
 }
 
-.slot-rating-line {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.detail-panel {
+    background: rgba(10, 10, 10, 0.92);
+    border: 2px solid rgba(139, 125, 107, 0.5);
+    border-radius: 8px;
+    padding: 24px;
+    height: 100%;
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
+    position: relative;
 }
 
-.slot-stats {
-  margin-top: auto;
-  display: grid;
-  gap: 7px;
+/* Scrollbar pour le panneau de détails */
+.detail-panel::-webkit-scrollbar {
+    width: 8px;
 }
 
-.slot-stat-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 8px 10px;
-  font-size: 0.8rem;
+.detail-panel::-webkit-scrollbar-track {
+    background: rgba(20, 20, 20, 0.5);
+    border-radius: 4px;
 }
 
-.slot-stat-row span {
-  color: var(--text-silver);
+.detail-panel::-webkit-scrollbar-thumb {
+    background: rgba(139, 125, 107, 0.4);
+    border-radius: 4px;
 }
 
-.slot-stat-row strong {
-  color: var(--text-light);
-  font-weight: 700;
+.detail-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 125, 107, 0.6);
 }
 
-.slot-status {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid transparent;
+.detail-panel::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(139, 125, 107, 0.2);
+    border-radius: 4px;
+    pointer-events: none;
 }
 
-.slot-status.is-rated {
-  color: #8cf1b2;
-  border-color: rgba(46, 204, 113, 0.45);
-  background: rgba(46, 204, 113, 0.14);
+/* Placeholder */
+.detail-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 450px;
+    color: var(--text-silver);
+    font-size: 0.9rem;
+    opacity: 0.6;
 }
 
-.slot-status.is-unrated {
-  color: #ffd58f;
-  border-color: rgba(241, 196, 15, 0.48);
-  background: rgba(241, 196, 15, 0.12);
+/* Header du panneau de détail */
+.detail-header {
+    text-align: center;
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(139, 125, 107, 0.3);
 }
 
-.inventory-tooltip {
-  position: fixed;
-  left: 0;
-  top: 0;
-  width: min(320px, calc(100vw - 20px));
-  padding: 12px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(25, 133, 161, 0.45);
-  background: rgba(12, 14, 17, 0.96);
-  color: var(--text-light);
-  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
-  pointer-events: none;
-  opacity: 0;
-  transform: translateY(5px);
-  transition:
-    opacity 0.12s ease,
-    transform 0.12s ease;
-  z-index: 1400;
+.detail-icon-large {
+    font-size: 5rem;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
 }
 
-.inventory-tooltip.visible {
-  opacity: 1;
-  transform: translateY(0);
+.detail-title {
+    font-size: 1.4rem;
+    margin: 0 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-.tooltip-title {
-  color: var(--accent);
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin-bottom: 6px;
+.detail-meta {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    font-size: 0.85rem;
 }
 
-.tooltip-description {
-  color: var(--text-silver);
-  font-size: 0.82rem;
-  line-height: 1.4;
+.detail-type {
+    color: var(--text-silver);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.tooltip-meta {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.detail-rarity {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.tooltip-meta span {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 5px;
-  padding: 3px 6px;
-  color: var(--text-light);
-  font-size: 0.74rem;
+/* Description */
+.detail-description {
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(139, 125, 107, 0.2);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 24px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-silver);
+    font-style: italic;
 }
 
-.pending-reviews-panel {
-  padding: 18px;
-  border-radius: 10px;
-  border: 1px solid rgba(25, 133, 161, 0.28);
-  background: rgba(20, 22, 25, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  height: auto;
+/* Sections de stats */
+.detail-stats-section {
+    margin-bottom: 24px;
 }
 
-.pending-reviews-header h3 {
-  margin: 0;
-  color: var(--accent);
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+.detail-section-title {
+    font-size: 0.8rem;
+    color: var(--accent, #1985a1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.pending-reviews-header p {
-  margin: 8px 0 0;
-  color: var(--text-silver);
-  font-size: 0.85rem;
+.detail-section-title::before {
+    content: '▸';
+    color: var(--gold, #d4af37);
 }
 
-.pending-reviews-list {
-  margin-top: 14px;
-  display: grid;
-  gap: 12px;
+.detail-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
+.detail-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(20, 20, 20, 0.5);
+    border: 1px solid rgba(139, 125, 107, 0.2);
+    border-radius: 4px;
+}
+
+.detail-stat-label {
+    color: var(--text-silver);
+    font-size: 0.85rem;
+}
+
+.detail-stat-value {
+    color: var(--text-light);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Section prix */
+.detail-price-section {
+    margin-bottom: 24px;
+}
+
+.detail-price-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.detail-price-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(139, 125, 107, 0.2);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.detail-price-gold {
+    color: var(--gold, #d4af37);
+}
+
+.detail-price-silver {
+    color: var(--text-silver);
+}
+
+.detail-price-bronze {
+    color: #CD7F32;
+}
+
+/* Footer du panneau */
+.detail-footer {
+    border-top: 1px solid rgba(139, 125, 107, 0.3);
+    padding-top: 20px;
+}
+
+.detail-rating {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.detail-stars {
+    color: var(--gold, #d4af37);
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+}
+
+.detail-rating-value {
+    color: var(--text-silver);
+    font-size: 0.85rem;
+}
+
+.detail-status {
+    text-align: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-status.is-rated {
+    color: #8cf1b2;
+    border: 1px solid rgba(46, 204, 113, 0.45);
+    background: rgba(46, 204, 113, 0.14);
+}
+
+.detail-status.is-unrated {
+    color: #ffd58f;
+    border: 1px solid rgba(241, 196, 15, 0.48);
+    background: rgba(241, 196, 15, 0.12);
+}
+
+/* ----------------------------------------------------------
+   RARITY COLORS
+   ---------------------------------------------------------- */
+.rarity-commun { color: #9e9e9e; }
+.rarity-rare { color: #4fc3f7; }
+.rarity-epique { color: #ba68c8; }
+.rarity-legendaire { color: #ffa726; }
+.rarity-mythique { color: #ef5350; }
+
+/* ----------------------------------------------------------
+   REVIEW NOTIFICATION BUBBLE
+   ---------------------------------------------------------- */
+.review-notification-bubble {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(25, 133, 161, 0.9), rgba(25, 133, 161, 0.7));
+    border: 2px solid rgba(212, 175, 55, 0.6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 
+        0 4px 15px rgba(0, 0, 0, 0.4),
+        0 0 20px rgba(25, 133, 161, 0.3);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.review-notification-bubble:hover {
+    transform: scale(1.1);
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.5),
+        0 0 30px rgba(25, 133, 161, 0.5);
+}
+
+.review-bubble-icon {
+    font-size: 1.5rem;
+    color: var(--gold, #d4af37);
+}
+
+.review-bubble-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e74c3c;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(10, 10, 10, 0.9);
+}
+
+/* ----------------------------------------------------------
+   REVIEW FLOATING PANEL
+   ---------------------------------------------------------- */
+.review-floating-panel {
+    position: fixed;
+    bottom: 100px;
+    right: 30px;
+    width: 380px;
+    max-height: 500px;
+    background: rgba(15, 15, 15, 0.98);
+    border: 2px solid rgba(139, 125, 107, 0.5);
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    z-index: 999;
+}
+
+.review-floating-panel.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.review-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(139, 125, 107, 0.3);
+    background: rgba(20, 20, 20, 0.8);
+    border-radius: 8px 8px 0 0;
+}
+
+.review-panel-header h3 {
+    margin: 0;
+    color: var(--accent);
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.review-panel-close {
+    background: none;
+    border: none;
+    color: var(--text-silver);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s ease;
+}
+
+.review-panel-close:hover {
+    color: #e74c3c;
+}
+
+.review-panel-content {
+    padding: 16px;
+    overflow-y: auto;
+    max-height: 400px;
+}
+
+/* ----------------------------------------------------------
+   PENDING REVIEW CARD (dans le panneau flottant)
+   ---------------------------------------------------------- */
 .pending-review-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 12px;
+    border: 1px solid rgba(139, 125, 107, 0.2);
+    border-radius: 6px;
+    background: rgba(20, 20, 20, 0.6);
+    padding: 14px;
+    margin-bottom: 12px;
+}
+
+.pending-review-card:last-child {
+    margin-bottom: 0;
 }
 
 .pending-review-item-meta {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
 }
 
 .pending-review-thumb {
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
-  border: 1px solid rgba(25, 133, 161, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.4rem;
-  background: rgba(255, 255, 255, 0.05);
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
+    border: 1px solid rgba(25, 133, 161, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    background: rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
 .pending-review-item-meta h4 {
-  margin: 0;
-  font-size: 0.95rem;
-  color: var(--text-light);
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+    color: var(--text-light);
 }
 
 .pending-review-item-meta p {
-  margin: 4px 0;
-  color: var(--text-silver);
-  font-size: 0.78rem;
+    margin: 0 0 8px;
+    color: var(--text-silver);
+    font-size: 0.78rem;
 }
 
 .pending-review-current-rating {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .pending-review-form {
-  margin-top: 10px;
+    margin-top: 12px;
 }
 
 .rating-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
 }
 
 .rating-step-btn {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text-silver);
-  border-radius: 6px;
-  padding: 6px 8px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-silver);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 .rating-step-btn .step-value {
-  font-size: 0.72rem;
-  line-height: 1;
+    font-size: 0.72rem;
+    line-height: 1;
 }
 
 .rating-step-btn:hover,
 .rating-step-btn.is-selected {
-  color: var(--gold);
-  border-color: rgba(241, 196, 15, 0.7);
-  background: rgba(241, 196, 15, 0.12);
+    color: var(--gold);
+    border-color: rgba(212, 175, 55, 0.7);
+    background: rgba(212, 175, 55, 0.12);
 }
 
 .rating-picker-preview {
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
 .btn-submit-rating {
-  margin-top: 10px;
-  border: 1px solid rgba(25, 133, 161, 0.6);
-  background: rgba(25, 133, 161, 0.26);
-  color: #fff;
-  border-radius: 6px;
-  padding: 9px 12px;
-  cursor: pointer;
-  font-weight: 600;
+    border: 1px solid rgba(25, 133, 161, 0.6);
+    background: rgba(25, 133, 161, 0.26);
+    color: #fff;
+    border-radius: 6px;
+    padding: 9px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.2s ease;
 }
 
 .btn-submit-rating:hover {
-  background: rgba(25, 133, 161, 0.42);
+    background: rgba(25, 133, 161, 0.42);
 }
 
 .btn-submit-rating:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
+    opacity: 0.65;
+    cursor: not-allowed;
 }
 
 .pending-review-message {
-  margin: 8px 0 0;
-  min-height: 18px;
-  font-size: 0.78rem;
+    margin: 10px 0 0;
+    min-height: 18px;
+    font-size: 0.78rem;
 }
 
 .pending-review-message.is-success {
-  color: #80f2af;
+    color: #80f2af;
 }
 
 .pending-review-message.is-error {
-  color: #ff9a9a;
+    color: #ff9a9a;
 }
 
-@media (max-width: 767px) {
-  .catalog-banner {
-    padding: var(--spacing-md);
-    font-size: var(--font-size-h2);
-  }
+/* Rating stars général */
+.rating-stars {
+    color: var(--gold, #d4af37);
+}
 
-  .inventory-layout.has-review-panel {
-    display: block;
-  }
-
-  .inventory-layout.has-review-panel .inventory-main-column,
-  .inventory-layout.has-review-panel .pending-reviews-panel {
-    max-width: 100%;
-    width: 100%;
-    flex: none;
-  }
-
-  .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 12px;
-  }
-
-  .pending-review-item-meta {
-    flex-direction: column;
-  }
-
-  .rating-step-btn {
-    padding: 6px;
-  }
-
-  .btn-submit-rating {
-    width: 100%;
-  }
-
-  .inventory-slot {
-    min-height: auto;
-    padding: 12px;
-    border-radius: 6px;
-  }
-
-  .slot-top-row {
-    padding-right: 42px;
-  }
-
-  .slot-thumb {
-    width: 64px;
-    height: 64px;
-  }
-
-  .slot-icon {
-    font-size: 1.6rem;
-  }
-
-  .slot-qty-badge {
-    min-width: 28px;
-    height: 28px;
-    padding: 0 6px;
-    font-size: 0.75rem;
-    top: 0;
-    right: 0;
-  }
-
-  .slot-label {
-    font-size: 0.9rem;
-  }
-
-  .slot-type,
-  .slot-owned,
-  .slot-description-text {
-    font-size: 0.78rem;
-  }
-
-  .slot-description-text {
-    min-height: auto;
-    -webkit-line-clamp: 4;
-  }
-
-  .slot-stat-row {
-    font-size: 0.76rem;
-    padding: 7px 8px;
-  }
-
-  .inventory-tooltip {
-    width: min(280px, calc(100vw - 16px));
-    padding: 10px 12px;
-  }
-
-  .tooltip-title {
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-  }
-
-  .tooltip-description {
+.rating-value-inline {
+    color: var(--text-silver);
     font-size: 0.8rem;
-  }
-
-  .tooltip-meta span {
-    font-size: 0.7rem;
-    padding: 2px 5px;
-  }
 }
 
-@media (min-width: 768px) and (max-width: 1199px) {
-  .inventory-layout.has-review-panel {
-    display: block;
-  }
-
-  .inventory-layout.has-review-panel .inventory-main-column,
-  .inventory-layout.has-review-panel .pending-reviews-panel {
-    max-width: 100%;
-    width: 100%;
-    flex: none;
-  }
-
-  .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 14px;
-  }
-
-  .inventory-slot {
-    min-height: 280px;
-    padding: 14px;
-  }
-
-  .slot-thumb {
-    width: 74px;
-    height: 74px;
-  }
-
-  .slot-icon {
-    font-size: 2rem;
-  }
-
-  .slot-qty-badge {
-    min-width: 32px;
-    height: 32px;
-    font-size: 0.8rem;
-  }
-
-  .slot-label {
-    font-size: 0.92rem;
-  }
-
-  .slot-description-text {
-    min-height: 3.2rem;
-  }
-
-  .inventory-tooltip {
-    width: min(300px, calc(100vw - 20px));
-  }
-
-  .tooltip-title {
-    font-size: 0.92rem;
-  }
-
-  .tooltip-description {
-    font-size: 0.82rem;
-  }
+/* Scrollbar personnalisée pour le panneau d'évaluation */
+.review-panel-content::-webkit-scrollbar {
+    width: 6px;
 }
 
-@media (min-width: 1200px) {
-  .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 18px;
-  }
+.review-panel-content::-webkit-scrollbar-track {
+    background: rgba(20, 20, 20, 0.5);
+}
 
-  .inventory-slot {
-    min-height: 320px;
-    padding: 16px;
-  }
+.review-panel-content::-webkit-scrollbar-thumb {
+    background: rgba(139, 125, 107, 0.4);
+    border-radius: 3px;
+}
 
-  .slot-thumb {
-    width: 84px;
-    height: 84px;
-  }
+.review-panel-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 125, 107, 0.6);
+}
 
-  .slot-icon {
-    font-size: 2.2rem;
-  }
+/* ----------------------------------------------------------
+   RESPONSIVE - Support jusqu'à iPad mini (768px)
+   ---------------------------------------------------------- */
 
-  .inventory-layout.has-review-panel .pending-reviews-panel {
-    position: sticky;
-    top: 20px;
-  }
+/* iPad Mini et plus petits écrans - Layout 50/50 */
+@media (max-width: 1024px) {
+    .elden-ring-layout {
+        gap: 15px;
+        padding: 15px;
+    }
+    
+    .items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        padding: 8px;
+    }
+    
+    .item-slot-icon {
+        font-size: 1.6rem;
+    }
+    
+    .item-slot-name {
+        font-size: 0.65rem;
+    }
+    
+    .detail-panel {
+        padding: 18px;
+    }
+    
+    .detail-icon-large {
+        font-size: 3.5rem;
+    }
+    
+    .detail-title {
+        font-size: 1.1rem;
+    }
+    
+    .detail-description {
+        font-size: 0.85rem;
+        padding: 12px;
+    }
+    
+    .detail-stat-row {
+        padding: 8px 12px;
+    }
+    
+    .detail-stat-label,
+    .detail-stat-value {
+        font-size: 0.8rem;
+    }
+}
 
-  .inventory-tooltip {
-    width: min(320px, calc(100vw - 20px));
-  }
+/* iPad Mini spécifiquement (768px) */
+@media (max-width: 768px) {
+    .elden-ring-layout {
+        gap: 12px;
+        padding: 12px;
+        min-height: calc(100vh - 100px);
+    }
+    
+    .items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+        gap: 8px;
+    }
+    
+    .item-slot {
+        padding: 6px;
+    }
+    
+    .item-slot-icon {
+        font-size: 1.4rem;
+    }
+    
+    .item-slot-name {
+        font-size: 0.6rem;
+    }
+    
+    .item-slot-qty {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+    }
+    
+    .detail-panel {
+        padding: 15px;
+        max-height: calc(100vh - 140px);
+    }
+    
+    .detail-icon-large {
+        font-size: 3rem;
+    }
+    
+    .detail-title {
+        font-size: 1rem;
+    }
+    
+    .detail-meta {
+        font-size: 0.75rem;
+        gap: 10px;
+    }
+    
+    .detail-description {
+        font-size: 0.8rem;
+        padding: 10px;
+        margin-bottom: 15px;
+    }
+    
+    .detail-section-title {
+        font-size: 0.7rem;
+        margin-bottom: 8px;
+    }
+    
+    .detail-stats-list {
+        gap: 6px;
+    }
+    
+    .detail-stat-row {
+        padding: 6px 10px;
+    }
+    
+    .detail-stat-label {
+        font-size: 0.75rem;
+    }
+    
+    .detail-stat-value {
+        font-size: 0.8rem;
+    }
+    
+    .detail-price-row span {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+    
+    .detail-footer {
+        padding-top: 15px;
+    }
+    
+    .detail-stars {
+        font-size: 0.9rem;
+    }
+    
+    .detail-rating-value {
+        font-size: 0.75rem;
+    }
+    
+    .detail-status {
+        font-size: 0.75rem;
+        padding: 6px 12px;
+    }
+    
+    /* Review panel ajustements */
+    .review-floating-panel {
+        width: calc(100vw - 40px);
+        max-width: 350px;
+        right: 20px;
+        left: auto;
+    }
+    
+    .review-notification-bubble {
+        width: 50px;
+        height: 50px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .review-bubble-icon {
+        font-size: 1.2rem;
+    }
+    
+    .review-bubble-count {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+}
+
+/* Très petits écrans - en dessous de iPad mini */
+@media (max-width: 600px) {
+    .items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    }
+    
+    .item-slot-icon {
+        font-size: 1.2rem;
+    }
+    
+    .item-slot-name {
+        display: none;
+    }
 }

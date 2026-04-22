@@ -27,6 +27,13 @@
 /* Flottement Continu (Wrapper) */
 .floating-wrapper {
   animation: softFloat 6s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
   z-index: 5;
 }
 
@@ -46,6 +53,22 @@
   display: inline-block;
   filter: drop-shadow(0 0 15px rgba(25, 133, 161, 0.3));
   transition: transform 0.5s ease;
+}
+
+.main-icon.item-detail-image-frame {
+  width: 82%;
+  height: 82%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0;
+}
+
+.item-detail-image-frame .item-detail-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* Animation de Secouement Longue (0.8s) */
@@ -80,6 +103,8 @@
 /* --- VISUAL BOX --- */
 .item-display-box {
   position: relative;
+  width: 380px;
+  max-width: 100%;
   height: 380px;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 15px;
@@ -395,6 +420,10 @@
   font-size: 4rem; /* Taille initiale */
   transition: all 0.8s cubic-bezier(0.42, 0, 0.58, 1); /* Courbe de mouvement fluide */
   opacity: 0.9;
+}
+
+.flying-item.item-detail-image-frame .item-detail-image {
+  object-fit: contain;
 }
 
 /* Petit effet de secousse sur le panier quand il reçoit l'objet */

@@ -62,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
             $stmt->execute([$alias, $hashedPassword]);
             flushProcedureResults($stmt);
-            $success = "Compte forge avec succes ! Vous pouvez maintenant vous connecter.";
+            $success = "Compte forgé avec succès ! Vous pouvez maintenant vous connecter.";
         } catch (PDOException $e) {
             $error = "Erreur : " . $e->getMessage();
         }
@@ -73,10 +73,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $foundUser = $stmt->fetch(PDO::FETCH_ASSOC);
             flushProcedureResults($stmt);
 
+            // 1. Vérifie si l'utilisateur existe et si le mot de passe est bon
             if ($foundUser && password_verify($password, $foundUser['Password'])) {
-                if ((int)($foundUser['IsBanned'] ?? 0) === 1) {
-                    $error = "Ce compte est bloque par un administrateur.";
-                } else {
+
+                // 2. Vérifie si l'utilisateur est banni (On utilise $foundUser et non $utilisateur_db)
+                if (isset($foundUser['IsBanned']) && $foundUser['IsBanned'] == 1) {
+                    $error = "Votre compte a été bloqué par le Conseil des Mages de l'Arsenal.";
+                } 
+                // 3. Sinon, on le connecte
+                else {
                     $_SESSION['user'] = [
                         'id' => (int)$foundUser['UserId'],
                         'alias' => $foundUser['Alias'],
@@ -88,17 +93,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header("Location: index.php");
                     exit();
                 }
-            }
 
-            if ($error === "") {
+            } else {
+                // Si le mot de passe est faux ou le compte n'existe pas
                 $error = "Alias ou mot de passe incorrect.";
             }
+
         } catch (PDOException $e) {
-            $error = "Erreur systeme : " . $e->getMessage();
+            $error = "Erreur système : " . $e->getMessage();
         }
     }
 }
-
 $title = "L'Arsenal - Sanctuaire d'Acces";
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';

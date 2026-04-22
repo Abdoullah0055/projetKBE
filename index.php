@@ -13,7 +13,7 @@ if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'isMage' => ($_SESSION['user']['role'] === 'Mage') || $_SESSION['user']['role'] === 'Admin',
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
@@ -29,7 +29,7 @@ if (isset($_SESSION['user'])) {
     ];
 }
 
-// 2. RÉCUPÉRATION DES ITEMS (Ta requête SQL d'origine)
+// 2. RÉCUPÉRATION DES ITEMS
 $itemsPerPage = 25;
 $countStmt = $pdo->query("
     SELECT COUNT(*)
@@ -53,7 +53,7 @@ $stmt = $pdo->prepare("
         i.ItemId as id, 
         i.Name as nom, 
         t.Name as type, 
-        i.Rarity as rarete,
+        COALESCE(i.Rarity, 'Commun') as rarete,
         i.PriceGold as prix, 
         i.Stock as stock, 
         IFNULL(AVG(r.Rating), 0) as rating, 
@@ -64,12 +64,13 @@ $stmt = $pdo->prepare("
     WHERE i.IsActive = TRUE
     GROUP BY i.ItemId, i.Name, t.Name, i.Rarity, i.PriceGold, i.Stock
     ORDER BY i.ItemId ASC
-    LIMIT :limit OFFSET :offset
 ");
-$stmt->bindValue(':limit', $itemsPerPage, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Plus besoin de pagination côté serveur
+$totalPages = 1;
+$currentPage = 1;
 
 $title = "L'Arsenal - Marché Noir";
 
@@ -105,16 +106,17 @@ function buildPageUrl(int $targetPage): string
 <style>
     :root {
         --main-bg: url('<?= $bgImage ?>');
-        --catalog-card-max: clamp(192px, 14.8vw, 232px);
-        --catalog-card-gap: 10px;
+        --catalog-gap: 14px;
     }
 
     body {
         background-image: var(--main-bg) !important;
         background-color: #1a1b1e;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
         position: relative;
         z-index: 0;
-        /* On cache la scrollbar comme demandé précédemment */
         scrollbar-width: none;
         -ms-overflow-style: none;
     }
@@ -132,50 +134,66 @@ function buildPageUrl(int $targetPage): string
         pointer-events: none;
     }
 
+    .wrapper,
+    main {
+        background: transparent !important;
+    }
+
+    .catalog-banner {
+        margin-bottom: 18px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: rgba(12, 15, 19, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+    }
+
     .product-list {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: var(--catalog-card-gap);
-        align-items: start;
-        justify-items: center;
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 14px !important;
     }
 
     .product-list .item-row {
-        position: relative;
-        isolation: isolate;
-        aspect-ratio: 4 / 5;
-        min-height: 0;
-        width: 100%;
-        max-width: var(--catalog-card-max);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
-        gap: 7px;
-        padding: 9px;
-        border-radius: 10px;
+        align-items: stretch;
+        position: relative;
+        isolation: isolate;
+        width: 100%;
+        aspect-ratio: 4 / 5; /* 👈 carré propre */
+        max-width: 240px;   /* 👈 limite taille */
+        margin: 0 auto;     /* 👈 centre dans la colonne */
+        padding: 12px;
         overflow: hidden;
-        cursor: pointer;
-        background: rgba(14, 16, 20, 0.86);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.28);
-        transition: transform 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
     }
 
-    .product-list .item-row::before {
+/* Classe pour cacher les items filtrés */
+main .product-list .item-row.hidden {
+    display: none !important;
+}
+
+.product-list .item-row::before {
         content: "";
         position: absolute;
         inset: 0;
         border-radius: inherit;
-        background: linear-gradient(135deg, var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%, var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%, rgba(0, 0, 0, 0) 88%);
+        background: linear-gradient(
+            135deg,
+            var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%,
+            var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%,
+            rgba(0, 0, 0, 0) 88%
+        );
         pointer-events: none;
         z-index: -1;
     }
 
     .product-list .item-row:hover {
-        transform: translateY(-3px);
+        transform: translateY(-4px);
         background: rgba(18, 21, 26, 0.92);
         border-color: rgba(255, 255, 255, 0.2);
-        box-shadow: 0 11px 18px rgba(0, 0, 0, 0.38);
+        box-shadow: 0 12px 22px rgba(0, 0, 0, 0.38);
     }
 
     .product-list .item-row.rarity-commun {
@@ -219,10 +237,7 @@ function buildPageUrl(int $targetPage): string
     }
 
     @keyframes mythic-sheen {
-
-        0%,
-        76%,
-        100% {
+        0%, 76%, 100% {
             opacity: 0;
             transform: translateX(0) rotate(8deg);
         }
@@ -241,7 +256,8 @@ function buildPageUrl(int $targetPage): string
         display: flex;
         justify-content: space-between;
         align-items: center;
-        gap: 5px;
+        gap: 6px;
+        min-height: 28px;
     }
 
     .item-rarity-pill,
@@ -250,14 +266,15 @@ function buildPageUrl(int $targetPage): string
         align-items: center;
         justify-content: center;
         border-radius: 999px;
-        padding: 2px 7px;
-        font-size: 0.56rem;
+        padding: 3px 8px;
+        font-size: 0.58rem;
         letter-spacing: 0.38px;
         text-transform: uppercase;
         font-weight: 700;
         border: 1px solid transparent;
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
+        white-space: nowrap;
     }
 
     .item-rarity-pill.rarity-commun {
@@ -297,33 +314,42 @@ function buildPageUrl(int $targetPage): string
     }
 
     .item-card-media {
-        flex: 1 1 auto;
-        min-height: 0;
+        height: 124px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 8px;
+        border-radius: 10px;
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid rgba(255, 255, 255, 0.05);
-        padding: 6px;
+        padding: 8px;
+        flex-shrink: 0;
     }
 
     .item-card-media .item-icon {
-        font-size: clamp(1.8rem, 2.35vw, 2.55rem);
+        font-size: clamp(2rem, 3vw, 2.8rem);
         width: auto;
+        line-height: 1;
+    }
+
+    .item-card-media .item-card-image {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
     }
 
     .item-info {
-        margin-top: 0;
         display: flex;
         flex-direction: column;
-        gap: 2px;
+        gap: 5px;
+        flex: 1 1 auto;
     }
 
     .item-info h3 {
         margin: 0;
-        font-size: clamp(0.79rem, 0.96vw, 0.9rem);
-        line-height: 1.2;
+        font-size: 0.95rem;
+        line-height: 1.25;
+        min-height: 2.5em;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         line-clamp: 2;
@@ -332,30 +358,30 @@ function buildPageUrl(int $targetPage): string
     }
 
     .item-price-line {
-        margin-top: 1px;
+        margin-top: 2px;
     }
 
     .item-price {
         margin: 0;
         color: #d9c176;
         font-weight: 700;
-        font-size: clamp(0.77rem, 1.02vw, 0.88rem);
+        font-size: 0.9rem;
     }
 
     .item-rating {
-        margin-top: 1px;
+        margin-top: auto;
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
     }
 
     .item-rating .rating-stars i {
-        font-size: 0.66rem;
+        font-size: 0.7rem;
     }
 
     .item-rating small {
         color: var(--text-silver);
-        font-size: 0.63rem;
+        font-size: 0.68rem;
     }
 
     .product-list .item-row.item-out-of-stock {
@@ -364,11 +390,7 @@ function buildPageUrl(int $targetPage): string
     }
 
     .product-list .item-row.item-out-of-stock:hover {
-        transform: translateY(-1px);
-    }
-
-    #no-results-message {
-        margin-top: 24px;
+        transform: translateY(-2px);
     }
 
     .catalog-pagination {
@@ -419,115 +441,71 @@ function buildPageUrl(int $targetPage): string
         color: var(--text-silver);
     }
 
-    .catalog-pagination .page-nav {
-        min-width: auto;
-        padding: 0 12px;
+.catalog-pagination .page-nav {
+    min-width: auto;
+    padding: 0 12px;
+}
+
+/* ========== RESPONSIVE - Flexbox uniquement ========== */
+
+/* Responsive - ajustements pour petits écrans */
+@media (max-width: 768px) {
+    :root {
+        --card-base-width: 180px;
+        --card-min-width: 160px;
+        --card-max-width: 200px;
+        --card-height: 250px;
+    }
+    
+    main .product-list {
+        gap: 12px;
+        padding: 8px;
+    }
+    
+    .item-card-media .item-icon {
+        font-size: 1.9rem;
+    }
+    
+    .item-info h3 {
+        font-size: 0.8rem;
+    }
+    
+    .item-rarity-pill,
+    .item-stock-pill {
+        font-size: 0.55rem;
+        padding: 2px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --card-base-width: 160px;
+        --card-min-width: 140px;
+        --card-max-width: 180px;
+        --card-height: 220px;
+    }
+    
+    main .product-list {
+        gap: 10px;
+        padding: 6px;
+    }
+    
+    .item-card-media .item-icon {
+        font-size: 1.7rem;
+    }
+    
+    .item-info h3 {
+        font-size: 0.75rem;
+    }
+    
+    .item-price {
+        font-size: 0.8rem;
+    }
+    
+    .catalog-pagination {
+        gap: 6px;
     }
 
-    .product-list .item-row.item-last-single-row-2 {
-        grid-column: 1 / -1;
-        max-width: var(--catalog-card-max);
-        width: 100%;
-        justify-self: center;
-    }
-
-    .product-list .item-row.item-last-single-row-3 {
-        grid-column: 2;
-    }
-
-    .product-list .item-row.item-last-single-row-4 {
-        grid-column: 2 / span 2;
-    }
-
-    .product-list .item-row.item-last-single-row-5 {
-        grid-column: 3;
-    }
-
-    .product-list .item-row.item-last-single-row-6 {
-        grid-column: 3 / span 2;
-    }
-
-    .product-list .item-row.item-last-single-row-7 {
-        grid-column: 4;
-    }
-
-    @media (min-width: 600px) {
-        .product-list {
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-    }
-
-    @media (min-width: 860px) {
-        .product-list {
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-    }
-
-    @media (min-width: 1160px) {
-        .product-list {
-            grid-template-columns: repeat(5, minmax(0, 1fr));
-            gap: 12px;
-        }
-    }
-
-    @media (min-width: 1500px) {
-        .product-list {
-            grid-template-columns: repeat(6, minmax(0, 1fr));
-            gap: 11px;
-        }
-    }
-
-    @media (min-width: 1840px) {
-        .product-list {
-            grid-template-columns: repeat(7, minmax(0, 1fr));
-            gap: 10px;
-        }
-    }
-
-    @media (max-width: 859px) {
-        .product-list .item-row {
-            max-width: 184px;
-            padding: 8px;
-        }
-
-        .item-rarity-pill,
-        .item-stock-pill {
-            font-size: 0.55rem;
-            padding: 2px 6px;
-        }
-
-        .item-info h3 {
-            font-size: 0.76rem;
-        }
-
-        .item-price {
-            font-size: 0.76rem;
-        }
-
-        .catalog-pagination {
-            gap: 6px;
-        }
-
-        .catalog-pagination .page-link,
-        .catalog-pagination .page-current,
-        .catalog-pagination .page-ellipsis {
-            min-width: 30px;
-            height: 30px;
-            font-size: 0.76rem;
-        }
-    }
-
-    @media (max-width: 460px) {
-        .product-list {
-            grid-template-columns: 1fr;
-        }
-
-        .product-list .item-row {
-            max-width: min(228px, 100%);
-        }
-    }
-
-    /* Styles spécifiques au filtrage */
     .filter-input,
     .filter-select {
         width: 100%;
@@ -546,12 +524,7 @@ function buildPageUrl(int $targetPage): string
         padding: 20px;
         background: rgba(0, 0, 0, 0.3);
         border-radius: 8px;
-        margin: 20px;
-    }
-
-    .wrapper,
-    main {
-        background: transparent !important;
+        margin: 20px 0;
     }
 
     .sidebar-bottom-actions {
@@ -591,6 +564,24 @@ function buildPageUrl(int $targetPage): string
     aside.collapsed .sidebar-inventory-btn .btn-label {
         display: none;
     }
+
+    @media (max-width: 1200px) {
+        .product-list {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        }
+    }
+
+    @media (max-width: 800px) {
+        .product-list {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+    }
+
+    @media (max-width: 500px) {
+        .product-list {
+            grid-template-columns: 1fr !important;
+        }
+    }
 </style>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -623,7 +614,9 @@ function buildPageUrl(int $targetPage): string
                         </select>
                     </div>
 
-                    <button type="button" id="reset-filters"
+                    <button
+                        type="button"
+                        id="reset-filters"
                         style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
                         Réinitialiser
                     </button>
@@ -652,7 +645,7 @@ function buildPageUrl(int $targetPage): string
                 <?php if ($user['isConnected']): ?>
                     <a href="inventory.php" class="sidebar-inventory-btn" title="Ouvrir mon inventaire">
                         <span aria-hidden="true"><i class="fa-solid fa-box-open"></i></span>
-                        <span class="btn-label">Inventory</span>
+                        <span class="btn-label">Inventaire</span>
                     </a>
                 <?php endif; ?>
             </div>
@@ -671,37 +664,46 @@ function buildPageUrl(int $targetPage): string
                 $normType = normalizeItemType($item['type']);
                 $rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
                 $rarityClass = getRarityClass($rarityLabel);
+                $itemImagePath = getItemImagePath((string)$item['nom']);
             ?>
-                <div class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
-                    data-type="<?= $normType ?>"
-                    data-name="<?= htmlspecialchars(strtolower($item['nom'])) ?>"
+                <div
+                    class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
+                    data-type="<?= htmlspecialchars($normType) ?>"
+                    data-name="<?= htmlspecialchars(mb_strtolower($item['nom'], 'UTF-8')) ?>"
                     data-rarity="<?= htmlspecialchars($rarityClass) ?>"
-                    onclick="window.location.href='details.php?id=<?= $item['id'] ?>'"
-                    style="cursor:pointer;">
+                    onclick="window.location.href='details.php?id=<?= (int)$item['id'] ?>'">
 
                     <div class="item-card-head">
-                        <span class="item-rarity-pill <?= htmlspecialchars($rarityClass) ?>"><?= htmlspecialchars($rarityLabel) ?></span>
+                        <span class="item-rarity-pill <?= htmlspecialchars($rarityClass) ?>">
+                            <?= htmlspecialchars($rarityLabel) ?>
+                        </span>
+
                         <?php if ((int)$item['stock'] === 0): ?>
-                            <span class="item-stock-pill">Epuise</span>
+                            <span class="item-stock-pill">Épuisé</span>
                         <?php endif; ?>
                     </div>
 
                     <div class="item-card-media">
-                        <div class="item-icon"><?= getItemImage($item['type']) ?></div>
+                        <?php if ($itemImagePath !== null): ?>
+                            <img
+                                class="item-card-image"
+                                src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                alt="<?= htmlspecialchars($item['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                        <?php else: ?>
+                            <div class="item-icon"><?= getItemImage($item['type']) ?></div>
+                        <?php endif; ?>
                     </div>
 
                     <div class="item-info">
                         <h3><?= htmlspecialchars($item['nom']) ?></h3>
 
                         <div class="item-price-line">
-                            <p class="item-price"><?= number_format($item['prix'], 0) ?> GP</p>
+                            <p class="item-price"><?= number_format((float)$item['prix'], 0, ',', ' ') ?> GP</p>
                         </div>
 
                         <div class="item-rating">
-                            <?= renderRatingStars((float) $item['rating']) ?>
-                            <small>
-                                <?= formatRatingValue((float) $item['rating']) ?>/5
-                            </small>
+                            <?= renderRatingStars((float)$item['rating']) ?>
+                            <small><?= formatRatingValue((float)$item['rating']) ?>/5</small>
                         </div>
                     </div>
                 </div>
@@ -752,66 +754,17 @@ function buildPageUrl(int $targetPage): string
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const typeFilter = document.getElementById("type-filter");
-        const searchFilter = document.getElementById("search-filter");
-        const resetBtn = document.getElementById("reset-filters");
-        const items = document.querySelectorAll(".item-row");
-        const noResults = document.getElementById("no-results-message");
-        const pagination = document.getElementById("catalog-pagination");
-
-        function getGridColumns() {
-            if (window.matchMedia("(min-width: 1840px)").matches) {
-                return 7;
-            }
-
-            if (window.matchMedia("(min-width: 1500px)").matches) {
-                return 6;
-            }
-
-            if (window.matchMedia("(min-width: 1160px)").matches) {
-                return 5;
-            }
-
-            if (window.matchMedia("(min-width: 860px)").matches) {
-                return 4;
-            }
-
-            if (window.matchMedia("(min-width: 600px)").matches) {
-                return 3;
-            }
-
-            if (window.matchMedia("(min-width: 460px)").matches) {
-                return 2;
-            }
-
-            return 1;
-        }
-
-        function refreshLastRowAlignment() {
-            items.forEach(item => {
-                item.classList.remove(
-                    "item-last-single-row-2",
-                    "item-last-single-row-3",
-                    "item-last-single-row-4",
-                    "item-last-single-row-5",
-                    "item-last-single-row-6",
-                    "item-last-single-row-7"
-                );
-            });
-
-            const visibleItems = Array.from(items).filter(item => item.style.display !== "none");
-            const columns = getGridColumns();
-
-            if (columns <= 1 || visibleItems.length === 0) {
-                return;
-            }
-
-            if (visibleItems.length % columns === 1) {
-                const orphanItem = visibleItems[visibleItems.length - 1];
-                orphanItem.classList.add(`item-last-single-row-${columns}`);
-            }
-        }
+document.addEventListener("DOMContentLoaded", function() {
+    const typeFilter = document.getElementById("type-filter");
+    const searchFilter = document.getElementById("search-filter");
+    const resetBtn = document.getElementById("reset-filters");
+    const items = document.querySelectorAll(".item-row");
+    const noResults = document.getElementById("no-results-message");
+    const pagination = document.getElementById("catalog-pagination");
+    
+    // --- GESTION RESPONSIVE DU SIDEBAR ---
+    const sidebar = document.getElementById('sidebar');
+    const productList = document.getElementById('product-list');
 
         function applyFilters() {
             const selectedType = typeFilter.value;
@@ -835,21 +788,91 @@ function buildPageUrl(int $targetPage): string
             if (pagination) {
                 pagination.style.display = (count === 0) ? "none" : "flex";
             }
-
-            refreshLastRowAlignment();
         }
 
         typeFilter.addEventListener("change", applyFilters);
         searchFilter.addEventListener("input", applyFilters);
+
         resetBtn.addEventListener("click", () => {
             typeFilter.value = "all";
             searchFilter.value = "";
             applyFilters();
         });
-
-        window.addEventListener("resize", refreshLastRowAlignment);
-        refreshLastRowAlignment();
     });
+
+    typeFilter.addEventListener("change", function() {
+        console.log("Type filtre changé:", this.value);
+        applyFilters();
+    });
+    
+    searchFilter.addEventListener("input", function() {
+        console.log("Recherche:", this.value);
+        applyFilters();
+    });
+    
+    resetBtn.addEventListener("click", () => {
+        console.log("Reset des filtres");
+        typeFilter.value = "all";
+        searchFilter.value = "";
+        applyFilters();
+    });
+
+// Appliquer les filtres au chargement pour initialiser correctement
+    applyFilters();
+
+    function updateCardsForSidebar() {
+        if (!sidebar || !productList) return;
+
+        const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
+        const mainWidth = window.innerWidth - sidebarWidth - 40;
+        const gap = parseFloat(getComputedStyle(productList).gap) || 16;
+        const cardMinWidth = 180;
+        const cardMaxWidth = 240;
+
+        // Calculer l'espace disponible
+        const availableSpace = mainWidth;
+        const maxCardsPerRow = Math.floor((availableSpace + gap) / (cardMinWidth + gap));
+        const cardsPerRow = Math.min(maxCardsPerRow, 7);
+
+        // Calculer la taille des cartes
+        const totalGapSpace = (cardsPerRow - 1) * gap;
+        const cardWidth = Math.min(
+            Math.max(cardMinWidth, (availableSpace - totalGapSpace) / cardsPerRow),
+            cardMaxWidth
+        );
+
+        // Appliquer UNIQUEMENT aux cartes visibles
+        document.querySelectorAll('.item-row').forEach(card => {
+            if (card.style.display !== 'none') {
+                card.style.flex = `0 0 ${cardWidth}px`;
+                card.style.maxWidth = `${cardWidth}px`;
+            }
+        });
+    }
+    
+    // Observer les changements du sidebar
+    if (sidebar) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    // Attendre la fin de la transition
+                    setTimeout(updateCardsForSidebar, 300);
+                }
+            });
+        });
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // Mettre à jour sur redimensionnement
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(updateCardsForSidebar, 100);
+    });
+    
+    // Initialiser
+    setTimeout(updateCardsForSidebar, 100);
+});
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
