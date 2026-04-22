@@ -105,9 +105,12 @@ function buildPageUrl(int $targetPage): string
 <style>
 :root {
     --main-bg: url('<?= $bgImage ?>');
-    --card-width: 200px;
+    --card-base-width: 200px;
+    --card-min-width: 180px;
+    --card-max-width: 240px;
     --card-height: 280px;
-    --catalog-card-gap: 16px;
+    --catalog-card-gap: clamp(12px, 1.5vw, 20px);
+    --cards-per-row: 7;
 }
 
     body {
@@ -140,7 +143,7 @@ main .product-list {
     flex-wrap: wrap !important;
     gap: var(--catalog-card-gap);
     align-items: flex-start;
-    justify-content: flex-start;
+    justify-content: center;
     width: 100%;
     padding: 10px;
     box-sizing: border-box;
@@ -150,11 +153,11 @@ main .product-list {
 main .product-list .item-row {
     position: relative;
     isolation: isolate;
-    width: 200px !important;
-    min-width: 200px !important;
-    max-width: 200px !important;
-    height: 280px;
-    flex: 0 0 200px;
+    width: auto !important;
+    min-width: var(--card-min-width);
+    max-width: var(--card-max-width);
+    height: var(--card-height);
+    flex: 1 1 var(--card-base-width);
     display: flex !important;
     flex-direction: column !important;
     justify-content: flex-start !important;
@@ -438,38 +441,26 @@ main .product-list .item-row {
 
 /* ========== RESPONSIVE - Flexbox uniquement ========== */
 
-/* Petits écrans (tablettes) */
+/* Responsive - ajustements pour petits écrans */
 @media (max-width: 768px) {
     :root {
-        --card-width: 180px;
+        --card-base-width: 180px;
+        --card-min-width: 160px;
+        --card-max-width: 200px;
         --card-height: 250px;
-        --catalog-card-gap: 14px;
     }
     
-    .product-list {
-        justify-content: center;
+    main .product-list {
+        gap: 12px;
         padding: 8px;
     }
     
-    .product-list .item-row {
-        width: 180px !important;
-        min-width: 180px !important;
-        max-width: 180px !important;
-        flex: 0 0 180px;
-        height: 250px;
-        padding: 10px;
-    }
-    
     .item-card-media .item-icon {
-        font-size: 2rem;
+        font-size: 1.9rem;
     }
     
     .item-info h3 {
         font-size: 0.8rem;
-    }
-    
-    .item-price {
-        font-size: 0.85rem;
     }
     
     .item-rarity-pill,
@@ -479,30 +470,21 @@ main .product-list .item-row {
     }
 }
 
-/* Très petits écrans (mobiles) */
 @media (max-width: 480px) {
     :root {
-        --card-width: 160px;
+        --card-base-width: 160px;
+        --card-min-width: 140px;
+        --card-max-width: 180px;
         --card-height: 220px;
-        --catalog-card-gap: 12px;
     }
     
-    .product-list {
-        justify-content: center;
-        padding: 8px;
-    }
-    
-    .product-list .item-row {
-        width: 160px !important;
-        min-width: 160px !important;
-        max-width: 160px !important;
-        flex: 0 0 160px;
-        height: 220px;
-        padding: 10px;
+    main .product-list {
+        gap: 10px;
+        padding: 6px;
     }
     
     .item-card-media .item-icon {
-        font-size: 1.8rem;
+        font-size: 1.7rem;
     }
     
     .item-info h3 {
@@ -526,30 +508,21 @@ main .product-list .item-row {
     }
 }
 
-/* Ultra petits écrans */
 @media (max-width: 360px) {
     :root {
-        --card-width: 140px;
+        --card-base-width: 140px;
+        --card-min-width: 120px;
+        --card-max-width: 160px;
         --card-height: 195px;
-        --catalog-card-gap: 10px;
     }
     
-    .product-list {
-        justify-content: center;
+    main .product-list {
+        gap: 8px;
         padding: 5px;
     }
     
-    .product-list .item-row {
-        width: 140px !important;
-        min-width: 140px !important;
-        max-width: 140px !important;
-        flex: 0 0 140px;
-        height: 195px;
-        padding: 8px;
-    }
-    
     .item-card-media .item-icon {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
     }
 }
 
@@ -787,27 +760,30 @@ document.addEventListener("DOMContentLoaded", function() {
     const pagination = document.getElementById("catalog-pagination");
 
     function applyFilters() {
-            const selectedType = typeFilter.value;
-            const searchValue = searchFilter.value.toLowerCase().trim();
-            let count = 0;
+        const selectedType = typeFilter.value;
+        const searchValue = searchFilter.value.toLowerCase().trim();
+        let count = 0;
 
-            items.forEach(item => {
-                const matchesType = (selectedType === "all" || item.dataset.type === selectedType);
-                const matchesSearch = (searchValue === "" || item.dataset.name.includes(searchValue));
+        items.forEach(item => {
+            const matchesType = (selectedType === "all" || item.dataset.type === selectedType);
+            const matchesSearch = (searchValue === "" || item.dataset.name.includes(searchValue));
 
-                if (matchesType && matchesSearch) {
-                    item.style.display = "";
-                    count++;
-                } else {
-                    item.style.display = "none";
-                }
-            });
+            if (matchesType && matchesSearch) {
+                item.style.display = "";
+                count++;
+            } else {
+                item.style.display = "none";
+            }
+        });
 
-            noResults.style.display = (count === 0) ? "block" : "none";
+        noResults.style.display = (count === 0) ? "block" : "none";
 
         if (pagination) {
             pagination.style.display = (count === 0) ? "none" : "flex";
         }
+
+        // Réappliquer les styles de taille après le filtrage
+        updateCardsForSidebar();
     }
 
     typeFilter.addEventListener("change", applyFilters);
@@ -817,6 +793,66 @@ document.addEventListener("DOMContentLoaded", function() {
         searchFilter.value = "";
         applyFilters();
     });
+
+    // Appliquer les filtres au chargement pour initialiser correctement
+    applyFilters();
+
+    // --- GESTION RESPONSIVE DU SIDEBAR ---
+    const sidebar = document.getElementById('sidebar');
+    const productList = document.getElementById('product-list');
+    
+    function updateCardsForSidebar() {
+        if (!sidebar || !productList) return;
+        
+        const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
+        const mainWidth = window.innerWidth - sidebarWidth - 40; // 40px pour padding/margins
+        const gap = parseFloat(getComputedStyle(productList).gap) || 16;
+        const cardMinWidth = 180;
+        const cardMaxWidth = 240;
+        
+        // Calculer combien de cartes peuvent tenir
+        const availableSpace = mainWidth;
+        const maxCardsPerRow = Math.floor((availableSpace + gap) / (cardMinWidth + gap));
+        
+        // Limiter à 7 cartes max
+        const cardsPerRow = Math.min(maxCardsPerRow, 7);
+        
+        // Calculer la taille optimale des cartes pour remplir l'espace
+        const totalGapSpace = (cardsPerRow - 1) * gap;
+        const cardWidth = Math.min(
+            Math.max(cardMinWidth, (availableSpace - totalGapSpace) / cardsPerRow),
+            cardMaxWidth
+        );
+        
+        // Appliquer la taille calculée aux cartes
+        document.querySelectorAll('.item-row').forEach(card => {
+            card.style.flex = `0 0 ${cardWidth}px`;
+            card.style.maxWidth = `${cardWidth}px`;
+        });
+    }
+    
+    // Observer les changements du sidebar
+    if (sidebar) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    // Attendre la fin de la transition
+                    setTimeout(updateCardsForSidebar, 300);
+                }
+            });
+        });
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // Mettre à jour sur redimensionnement
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(updateCardsForSidebar, 100);
+    });
+    
+    // Initialiser
+    setTimeout(updateCardsForSidebar, 100);
 });
 </script>
 

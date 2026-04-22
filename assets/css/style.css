@@ -259,16 +259,15 @@ header {
 
 /* --- STRUCTURE --- */
 .wrapper {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
+    display: flex;
+    flex: 1;
+    overflow: visible;
 }
 
 /* Enable scrolling in main content areas */
 main {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 aside {
@@ -278,17 +277,38 @@ aside {
 
 /* --- SIDEBAR (GLASSMORPHISM) --- */
 aside {
-  width: var(--sidebar-width);
-  background: rgba(20, 22, 25, 0.4) !important;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-  transition: width var(--transition);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  z-index: 100;
+    width: var(--sidebar-width);
+    height: calc(100vh - var(--header-height));
+    max-height: calc(100vh - var(--header-height));
+    background: rgba(20, 22, 25, 0.4) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+    transition: width var(--transition);
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    z-index: 100;
+    overflow: visible !important;
+}
+
+/* Adjust main content to account for fixed sidebar */
+main {
+    margin-left: var(--sidebar-width);
+    min-height: calc(100vh - var(--header-height));
+}
+
+/* Adjust main when sidebar is collapsed */
+.wrapper:has(aside.collapsed) main {
+    margin-left: var(--sidebar-collapsed);
+}
+
+/* For browsers that don't support :has() */
+aside.collapsed ~ main {
+    margin-left: var(--sidebar-collapsed);
 }
 
 aside.collapsed {
@@ -296,23 +316,23 @@ aside.collapsed {
 }
 
 #toggle-btn {
-  position: absolute;
-  right: -22px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background-color: var(--accent);
-  color: white;
-  border: 4px solid #1a1b1e;
-  cursor: pointer;
-  z-index: 1100;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
-  pointer-events: auto;
+    position: absolute;
+    right: -22px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    color: white;
+    border: 4px solid #1a1b1e;
+    cursor: pointer;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    pointer-events: auto;
 }
 
 .sidebar-content {
