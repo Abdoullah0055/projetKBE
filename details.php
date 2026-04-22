@@ -35,14 +35,14 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 $itemId = (int) $_GET['id'];
 
 $stmt = $pdo->prepare("
-    SELECT i.ItemId AS id, i.Name AS nom, i.PriceGold AS prix_gold, i.PriceSilver AS prix_silver,
+    SELECT i.ItemId AS id, i.Name AS nom, i.ImageUrl AS ImageUrl, i.PriceGold AS prix_gold, i.PriceSilver AS prix_silver,
            i.PriceBronze AS prix_bronze, i.Description AS description,
            i.Stock AS stock, t.Name AS type, IFNULL(AVG(r.Rating), 0) AS rating, COUNT(r.ReviewId) AS nb_avis
     FROM Items i
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.ItemId = ?
-    GROUP BY i.ItemId, i.Name, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
+    GROUP BY i.ItemId, i.Name, i.ImageUrl, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
 ");
 $stmt->execute([$itemId]);
 $item = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -53,7 +53,7 @@ if (!$item) {
 }
 
 $item['image'] = getItemImage($item['type']);
-$itemImagePath = getItemImagePath((string) $item['nom']);
+$itemImagePath = getItemImagePathForItem($item);
 $properties = getItemProperties($pdo, (int) $item['id'], $item['type']);
 $title = "Details - " . $item['nom'];
 $itemRatingText = formatRatingValue((float) $item['rating']);

@@ -113,11 +113,19 @@ function getItemImagePath(string $itemName): ?string
         'dragon_slayer' => 'assets/images/armes/dragon_slayer_longsword.png',
 
         'leather_armor' => 'assets/images/armure/chest/elf_chest.png',
+        'elf_chest' => 'assets/images/armure/chest/elf_chest.png',
         'chainmail' => 'assets/images/armure/chest/elf_chest.png',
         'steel_armor' => 'assets/images/armure/chest/daedra_chest.png',
         'golden_armor' => 'assets/images/armure/chest/daedra_chest.png',
+        'daedra_chest' => 'assets/images/armure/chest/daedra_chest.png',
         'paladin_armor' => 'assets/images/armure/chest/elf_chest.png',
         'dragon_scale_armor' => 'assets/images/armure/chest/daedra_chest.png',
+        'elf_helmet' => 'assets/images/armure/helmet/elf_helmet.png',
+        'daedra_helmet' => 'assets/images/armure/helmet/daedra_helmet.png',
+        'elf_legs' => 'assets/images/armure/legs/elf_legs.png',
+        'daedra_legs' => 'assets/images/armure/legs/daedra_legs.png',
+
+        'fireball' => 'assets/images/sorts/fireball_tome.png',
     ];
 
     $key = normalizeItemImageKey($itemName);
@@ -133,6 +141,8 @@ function getItemImagePath(string $itemName): ?string
     $candidatePaths[] = 'assets/images/armure/chest/' . $key . '.png';
     $candidatePaths[] = 'assets/images/armure/helmet/' . $key . '.png';
     $candidatePaths[] = 'assets/images/armure/legs/' . $key . '.png';
+    $candidatePaths[] = 'assets/images/potions/' . $key . '.png';
+    $candidatePaths[] = 'assets/images/sorts/' . $key . '.png';
 
     foreach (array_unique($candidatePaths) as $path) {
         if (is_file(dirname(__DIR__) . '/' . $path)) {
@@ -141,6 +151,96 @@ function getItemImagePath(string $itemName): ?string
     }
 
     return null;
+}
+
+function getItemImagePathForItem(array $item): ?string
+{
+    $imageUrl = trim((string)($item['ImageUrl'] ?? $item['image_url'] ?? $item['imageUrl'] ?? ''));
+
+    if ($imageUrl !== '') {
+        $type = strtolower(trim((string)($item['type'] ?? $item['item_type'] ?? '')));
+        $fileName = basename(str_replace('\\', '/', $imageUrl));
+        $fileKey = normalizeItemImageKey(pathinfo($fileName, PATHINFO_FILENAME));
+
+        $imageUrlAliases = [
+            'leather_armor' => 'assets/images/armure/chest/elf_chest.png',
+            'elf_chest' => 'assets/images/armure/chest/elf_chest.png',
+            'golden_armor' => 'assets/images/armure/chest/daedra_chest.png',
+            'daedra_chest' => 'assets/images/armure/chest/daedra_chest.png',
+            'elf_helm' => 'assets/images/armure/helmet/elf_helmet.png',
+            'elf_helmet' => 'assets/images/armure/helmet/elf_helmet.png',
+            'daedra_helm' => 'assets/images/armure/helmet/daedra_helmet.png',
+            'daedra_helmet' => 'assets/images/armure/helmet/daedra_helmet.png',
+            'elf_leg' => 'assets/images/armure/legs/elf_legs.png',
+            'elf_legs' => 'assets/images/armure/legs/elf_legs.png',
+            'daedra_leg' => 'assets/images/armure/legs/daedra_legs.png',
+            'daedra_legs' => 'assets/images/armure/legs/daedra_legs.png',
+            'fireball' => 'assets/images/sorts/fireball_tome.png',
+        ];
+
+        // Détection plus fiable pour les armures
+        if (
+            str_contains($fileKey, 'helmet') ||
+            str_contains($fileKey, 'helm') ||
+            str_contains($fileKey, 'casque')
+        ) {
+            $path = 'assets/images/armure/helmet/';
+        } elseif (
+            str_contains($fileKey, 'legs') ||
+            str_contains($fileKey, 'leg') ||
+            str_contains($fileKey, 'jambe') ||
+            str_contains($fileKey, 'jambes')
+        ) {
+            $path = 'assets/images/armure/legs/';
+        } elseif (
+            str_contains($fileKey, 'chest') ||
+            str_contains($fileKey, 'armor') ||
+            str_contains($fileKey, 'armour') ||
+            str_contains($fileKey, 'armure') ||
+            $type === 'armor' ||
+            $type === 'armour' ||
+            $type === 'armure'
+        ) {
+            $path = 'assets/images/armure/chest/';
+        } elseif ($type === 'weapon') {
+            $path = 'assets/images/armes/';
+        } elseif ($type === 'potion') {
+            $path = 'assets/images/potions/';
+        } elseif ($type === 'magicspell') {
+            $path = 'assets/images/sorts/';
+        } else {
+            $path = 'assets/images/';
+        }
+
+        $candidateFileNames = [$fileName];
+
+        if (pathinfo($fileName, PATHINFO_EXTENSION) === '') {
+            $candidateFileNames[] = $fileName . '.png';
+        }
+
+        $candidatePaths = [
+            $imageUrlAliases[$fileKey] ?? '',
+            ltrim($imageUrl, '/'),
+        ];
+
+        foreach (array_unique($candidateFileNames) as $candidateFileName) {
+            $candidatePaths[] = $path . $candidateFileName;
+            $candidatePaths[] = 'assets/images/armure/chest/' . $candidateFileName;
+            $candidatePaths[] = 'assets/images/armure/helmet/' . $candidateFileName;
+            $candidatePaths[] = 'assets/images/armure/legs/' . $candidateFileName;
+            $candidatePaths[] = 'assets/images/armes/' . $candidateFileName;
+            $candidatePaths[] = 'assets/images/potions/' . $candidateFileName;
+            $candidatePaths[] = 'assets/images/sorts/' . $candidateFileName;
+        }
+
+        foreach (array_filter(array_unique($candidatePaths)) as $candidatePath) {
+            if (str_starts_with($candidatePath, 'assets/images/') && is_file(dirname(__DIR__) . '/' . $candidatePath)) {
+                return $candidatePath;
+            }
+        }
+    }
+
+    return getItemImagePath((string)($item['nom'] ?? $item['item_name'] ?? $item['Name'] ?? ''));
 }
 
 function normalizeRarityValue(string $rarity): string

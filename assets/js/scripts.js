@@ -368,7 +368,15 @@ class LiveSearchSuggestions {
 
       const thumb = document.createElement("span");
       thumb.className = "search-suggestion-thumb";
-      thumb.textContent = item.image || "❓";
+
+      if (item.imageUrl) {
+        const thumbImage = document.createElement("img");
+        thumbImage.src = item.imageUrl;
+        thumbImage.alt = "";
+        thumb.appendChild(thumbImage);
+      } else {
+        thumb.textContent = item.image || "❓";
+      }
 
       const textWrap = document.createElement("span");
       textWrap.className = "search-suggestion-text";

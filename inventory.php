@@ -47,6 +47,7 @@ try {
             inv.ItemId AS item_id,
             inv.Quantity AS quantity,
             i.Name AS item_name,
+            i.ImageUrl AS ImageUrl,
             i.Description AS item_description,
             i.PriceGold AS item_price_gold,
             i.PriceSilver AS item_price_silver,
@@ -112,6 +113,7 @@ if ($inventoryError === '') {
                 inv.ItemId AS item_id,
                 inv.Quantity AS quantity_owned,
                 i.Name AS item_name,
+                i.ImageUrl AS ImageUrl,
                 t.Name AS item_type,
                 IFNULL(AVG(all_reviews.Rating), 0) AS rating,
                 COUNT(all_reviews.ReviewId) AS review_count
@@ -126,7 +128,7 @@ if ($inventoryError === '') {
             WHERE inv.UserId = :user_id_for_inventory
             AND inv.Quantity > 0
             AND user_review.ReviewId IS NULL
-            GROUP BY inv.ItemId, inv.Quantity, i.Name, t.Name
+            GROUP BY inv.ItemId, inv.Quantity, i.Name, i.ImageUrl, t.Name
             ORDER BY i.Name ASC"
         );
 
@@ -223,6 +225,7 @@ body::before {
                             $itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
                             $itemType = $entry['item_type'] ?? 'Inconnu';
                             $isSelected = $index === 0 ? 'selected' : '';
+                            $itemImagePath = getItemImagePathForItem($entry);
                             
                             // Préparer les données pour JavaScript
                             $itemData = htmlspecialchars(json_encode([
@@ -239,6 +242,7 @@ body::before {
                                 'reviewCount' => (int)($entry['review_count'] ?? 0),
                                 'isRatedByUser' => (bool)$entry['is_rated_by_user'],
                                 'icon' => getItemImage($itemType),
+                                'imageUrl' => $itemImagePath,
                                 // Propriétés spécifiques
                                 'weapon' => $itemType === 'Weapon' ? [
                                     'damageMin' => (int)($entry['weapon_damage_min'] ?? 0),
@@ -269,7 +273,16 @@ body::before {
                             <div class="item-slot <?= $isSelected ?>" 
                                  data-item-index="<?= $index ?>"
                                  data-item-data="<?= $itemData ?>">
-                                <div class="item-slot-icon"><?= getItemImage($itemType) ?></div>
+                                <div class="item-slot-icon">
+                                    <?php if ($itemImagePath !== null): ?>
+                                        <img
+                                            class="item-slot-image"
+                                            src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                            alt="">
+                                    <?php else: ?>
+                                        <?= getItemImage($itemType) ?>
+                                    <?php endif; ?>
+                                </div>
                                 <div class="item-slot-name"><?= htmlspecialchars($itemName) ?></div>
                                 <div class="item-slot-qty">x<?= (int)$entry['quantity'] ?></div>
                             </div>
@@ -311,6 +324,7 @@ body::before {
                         $reviewItemId = (int) $reviewItem['item_id'];
                         $reviewItemType = (string) ($reviewItem['item_type'] ?? 'Inconnu');
                         $reviewItemName = (string) ($reviewItem['item_name'] ?? ('Item #' . $reviewItemId));
+                        $reviewItemImagePath = getItemImagePathForItem($reviewItem);
                         $ratingInputId = 'rating-input-' . $reviewItemId;
                         $ratingPreviewId = 'rating-preview-' . $reviewItemId;
                         ?>
@@ -318,7 +332,14 @@ body::before {
                         <article class="pending-review-card" data-pending-item-id="<?= $reviewItemId ?>">
                             <div class="pending-review-item-meta">
                                 <div class="pending-review-thumb" aria-hidden="true">
-                                    <?= getItemImage($reviewItemType) ?>
+                                    <?php if ($reviewItemImagePath !== null): ?>
+                                        <img
+                                            class="pending-review-image"
+                                            src="<?= htmlspecialchars($reviewItemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                            alt="">
+                                    <?php else: ?>
+                                        <?= getItemImage($reviewItemType) ?>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div>
@@ -409,6 +430,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const rarityClass = getRarityClass(item.rarity);
         const rarityLabel = formatRarityLabel(item.rarity);
         const statusClass = item.isRatedByUser ? 'is-rated' : 'is-unrated';
+        const detailVisual = item.imageUrl
+            ? `<img class="detail-image-large" src="${item.imageUrl}" alt="">`
+            : item.icon;
         const statusLabel = item.isRatedByUser ? 'Évalué' : 'Non évalué';
         
         // Générer les propriétés spécifiques
@@ -488,7 +512,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const html = `
             <div class="detail-header">
-                <div class="detail-icon-large">${item.icon}</div>
+                <div class="detail-icon-large">${detailVisual}</div>
                 <h3 class="detail-title ${rarityClass}">${item.name}</h3>
                 <div class="detail-meta">
                     <span class="detail-type">${item.type}</span>
