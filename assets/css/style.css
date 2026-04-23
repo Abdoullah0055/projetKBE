@@ -279,8 +279,8 @@ main {
 }
 
 aside {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: auto;
 }
 
 /* --- SIDEBAR (GLASSMORPHISM) --- */
@@ -296,6 +296,7 @@ aside {
   flex-direction: column;
   flex-shrink: 0;
   z-index: 100;
+  overflow: visible;
 }
 
 aside.collapsed {
@@ -304,9 +305,9 @@ aside.collapsed {
 
 #toggle-btn {
   position: absolute;
-  right: -22px;
+  right: 0px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(50%, -50%);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -327,7 +328,7 @@ aside.collapsed {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .filter-group label {
