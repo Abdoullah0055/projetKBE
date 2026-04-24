@@ -13,7 +13,7 @@ if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'isMage' => ($_SESSION['user']['role'] === 'Mage') || $_SESSION['user']['role'] === 'Admin',
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
@@ -52,7 +52,6 @@ $stmt = $pdo->prepare("
     SELECT 
         i.ItemId as id, 
         i.Name as nom, 
-        i.ImageUrl as ImageUrl,
         t.Name as type, 
         COALESCE(i.Rarity, 'Commun') as rarete,
         i.PriceGold as prix, 
@@ -63,14 +62,15 @@ $stmt = $pdo->prepare("
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.IsActive = TRUE
-    GROUP BY i.ItemId, i.Name, i.ImageUrl, t.Name, i.Rarity, i.PriceGold, i.Stock
+    GROUP BY i.ItemId, i.Name, t.Name, i.Rarity, i.PriceGold, i.Stock
     ORDER BY i.ItemId ASC
-    LIMIT :limit OFFSET :offset
 ");
-$stmt->bindValue(':limit', $itemsPerPage, PDO::PARAM_INT);
-$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 $stmt->execute();
 $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Plus besoin de pagination côté serveur
+$totalPages = 1;
+$currentPage = 1;
 
 $title = "L'Arsenal - Marché Noir";
 
@@ -169,7 +169,12 @@ function buildPageUrl(int $targetPage): string
         overflow: hidden;
     }
 
-    .product-list .item-row::before {
+/* Classe pour cacher les items filtrés */
+main .product-list .item-row.hidden {
+    display: none !important;
+}
+
+.product-list .item-row::before {
         content: "";
         position: absolute;
         inset: 0;
@@ -436,9 +441,69 @@ function buildPageUrl(int $targetPage): string
         color: var(--text-silver);
     }
 
-    .catalog-pagination .page-nav {
-        min-width: auto;
-        padding: 0 12px;
+.catalog-pagination .page-nav {
+    min-width: auto;
+    padding: 0 12px;
+}
+
+/* ========== RESPONSIVE - Flexbox uniquement ========== */
+
+/* Responsive - ajustements pour petits écrans */
+@media (max-width: 768px) {
+    :root {
+        --card-base-width: 180px;
+        --card-min-width: 160px;
+        --card-max-width: 200px;
+        --card-height: 250px;
+    }
+    
+    main .product-list {
+        gap: 12px;
+        padding: 8px;
+    }
+    
+    .item-card-media .item-icon {
+        font-size: 1.9rem;
+    }
+    
+    .item-info h3 {
+        font-size: 0.8rem;
+    }
+    
+    .item-rarity-pill,
+    .item-stock-pill {
+        font-size: 0.55rem;
+        padding: 2px 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --card-base-width: 160px;
+        --card-min-width: 140px;
+        --card-max-width: 180px;
+        --card-height: 220px;
+    }
+    
+    main .product-list {
+        gap: 10px;
+        padding: 6px;
+    }
+    
+    .item-card-media .item-icon {
+        font-size: 1.7rem;
+    }
+    
+    .item-info h3 {
+        font-size: 0.75rem;
+    }
+    
+    .item-price {
+        font-size: 0.8rem;
+    }
+    
+    .catalog-pagination {
+        gap: 6px;
     }
 
     .filter-input,
@@ -599,7 +664,7 @@ function buildPageUrl(int $targetPage): string
                 $normType = normalizeItemType($item['type']);
                 $rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
                 $rarityClass = getRarityClass($rarityLabel);
-                $itemImagePath = getItemImagePathForItem($item);
+                $itemImagePath = getItemImagePath((string)$item['nom']);
             ?>
                 <div
                     class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
@@ -689,13 +754,17 @@ function buildPageUrl(int $targetPage): string
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const typeFilter = document.getElementById("type-filter");
-        const searchFilter = document.getElementById("search-filter");
-        const resetBtn = document.getElementById("reset-filters");
-        const items = document.querySelectorAll(".item-row");
-        const noResults = document.getElementById("no-results-message");
-        const pagination = document.getElementById("catalog-pagination");
+document.addEventListener("DOMContentLoaded", function() {
+    const typeFilter = document.getElementById("type-filter");
+    const searchFilter = document.getElementById("search-filter");
+    const resetBtn = document.getElementById("reset-filters");
+    const items = document.querySelectorAll(".item-row");
+    const noResults = document.getElementById("no-results-message");
+    const pagination = document.getElementById("catalog-pagination");
+    
+    // --- GESTION RESPONSIVE DU SIDEBAR ---
+    const sidebar = document.getElementById('sidebar');
+    const productList = document.getElementById('product-list');
 
         function applyFilters() {
             const selectedType = typeFilter.value;
@@ -730,6 +799,80 @@ function buildPageUrl(int $targetPage): string
             applyFilters();
         });
     });
+
+    typeFilter.addEventListener("change", function() {
+        console.log("Type filtre changé:", this.value);
+        applyFilters();
+    });
+    
+    searchFilter.addEventListener("input", function() {
+        console.log("Recherche:", this.value);
+        applyFilters();
+    });
+    
+    resetBtn.addEventListener("click", () => {
+        console.log("Reset des filtres");
+        typeFilter.value = "all";
+        searchFilter.value = "";
+        applyFilters();
+    });
+
+// Appliquer les filtres au chargement pour initialiser correctement
+    applyFilters();
+
+    function updateCardsForSidebar() {
+        if (!sidebar || !productList) return;
+
+        const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
+        const mainWidth = window.innerWidth - sidebarWidth - 40;
+        const gap = parseFloat(getComputedStyle(productList).gap) || 16;
+        const cardMinWidth = 180;
+        const cardMaxWidth = 240;
+
+        // Calculer l'espace disponible
+        const availableSpace = mainWidth;
+        const maxCardsPerRow = Math.floor((availableSpace + gap) / (cardMinWidth + gap));
+        const cardsPerRow = Math.min(maxCardsPerRow, 7);
+
+        // Calculer la taille des cartes
+        const totalGapSpace = (cardsPerRow - 1) * gap;
+        const cardWidth = Math.min(
+            Math.max(cardMinWidth, (availableSpace - totalGapSpace) / cardsPerRow),
+            cardMaxWidth
+        );
+
+        // Appliquer UNIQUEMENT aux cartes visibles
+        document.querySelectorAll('.item-row').forEach(card => {
+            if (card.style.display !== 'none') {
+                card.style.flex = `0 0 ${cardWidth}px`;
+                card.style.maxWidth = `${cardWidth}px`;
+            }
+        });
+    }
+    
+    // Observer les changements du sidebar
+    if (sidebar) {
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    // Attendre la fin de la transition
+                    setTimeout(updateCardsForSidebar, 300);
+                }
+            });
+        });
+        observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
+    }
+    
+    // Mettre à jour sur redimensionnement
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(updateCardsForSidebar, 100);
+    });
+    
+    // Initialiser
+    setTimeout(updateCardsForSidebar, 100);
+});
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
