@@ -39,11 +39,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
         try {
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare("INSERT INTO items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
+            $stmt = $pdo->prepare("INSERT INTO Items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
             $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $typeId]);
             $newItemId = $pdo->lastInsertId();
 
-            $typeStmt = $pdo->prepare("SELECT Name FROM itemtypes WHERE ItemTypeId = ?");
+            $typeStmt = $pdo->prepare("SELECT Name FROM ItemTypes WHERE ItemTypeId = ?");
             $typeStmt->execute([$typeId]);
             $typeName = strtolower((string)$typeStmt->fetchColumn());
 
@@ -51,10 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 throw new RuntimeException("Type d'objet invalide.");
             }
 
-            if ($typeName === 'weapon') $pdo->prepare("INSERT INTO weaponproperties (ItemId, DamageMin, DamageMax) VALUES (?, 10, 20)")->execute([$newItemId]);
-            elseif ($typeName === 'armor') $pdo->prepare("INSERT INTO armorproperties (ItemId, Defense) VALUES (?, 15)")->execute([$newItemId]);
-            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO potionproperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 50)")->execute([$newItemId]);
-            elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO magicspellproperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
+            if ($typeName === 'weapon') $pdo->prepare("INSERT INTO WeaponProperties (ItemId, DamageMin, DamageMax) VALUES (?, 10, 20)")->execute([$newItemId]);
+            elseif ($typeName === 'armor') $pdo->prepare("INSERT INTO ArmorProperties (ItemId, Defense) VALUES (?, 15)")->execute([$newItemId]);
+            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO PotionProperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 50)")->execute([$newItemId]);
+            elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO MagicSpellProperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
 
             $pdo->commit();
             $message_alerte = ["type" => "succes", "texte" => "L'artefact '$name' a été ajouté avec succès."];
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
         $stock = (int)$_POST['stock'];
         
-        $stmt = $pdo->prepare("UPDATE items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
+        $stmt = $pdo->prepare("UPDATE Items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
         $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
         $message_alerte = ["type" => "succes", "texte" => "L'artefact a été modifié avec succès."];
     }
@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // 3. Activer / Désactiver Item
     elseif ($_POST['action'] === 'toggle_item') {
         $itemId = (int)$_POST['item_id'];
-        $stmt = $pdo->prepare("UPDATE items SET IsActive = NOT IsActive WHERE ItemId=?");
+        $stmt = $pdo->prepare("UPDATE Items SET IsActive = NOT IsActive WHERE ItemId=?");
         $stmt->execute([$itemId]);
         $message_alerte = ["type" => "succes", "texte" => "Le statut de disponibilité de l'artefact a été mis à jour."];
     }
@@ -90,10 +90,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     elseif ($_POST['action'] === 'delete_item') {
         $itemId = (int)$_POST['item_id'];
         try {
-            $pdo->prepare("DELETE FROM items WHERE ItemId = ?")->execute([$itemId]);
+            $pdo->prepare("DELETE FROM Items WHERE ItemId = ?")->execute([$itemId]);
             $message_alerte = ["type" => "succes", "texte" => "L'artefact a été détruit définitivement."];
         } catch (Exception $e) {
-            $pdo->prepare("UPDATE items SET IsActive = 0 WHERE ItemId = ?")->execute([$itemId]);
+            $pdo->prepare("UPDATE Items SET IsActive = 0 WHERE ItemId = ?")->execute([$itemId]);
             $message_alerte = ["type" => "succes", "texte" => "L'objet est lié à des achats passés, il a été désactivé (caché) au lieu d'être supprimé."];
         }
     }
@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $rewardBronze = (int)$_POST['reward_bronze'];
 
         try {
-            $stmt = $pdo->prepare("INSERT INTO riddles (QuestionText, AnswerText, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
+            $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
             $stmt->execute([$question, $answer, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze]);
             $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
         } catch (Exception $e) {
@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     // 6. Activer / Désactiver Énigme
     elseif ($_POST['action'] === 'toggle_riddle') {
         $riddleId = (int)$_POST['riddle_id'];
-        $stmt = $pdo->prepare("UPDATE riddles SET IsActive = NOT IsActive WHERE RiddleId=?");
+        $stmt = $pdo->prepare("UPDATE Riddles SET IsActive = NOT IsActive WHERE RiddleId=?");
         $stmt->execute([$riddleId]);
         $message_alerte = ["type" => "succes", "texte" => "Le statut de la quête a été mis à jour."];
     }
@@ -132,10 +132,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     elseif ($_POST['action'] === 'delete_riddle') {
         $riddleId = (int)$_POST['riddle_id'];
         try {
-            $pdo->prepare("DELETE FROM riddles WHERE RiddleId = ?")->execute([$riddleId]);
+            $pdo->prepare("DELETE FROM Riddles WHERE RiddleId = ?")->execute([$riddleId]);
             $message_alerte = ["type" => "succes", "texte" => "La quête a été définitivement effacée."];
         } catch (Exception $e) {
-            $pdo->prepare("UPDATE riddles SET IsActive = 0 WHERE RiddleId = ?")->execute([$riddleId]);
+            $pdo->prepare("UPDATE Riddles SET IsActive = 0 WHERE RiddleId = ?")->execute([$riddleId]);
             $message_alerte = ["type" => "succes", "texte" => "Des joueurs ont déjà répondu à cette quête. Elle a été désactivée au lieu d'être supprimée."];
         }
     }
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     elseif ($_POST['action'] === 'add_funds') {
         $targetUserId = (int)$_POST['user_id'];
         $addGold = (int)$_POST['add_gold']; $addSilver = (int)$_POST['add_silver']; $addBronze = (int)$_POST['add_bronze'];
-        $pdo->prepare("UPDATE users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+        $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
         $message_alerte = ["type" => "succes", "texte" => "Les fonds du joueur ont été mis à jour."];
     }
 
@@ -154,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     elseif ($_POST['action'] === 'toggle_ban') {
         $targetUserId = (int)$_POST['user_id'];
         try {
-            $pdo->prepare("UPDATE users SET IsBanned = NOT IsBanned WHERE UserId = ?")->execute([$targetUserId]);
+            $pdo->prepare("UPDATE Users SET IsBanned = NOT IsBanned WHERE UserId = ?")->execute([$targetUserId]);
             $message_alerte = ["type" => "succes", "texte" => "Le droit de connexion du joueur a été modifié."];
         } catch (Exception $e) {
             $message_alerte = ["type" => "erreur", "texte" => "Impossible de modifier le blocage de ce joueur."];
@@ -174,21 +174,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 // --- RÉCUPÉRATION DES DONNÉES ---
-$items = $pdo->query("SELECT i.*, t.Name AS TypeName FROM items i JOIN itemtypes t ON i.ItemTypeId = t.ItemTypeId ORDER BY i.ItemId DESC")->fetchAll();
-$itemTypes = $pdo->query("SELECT * FROM itemtypes")->fetchAll();
+$items = $pdo->query("SELECT i.*, t.Name AS TypeName FROM Items i JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId ORDER BY i.ItemId DESC")->fetchAll();
+$itemTypes = $pdo->query("SELECT * FROM ItemTypes")->fetchAll();
 
 // Récupération des énigmes
 $riddleCategories = [];
 $riddles = [];
 try {
-    $riddleCategories = $pdo->query("SELECT * FROM riddlecategories")->fetchAll();
-    $riddles = $pdo->query("SELECT r.*, c.Name AS CategoryName FROM riddles r JOIN riddlecategories c ON r.RiddleCategoryId = c.RiddleCategoryId ORDER BY r.RiddleId DESC")->fetchAll();
+    $riddleCategories = $pdo->query("SELECT * FROM RiddleCategories")->fetchAll();
+    $riddles = $pdo->query("SELECT r.*, c.Name AS CategoryName FROM Riddles r JOIN RiddleCategories c ON r.RiddleCategoryId = c.RiddleCategoryId ORDER BY r.RiddleId DESC")->fetchAll();
 } catch (Exception $e) {}
 
 $hasBannedCol = false;
-try { $pdo->query("SELECT IsBanned FROM users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
+try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
 
-$query = "SELECT UserId, Alias, Role, Gold, Silver, Bronze " . ($hasBannedCol ? ", IsBanned" : "") . " FROM users WHERE Role IN ('Player', 'Mage') ORDER BY Alias ASC";
+$query = "SELECT UserId, Alias, Role, Gold, Silver, Bronze " . ($hasBannedCol ? ", IsBanned" : "") . " FROM Users WHERE Role IN ('Player', 'Mage') ORDER BY Alias ASC";
 $players = $pdo->query($query)->fetchAll();
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 

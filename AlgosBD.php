@@ -344,4 +344,3 @@ function get_random_active_riddle($category_id, $difficulty)
 
     return $riddle ?: null;
 }
-?>

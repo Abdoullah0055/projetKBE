@@ -1,5 +1,6 @@
-﻿<?php
-ob_start(); // Prevents "Headers already sent" errors
+<?php
+ob_start();
+
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
