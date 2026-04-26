@@ -84,7 +84,7 @@ function add_to_cart($user_id, $item_id, $quantity)
 
         $item_stmt = $pdo->prepare(
             "SELECT item_id, stock, is_active
-             FROM items
+             FROM Items
              WHERE item_id = :item_id
              FOR UPDATE"
         );
@@ -102,7 +102,7 @@ function add_to_cart($user_id, $item_id, $quantity)
             return false;
         }
 
-        $sql_check = "SELECT quantity FROM cart_items WHERE cart_id = :cart_id AND item_id = :item_id";
+        $sql_check = "SELECT quantity FROM cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
         $stmt = $pdo->prepare($sql_check);
         $stmt->execute([
             ':cart_id' => $cart_id,
@@ -119,7 +119,7 @@ function add_to_cart($user_id, $item_id, $quantity)
         }
 
         if ($existing) {
-            $sql_update = "UPDATE cart_items
+            $sql_update = "UPDATE cart_Items
                           SET quantity = :quantity
                           WHERE cart_id = :cart_id AND item_id = :item_id";
             $stmt = $pdo->prepare($sql_update);
@@ -129,7 +129,7 @@ function add_to_cart($user_id, $item_id, $quantity)
                 ':item_id' => $item_id
             ]);
         } else {
-            $sql_insert = "INSERT INTO cart_items (cart_id, item_id, quantity)
+            $sql_insert = "INSERT INTO cart_Items (cart_id, item_id, quantity)
                           VALUES (:cart_id, :item_id, :quantity)";
             $stmt = $pdo->prepare($sql_insert);
             $stmt->execute([
@@ -157,7 +157,7 @@ function add_item($name, $description, $gold, $silver, $bronze, $amount, $item_t
     $pdo = get_pdo();
 
     try {
-        $sql = "INSERT INTO items
+        $sql = "INSERT INTO Items
                 (name, description, price_gold, price_silver, price_bronze, stock, item_type_id, is_active)
                 VALUES
                 (:name, :description, :gold, :silver, :bronze, :amount, :item_type_id, :is_active)";
@@ -196,7 +196,7 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         }
 
         if ((int)$new_quantity <= 0) {
-            $sql = "DELETE FROM cart_items WHERE cart_id = :cart_id AND item_id = :item_id";
+            $sql = "DELETE FROM cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':cart_id' => $cart_id,
@@ -208,7 +208,7 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
 
         $item_stmt = $pdo->prepare(
             "SELECT item_id, stock, is_active
-             FROM items
+             FROM Items
              WHERE item_id = :item_id
              FOR UPDATE"
         );
@@ -220,7 +220,7 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
             return false;
         }
 
-        $sql = "UPDATE cart_items
+        $sql = "UPDATE cart_Items
                 SET quantity = :quantity
                 WHERE cart_id = :cart_id AND item_id = :item_id";
         $stmt = $pdo->prepare($sql);
@@ -261,7 +261,7 @@ function remove_from_cart($user_id, $item_id)
             return false;
         }
 
-        $sql = "DELETE FROM cart_items WHERE cart_id = :cart_id AND item_id = :item_id";
+        $sql = "DELETE FROM cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':cart_id' => $cart_id,
@@ -295,7 +295,7 @@ function get_active_riddle_by_id($riddle_id)
                 r.reward_gold AS reward_gold,
                 r.reward_silver AS reward_silver,
                 r.reward_bronze AS reward_bronze
-            FROM riddles r
+            FROM Riddles r
             WHERE r.riddle_id = :riddle_id
               AND r.is_active = 1
             LIMIT 1";
@@ -327,7 +327,7 @@ function get_random_active_riddle($category_id, $difficulty)
                 r.reward_gold AS reward_gold,
                 r.reward_silver AS reward_silver,
                 r.reward_bronze AS reward_bronze
-            FROM riddles r
+            FROM Riddles r
             WHERE r.riddle_category_id = :category_id
               AND r.difficulty = :difficulty
               AND r.is_active = 1
