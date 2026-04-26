@@ -359,7 +359,7 @@ include __DIR__ . '/templates/head.php';
                                 <label>Catégorie</label>
                                 <select name="type_id" class="admin-input" required>
                                     <?php foreach ($itemTypes as $type): ?>
-                                        <option value="<?= $type['ItemTypeId'] ?>"><?= htmlspecialchars($type['Name']) ?></option>
+                                        <option value="<?= $type['itemtypeid'] ?>"><?= htmlspecialchars($type['name']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -405,28 +405,28 @@ include __DIR__ . '/templates/head.php';
                             <tbody>
                                 <?php foreach ($items as $it): ?>
                                 <tr>
-                                    <td>#<?= $it['ItemId'] ?></td>
-                                    <td><strong><?= htmlspecialchars($it['Name']) ?></strong><br><small><?= htmlspecialchars($it['TypeName']) ?></small></td>
-                                    <td><?= $it['PriceGold'] ?>/<?= $it['PriceSilver'] ?>/<?= $it['PriceBronze'] ?></td>
-                                    <td style="color: <?= $it['Stock'] > 0 ? '#2ECC71' : '#E74C3C' ?>;"><?= $it['Stock'] ?></td>
-                                    <td><?= $it['IsActive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
+<td>#<?= $it['itemid'] ?></td>
+        <td><strong><?= htmlspecialchars($it['name']) ?></strong><br><small><?= htmlspecialchars($it['typename']) ?></small></td>
+        <td><?= $it['pricegold'] ?>/<?= $it['pricesilver'] ?>/<?= $it['pricebronze'] ?></td>
+        <td style="color: <?= $it['stock'] > 0 ? '#2ECC71' : '#E74C3C' ?>;"><?= $it['stock'] ?></td>
+        <td><?= $it['isactive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
                                     <td>
                                         <button type="button" class="btn-outline-custom" style="padding:5px; border-color:var(--accent); color:var(--accent);" title="Modifier"
-                                                onclick='openEditModal(<?= $it['ItemId'] ?>, <?= json_encode($it['Name'], $jsonFlags) ?>, <?= json_encode($it['Description'], $jsonFlags) ?>, <?= $it['PriceGold'] ?>, <?= $it['PriceSilver'] ?>, <?= $it['PriceBronze'] ?>, <?= $it['Stock'] ?>)'>
+                                                onclick='openEditModal(<?= $it['itemid'] ?>, <?= json_encode($it['name'], $jsonFlags) ?>, <?= json_encode($it['description'], $jsonFlags) ?>, <?= $it['pricegold'] ?>, <?= $it['pricesilver'] ?>, <?= $it['pricebronze'] ?>, <?= $it['stock'] ?>)'>
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         
                                         <form style="display:inline;" method="POST" action="admin.php">
                                             <input type="hidden" name="action" value="toggle_item">
-                                            <input type="hidden" name="item_id" value="<?= $it['ItemId'] ?>">
-                                            <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $it['IsActive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $it['IsActive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $it['IsActive'] ? 'Désactiver' : 'Activer' ?>">
-                                                <i class="fa-solid <?= $it['IsActive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
+<input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
+            <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $it['isactive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $it['isactive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $it['isactive'] ? 'Désactiver' : 'Activer' ?>">
+            <i class="fa-solid <?= $it['isactive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                             </button>
                                         </form>
 
                                         <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('Voulez-vous vraiment détruire définitivement cet objet ?');">
                                             <input type="hidden" name="action" value="delete_item">
-                                            <input type="hidden" name="item_id" value="<?= $it['ItemId'] ?>">
+                                            <input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
                                             <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
                                         </form>
                                     </td>
@@ -459,7 +459,7 @@ include __DIR__ . '/templates/head.php';
                                 <label>Catégorie</label>
                                 <select name="category_id" class="admin-input" required>
                                     <?php foreach ($riddleCategories as $cat): ?>
-                                        <option value="<?= $cat['RiddleCategoryId'] ?>"><?= htmlspecialchars($cat['Name']) ?></option>
+                                        <option value="<?= $cat['riddlecategoryid'] ?>"><?= htmlspecialchars($cat['name']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -509,26 +509,26 @@ include __DIR__ . '/templates/head.php';
                             <tbody>
                                 <?php foreach ($riddles as $r): ?>
                                 <tr>
-                                    <td>#<?= $r['RiddleId'] ?></td>
-                                    <td style="max-width: 250px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($r['QuestionText']) ?>">
-                                        <strong><?= htmlspecialchars($r['QuestionText']) ?></strong><br>
-                                        <small style="color:var(--accent);">Rép : <?= htmlspecialchars($r['AnswerText']) ?></small>
-                                    </td>
-                                    <td><?= htmlspecialchars($r['CategoryName']) ?><br><small><?= $r['Difficulty'] ?></small></td>
-                                    <td><?= $r['RewardGold'] ?> / <?= $r['RewardSilver'] ?> / <?= $r['RewardBronze'] ?></td>
-                                    <td><?= $r['IsActive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
+<td>#<?= $r['riddleid'] ?></td>
+        <td style="max-width: 250px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($r['questiontext']) ?>">
+        <strong><?= htmlspecialchars($r['questiontext']) ?></strong><br>
+        <small style="color:var(--accent);">Rép : <?= htmlspecialchars($r['answertext']) ?></small>
+        </td>
+        <td><?= htmlspecialchars($r['categoryname']) ?><br><small><?= $r['difficulty'] ?></small></td>
+        <td><?= $r['rewardgold'] ?> / <?= $r['rewardsilver'] ?> / <?= $r['rewardbronze'] ?></td>
+        <td><?= $r['isactive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
                                     <td>
                                         <form style="display:inline;" method="POST" action="admin.php">
                                             <input type="hidden" name="action" value="toggle_riddle">
-                                            <input type="hidden" name="riddle_id" value="<?= $r['RiddleId'] ?>">
-                                            <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $r['IsActive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $r['IsActive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $r['IsActive'] ? 'Désactiver' : 'Activer' ?>">
-                                                <i class="fa-solid <?= $r['IsActive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
+<input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
+            <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $r['isactive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $r['isactive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $r['isactive'] ? 'Désactiver' : 'Activer' ?>">
+            <i class="fa-solid <?= $r['isactive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                             </button>
                                         </form>
 
                                         <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('Voulez-vous vraiment supprimer cette énigme ?');">
                                             <input type="hidden" name="action" value="delete_riddle">
-                                            <input type="hidden" name="riddle_id" value="<?= $r['RiddleId'] ?>">
+                                            <input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
                                             <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
                                         </form>
                                     </td>
@@ -550,7 +550,7 @@ include __DIR__ . '/templates/head.php';
                                 <select name="user_id" class="admin-input" required>
                                     <option value="" disabled selected>-- Choisir un joueur --</option>
                                     <?php foreach ($players as $p): ?>
-                                        <option value="<?= $p['UserId'] ?>"><?= htmlspecialchars($p['Alias']) ?></option>
+                                        <option value="<?= $p['userid'] ?>"><?= htmlspecialchars($p['alias']) ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
@@ -587,11 +587,11 @@ include __DIR__ . '/templates/head.php';
                             <tbody>
                                 <?php foreach ($players as $p): ?>
                                 <tr>
-                                    <td>#<?= $p['UserId'] ?></td>
-                                    <td><strong><?= htmlspecialchars($p['Alias']) ?></strong><br><small><?= $p['Role'] ?></small></td>
-                                    <td><span style="color: gold;"><?= $p['Gold'] ?></span> / <span style="color: silver;"><?= $p['Silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['Bronze'] ?></span></td>
-                                    <td>
-                                        <?php if(isset($p['IsBanned']) && $p['IsBanned']): ?>
+<td>#<?= $p['userid'] ?></td>
+        <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
+        <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
+        <td>
+        <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                             <span style="color: #E74C3C; font-weight:bold;">Bloqué</span>
                                         <?php else: ?>
                                             <span style="color: #2ECC71;">Normal</span>
@@ -600,8 +600,8 @@ include __DIR__ . '/templates/head.php';
                                     <td>
                                         <form style="display:inline;" method="POST" action="admin.php">
                                             <input type="hidden" name="action" value="toggle_ban">
-                                            <input type="hidden" name="user_id" value="<?= $p['UserId'] ?>">
-                                            <?php if(isset($p['IsBanned']) && $p['IsBanned']): ?>
+<input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
+        <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                                 <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#2ECC71; color:#2ECC71;" title="Débloquer l'accès"><i class="fa-solid fa-unlock"></i></button>
                                             <?php else: ?>
                                                 <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#E67E22; color:#E67E22;" title="Bloquer la connexion"><i class="fa-solid fa-ban"></i></button>
@@ -610,7 +610,7 @@ include __DIR__ . '/templates/head.php';
 
                                         <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('⚠️ ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?');">
                                             <input type="hidden" name="action" value="delete_user">
-                                            <input type="hidden" name="user_id" value="<?= $p['UserId'] ?>">
+                                            <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
                                             <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
                                         </form>
                                     </td>

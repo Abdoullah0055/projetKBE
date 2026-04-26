@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 ob_start(); // Prevents "Headers already sent" errors
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -71,20 +71,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             $stmt = $pdo->prepare("CALL sp_GetUserByAlias(?)");
             $stmt->execute([$alias]);
-            $foundUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            $foundUser = $stmt->fetch();
             flushProcedureResults($stmt);
 
-            if ($foundUser && password_verify($password, $foundUser['Password'])) {
-                if ((int)($foundUser['IsBanned'] ?? 0) === 1) {
-                    $error = "Ce compte est bloque par un administrateur.";
-                } else {
-                    $_SESSION['user'] = [
-                        'id' => (int)$foundUser['UserId'],
-                        'alias' => $foundUser['Alias'],
-                        'role' => $foundUser['Role'],
-                        'gold' => (int)$foundUser['Gold'],
-                        'silver' => (int)$foundUser['Silver'],
-                        'bronze' => (int)$foundUser['Bronze']
+if ($foundUser && password_verify($password, $foundUser['password'])) {
+            if ((int)($foundUser['isbanned'] ?? 0) === 1) {
+                $error = "Ce compte est bloque par un administrateur.";
+            } else {
+                $_SESSION['user'] = [
+                    'id' => (int)$foundUser['userid'],
+                    'alias' => $foundUser['alias'],
+                    'role' => $foundUser['role'],
+                    'gold' => (int)$foundUser['gold'],
+                    'silver' => (int)$foundUser['silver'],
+                    'bronze' => (int)$foundUser['bronze']
                     ];
                     header("Location: index.php");
                     exit();

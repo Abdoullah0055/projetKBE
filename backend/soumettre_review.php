@@ -101,8 +101,8 @@ try {
         ':item_id' => $itemId,
     ]);
 
-    $ownedRow = $ownedStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$ownedRow || (int)$ownedRow['Quantity'] <= 0) {
+$ownedRow = $ownedStmt->fetch();
+if (!$ownedRow || (int)$ownedRow['quantity'] <= 0) {
         $pdo->rollBack();
         review_response([
             'success' => false,

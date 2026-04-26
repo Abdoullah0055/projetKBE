@@ -155,7 +155,7 @@ function getItemImagePath(string $itemName): ?string
 
 function getItemImagePathForItem(array $item): ?string
 {
-    $imageUrl = trim((string)($item['ImageUrl'] ?? $item['image_url'] ?? $item['imageUrl'] ?? ''));
+    $imageUrl = trim((string)($item['imageurl'] ?? $item['image_url'] ?? $item['imageUrl'] ?? ''));
 
     if ($imageUrl !== '') {
         $type = strtolower(trim((string)($item['type'] ?? $item['item_type'] ?? '')));
@@ -240,7 +240,7 @@ function getItemImagePathForItem(array $item): ?string
         }
     }
 
-    return getItemImagePath((string)($item['nom'] ?? $item['item_name'] ?? $item['Name'] ?? ''));
+    return getItemImagePath((string)($item['nom'] ?? $item['item_name'] ?? $item['name'] ?? ''));
 }
 
 function normalizeRarityValue(string $rarity): string
@@ -356,7 +356,7 @@ function getItemProperties(PDO $pdo, int $itemId, string $type): array
     }
 
     $stmt->execute([$itemId]);
-    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $result = $stmt->fetch();
 
     return $result ?: [];
 }
@@ -376,19 +376,19 @@ function renderItemProperties(array $item, array $properties): string
             $html .= '
                 <div class="detail-prop-box">
                     <span class="detail-prop-label">Dégâts</span>
-                    <span class="detail-prop-value">' . (int)$properties['DamageMin'] . ' - ' . (int)$properties['DamageMax'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Durabilité</span>
-                    <span class="detail-prop-value">' . (int)$properties['Durability'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Niveau requis</span>
-                    <span class="detail-prop-value">' . (int)$properties['RequiredLevel'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Vitesse d\'attaque</span>
-                    <span class="detail-prop-value">' . htmlspecialchars((string)$properties['AttackSpeed']) . '</span>
+<span class="detail-prop-value">' . (int)$properties['damagemin'] . ' - ' . (int)$properties['damagemax'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Durabilité</span>
+            <span class="detail-prop-value">' . (int)$properties['durability'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Niveau requis</span>
+            <span class="detail-prop-value">' . (int)$properties['requiredlevel'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Vitesse d\'attaque</span>
+            <span class="detail-prop-value">' . htmlspecialchars((string)$properties['attackspeed']) . '</span>
                 </div>
             ';
             break;
@@ -397,15 +397,15 @@ function renderItemProperties(array $item, array $properties): string
             $html .= '
                 <div class="detail-prop-box">
                     <span class="detail-prop-label">Défense</span>
-                    <span class="detail-prop-value">' . (int)$properties['Defense'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Durabilité</span>
-                    <span class="detail-prop-value">' . (int)$properties['Durability'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Niveau requis</span>
-                    <span class="detail-prop-value">' . (int)$properties['RequiredLevel'] . '</span>
+<span class="detail-prop-value">' . (int)$properties['defense'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Durabilité</span>
+            <span class="detail-prop-value">' . (int)$properties['durability'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Niveau requis</span>
+            <span class="detail-prop-value">' . (int)$properties['requiredlevel'] . '</span>
                 </div>
             ';
             break;
@@ -414,19 +414,19 @@ function renderItemProperties(array $item, array $properties): string
             $html .= '
                 <div class="detail-prop-box">
                     <span class="detail-prop-label">Effet</span>
-                    <span class="detail-prop-value">' . htmlspecialchars((string)$properties['EffectType']) . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Valeur</span>
-                    <span class="detail-prop-value">' . (int)$properties['EffectValue'] . '</span>
+<span class="detail-prop-value">' . htmlspecialchars((string)$properties['effecttype']) . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Valeur</span>
+            <span class="detail-prop-value">' . (int)$properties['effectvalue'] . '</span>
                 </div>
             ';
 
-            if (isset($properties['DurationSeconds']) && $properties['DurationSeconds'] !== null) {
-                $html .= '
-                    <div class="detail-prop-box">
-                        <span class="detail-prop-label">Durée</span>
-                        <span class="detail-prop-value">' . (int)$properties['DurationSeconds'] . ' sec</span>
+if (isset($properties['durationseconds']) && $properties['durationseconds'] !== null) {
+            $html .= '
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Durée</span>
+            <span class="detail-prop-value">' . (int)$properties['durationseconds'] . ' sec</span>
                     </div>
                 ';
             }
@@ -436,23 +436,23 @@ function renderItemProperties(array $item, array $properties): string
             $html .= '
                 <div class="detail-prop-box">
                     <span class="detail-prop-label">Dégâts magiques</span>
-                    <span class="detail-prop-value">' . (int)$properties['SpellDamage'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Coût en mana</span>
-                    <span class="detail-prop-value">' . (int)$properties['ManaCost'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Élément</span>
-                    <span class="detail-prop-value">' . htmlspecialchars((string)$properties['ElementType']) . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Niveau requis</span>
-                    <span class="detail-prop-value">' . (int)$properties['RequiredLevel'] . '</span>
-                </div>
-                <div class="detail-prop-box">
-                    <span class="detail-prop-label">Recharge</span>
-                    <span class="detail-prop-value">' . (int)$properties['CooldownSeconds'] . ' sec</span>
+<span class="detail-prop-value">' . (int)$properties['spelldamage'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Coût en mana</span>
+            <span class="detail-prop-value">' . (int)$properties['manacost'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Élément</span>
+            <span class="detail-prop-value">' . htmlspecialchars((string)$properties['elementtype']) . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Niveau requis</span>
+            <span class="detail-prop-value">' . (int)$properties['requiredlevel'] . '</span>
+            </div>
+            <div class="detail-prop-box">
+            <span class="detail-prop-label">Recharge</span>
+            <span class="detail-prop-value">' . (int)$properties['cooldownseconds'] . ' sec</span>
                 </div>
             ';
             break;

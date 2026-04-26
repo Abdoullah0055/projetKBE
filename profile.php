@@ -24,7 +24,7 @@ try {
          LIMIT 1"
     );
     $stmt->execute([$userId]);
-    $dbUser = $stmt->fetch(PDO::FETCH_ASSOC);
+    $dbUser = $stmt->fetch();
 
     if (!$dbUser) {
         session_unset();
@@ -33,21 +33,21 @@ try {
         exit();
     }
 
-    $_SESSION['user']['alias'] = $dbUser['Alias'];
-    $_SESSION['user']['role'] = $dbUser['Role'];
-    $_SESSION['user']['gold'] = (int)$dbUser['Gold'];
-    $_SESSION['user']['silver'] = (int)$dbUser['Silver'];
-    $_SESSION['user']['bronze'] = (int)$dbUser['Bronze'];
+$_SESSION['user']['alias'] = $dbUser['alias'];
+        $_SESSION['user']['role'] = $dbUser['role'];
+        $_SESSION['user']['gold'] = (int)$dbUser['gold'];
+        $_SESSION['user']['silver'] = (int)$dbUser['silver'];
+        $_SESSION['user']['bronze'] = (int)$dbUser['bronze'];
 } catch (PDOException $e) {
     $dbUser = [
-        'Alias' => $_SESSION['user']['alias'] ?? '',
-        'FullName' => null,
-        'Email' => null,
-        'AvatarUrl' => null,
-        'Role' => $_SESSION['user']['role'] ?? 'Player',
-        'Gold' => $_SESSION['user']['gold'] ?? 0,
-        'Silver' => $_SESSION['user']['silver'] ?? 0,
-        'Bronze' => $_SESSION['user']['bronze'] ?? 0,
+        'alias' => $_SESSION['user']['alias'] ?? '',
+        'fullname' => null,
+        'email' => null,
+        'avatarurl' => null,
+        'role' => $_SESSION['user']['role'] ?? 'Player',
+        'gold' => $_SESSION['user']['gold'] ?? 0,
+        'silver' => $_SESSION['user']['silver'] ?? 0,
+        'bronze' => $_SESSION['user']['bronze'] ?? 0,
     ];
     $loadError = "Impossible de charger toutes les donnees profil actuellement.";
 }
@@ -55,12 +55,12 @@ try {
 $user = [
     'isConnected' => true,
     'id' => $userId,
-    'alias' => $dbUser['Alias'],
-    'isMage' => (($dbUser['Role'] ?? 'Player') === 'Mage'),
+    'alias' => $dbUser['alias'],
+    'isMage' => (($dbUser['role'] ?? 'Player') === 'Mage'),
     'balance' => [
-        'gold' => (int)($dbUser['Gold'] ?? 0),
-        'silver' => (int)($dbUser['Silver'] ?? 0),
-        'bronze' => (int)($dbUser['Bronze'] ?? 0),
+        'gold' => (int)($dbUser['gold'] ?? 0),
+        'silver' => (int)($dbUser['silver'] ?? 0),
+        'bronze' => (int)($dbUser['bronze'] ?? 0),
     ],
 ];
 
@@ -72,9 +72,9 @@ $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-$avatarUrl = trim((string)($dbUser['AvatarUrl'] ?? ''));
+$avatarUrl = trim((string)($dbUser['avatarurl'] ?? ''));
 $hasAvatar = $avatarUrl !== '';
-$avatarInitial = strtoupper(mb_substr((string)$dbUser['Alias'], 0, 1, 'UTF-8'));
+$avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -124,19 +124,19 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['Alias'], 0, 1, 'UTF-8'));
 
                 <label for="alias">Alias</label>
                 <input id="alias" name="alias" type="text" required minlength="3" maxlength="30"
-                    value="<?= htmlspecialchars((string)($dbUser['Alias'] ?? '')) ?>">
+                    value="<?= htmlspecialchars((string)($dbUser['alias'] ?? '')) ?>">
 
                 <label for="full_name">Nom complet</label>
                 <input id="full_name" name="full_name" type="text" maxlength="80"
-                    value="<?= htmlspecialchars((string)($dbUser['FullName'] ?? '')) ?>" placeholder="Optionnel">
+                    value="<?= htmlspecialchars((string)($dbUser['fullname'] ?? '')) ?>" placeholder="Optionnel">
 
                 <label for="email">Email</label>
                 <input id="email" name="email" type="email" maxlength="190"
-                    value="<?= htmlspecialchars((string)($dbUser['Email'] ?? '')) ?>" placeholder="Optionnel">
+                    value="<?= htmlspecialchars((string)($dbUser['email'] ?? '')) ?>" placeholder="Optionnel">
 
                 <label for="avatar_url">Avatar (URL)</label>
                 <input id="avatar_url" name="avatar_url" type="url" maxlength="255"
-                    value="<?= htmlspecialchars((string)($dbUser['AvatarUrl'] ?? '')) ?>" placeholder="https://...">
+                    value="<?= htmlspecialchars((string)($dbUser['avatarurl'] ?? '')) ?>" placeholder="https://...">
 
                 <h3>Changer le mot de passe</h3>
                 <p class="field-help">Remplissez ces champs uniquement si vous voulez changer votre mot de passe.</p>

@@ -1,7 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../AlgosBD.php';
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 header('Content-Type: application/json');
 
@@ -45,7 +47,7 @@ try {
          FOR UPDATE"
     );
     $userStmt->execute([':userId' => $userId]);
-    $userRow = $userStmt->fetch(PDO::FETCH_ASSOC);
+    $userRow = $userStmt->fetch();
 
     if (!$userRow) {
         fail_checkout($pdo, 'Utilisateur introuvable.', 'session');
@@ -80,7 +82,7 @@ try {
          FOR UPDATE"
     );
     $cartItemsStmt->execute([':cartId' => $cartId]);
-    $cartItems = $cartItemsStmt->fetchAll(PDO::FETCH_ASSOC);
+    $cartItems = $cartItemsStmt->fetchAll();
 
     if (empty($cartItems)) {
         fail_checkout($pdo, 'Votre panier est vide.', 'empty_cart');
@@ -91,9 +93,9 @@ try {
     $totalBronze = 0;
 
     foreach ($cartItems as $item) {
-        $quantity = (int)$item['Quantity'];
-        $stock = (int)$item['Stock'];
-        $isActive = (int)$item['IsActive'] === 1;
+$quantity = (int)$item['quantity'];
+    $stock = (int)$item['stock'];
+    $isActive = (int)$item['isactive'] === 1;
 
         if (!$isActive) {
             fail_checkout($pdo, 'Un article de votre panier n\'est plus disponible.', 'inactive_item');
@@ -103,12 +105,12 @@ try {
             fail_checkout($pdo, 'Stock insuffisant pour finaliser l\'achat.', 'stock_insufficient');
         }
 
-        $totalGold += (int)$item['PriceGold'] * $quantity;
-        $totalSilver += (int)$item['PriceSilver'] * $quantity;
-        $totalBronze += (int)$item['PriceBronze'] * $quantity;
+        $totalGold += (int)$item['pricegold'] * $quantity;
+        $totalSilver += (int)$item['pricesilver'] * $quantity;
+        $totalBronze += (int)$item['pricebronze'] * $quantity;
     }
 
-    if ((int)$userRow['Gold'] < $totalGold || (int)$userRow['Silver'] < $totalSilver || (int)$userRow['Bronze'] < $totalBronze) {
+    if ((int)$userRow['gold'] < $totalGold || (int)$userRow['silver'] < $totalSilver || (int)$userRow['bronze'] < $totalBronze) {
         fail_checkout($pdo, 'Solde insuffisant pour finaliser l\'achat.', 'balance_insufficient');
     }
 
@@ -143,16 +145,16 @@ try {
     );
 
     foreach ($cartItems as $item) {
-        $itemId = (int)$item['ItemId'];
-        $quantity = (int)$item['Quantity'];
+        $itemId = (int)$item['itemid'];
+        $quantity = (int)$item['quantity'];
 
         $orderItemStmt->execute([
             ':orderId' => $orderId,
             ':itemId' => $itemId,
             ':quantity' => $quantity,
-            ':priceGold' => (int)$item['PriceGold'],
-            ':priceSilver' => (int)$item['PriceSilver'],
-            ':priceBronze' => (int)$item['PriceBronze'],
+            ':priceGold' => (int)$item['pricegold'],
+            ':priceSilver' => (int)$item['pricesilver'],
+            ':priceBronze' => (int)$item['pricebronze'],
         ]);
 
         $stockStmt->execute([
@@ -186,9 +188,9 @@ try {
 
     $pdo->commit();
 
-    $_SESSION['user']['gold'] = (int)$userRow['Gold'] - $totalGold;
-    $_SESSION['user']['silver'] = (int)$userRow['Silver'] - $totalSilver;
-    $_SESSION['user']['bronze'] = (int)$userRow['Bronze'] - $totalBronze;
+    $_SESSION['user']['gold'] = (int)$userRow['gold'] - $totalGold;
+    $_SESSION['user']['silver'] = (int)$userRow['silver'] - $totalSilver;
+    $_SESSION['user']['bronze'] = (int)$userRow['bronze'] - $totalBronze;
 
     respond_json([
         'success' => true,

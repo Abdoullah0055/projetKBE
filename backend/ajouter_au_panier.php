@@ -1,7 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../AlgosBD.php';
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $response = ['success' => false, 'message' => 'Une erreur inconnue est survenue.'];
 $isAjaxRequest = is_ajax_request();
