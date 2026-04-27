@@ -534,28 +534,26 @@ main .product-list .item-row.hidden {
         gap: 12px;
     }
 
-    .sidebar-inventory-btn {
-        width: 100%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(25, 133, 161, 0.45);
-        background: rgba(25, 133, 161, 0.18);
-        color: var(--text-light);
-        text-decoration: none;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.7px;
-        transition: 0.2s ease;
-    }
+.sidebar-inventory-btn {
+width: 100%;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+padding: 10px;
+border-radius: 4px;
+border: 1px solid var(--accent);
+background: transparent;
+color: var(--accent);
+text-decoration: none;
+font-weight: bold;
+cursor: pointer;
+transition: 0.2s ease;
+}
 
-    .sidebar-inventory-btn:hover {
-        background: rgba(25, 133, 161, 0.3);
-        border-color: var(--accent);
-    }
+.sidebar-inventory-btn:hover {
+background: rgba(25, 133, 161, 0.1);
+}
 
     aside.collapsed .sidebar-inventory-btn {
         padding: 12px 8px;
