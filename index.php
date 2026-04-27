@@ -535,24 +535,26 @@ main .product-list .item-row.hidden {
     }
 
 .sidebar-inventory-btn {
-width: 100%;
-display: inline-flex;
-align-items: center;
-justify-content: center;
-gap: 8px;
-padding: 10px;
-border-radius: 4px;
-border: 1px solid var(--accent);
-background: transparent;
-color: var(--accent);
-text-decoration: none;
-font-weight: bold;
-cursor: pointer;
-transition: 0.2s ease;
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(25, 133, 161, 0.45);
+    background: rgba(25, 133, 161, 0.18);
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.7px;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
 .sidebar-inventory-btn:hover {
-background: rgba(25, 133, 161, 0.1);
+    background: rgba(25, 133, 161, 0.3);
 }
 
     aside.collapsed .sidebar-inventory-btn {
@@ -796,29 +798,10 @@ document.addEventListener("DOMContentLoaded", function() {
             searchFilter.value = "";
             applyFilters();
         });
-    });
 
-    typeFilter.addEventListener("change", function() {
-        console.log("Type filtre changé:", this.value);
         applyFilters();
-    });
-    
-    searchFilter.addEventListener("input", function() {
-        console.log("Recherche:", this.value);
-        applyFilters();
-    });
-    
-    resetBtn.addEventListener("click", () => {
-        console.log("Reset des filtres");
-        typeFilter.value = "all";
-        searchFilter.value = "";
-        applyFilters();
-    });
 
-// Appliquer les filtres au chargement pour initialiser correctement
-    applyFilters();
-
-    function updateCardsForSidebar() {
+        function updateCardsForSidebar() {
         if (!sidebar || !productList) return;
 
         const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
