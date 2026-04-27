@@ -318,28 +318,28 @@ function get_random_active_riddle($category_id, $difficulty)
     }
 
     $pdo = get_pdo();
+
     $sql = "SELECT
         r.RiddleId AS id,
         r.QuestionText AS question_text,
         r.AnswerText AS answer_text,
         COALESCE(r.HintText, '') AS hint_text,
-r.Difficulty AS difficulty,
-  r.RiddleCategoryId AS category_id,
-  r.RewardGold AS reward_gold,
-  r.RewardSilver AS reward_silver,
-  r.RewardBronze AS reward_bronze
-FROM Riddles r
-WHERE r.RiddleCategoryId = :category_id
-AND r.Difficulty = :difficulty
-AND r.IsActive = 1
-        ORDER BY RAND()
-        LIMIT 1";
+        r.Difficulty AS difficulty,
+        r.RiddleCategoryId AS category_id,
+        r.RewardGold AS reward_gold,
+        r.RewardSilver AS reward_silver,
+        r.RewardBronze AS reward_bronze
+    FROM Riddles r
+    WHERE r.RiddleCategoryId = :category_id
+    AND r.Difficulty = :difficulty
+    AND r.IsActive = 1
+    ORDER BY RAND()
+    LIMIT 1";
 
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':category_id' => $category_id,
-        ':difficulty' => $difficulty,
-    ]);
+    $stmt->bindValue(':category_id', (int)$category_id, PDO::PARAM_INT);
+    $stmt->bindValue(':difficulty', $difficulty, PDO::PARAM_STR);
+    $stmt->execute();
 
     $riddle = $stmt->fetch();
 
