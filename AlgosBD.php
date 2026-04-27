@@ -35,7 +35,7 @@ function get_cart_id($user_id)
 {
     $pdo = get_pdo();
 
-    $sql = "SELECT cart_id FROM carts WHERE user_id = :user_id LIMIT 1";
+    $sql = "SELECT cart_id FROM Carts WHERE user_id = :user_id LIMIT 1";
     $stmt = $pdo->prepare($sql);
     $stmt->execute([':user_id' => $user_id]);
 
@@ -56,7 +56,7 @@ function get_or_create_cart_id($user_id)
     }
 
     try {
-        $sql_insert = "INSERT INTO carts (user_id) VALUES (:user_id)";
+        $sql_insert = "INSERT INTO Carts (user_id) VALUES (:user_id)";
         $stmt = $pdo->prepare($sql_insert);
         $stmt->execute([':user_id' => $user_id]);
 
@@ -83,15 +83,15 @@ function add_to_cart($user_id, $item_id, $quantity)
         $pdo->beginTransaction();
 
         $item_stmt = $pdo->prepare(
-            "SELECT item_id, stock, is_active
-             FROM items
+            "SELECT item_id, stock, IsActive
+             FROM Items
              WHERE item_id = :item_id
              FOR UPDATE"
         );
         $item_stmt->execute([':item_id' => $item_id]);
         $item = $item_stmt->fetch();
 
-        if (!$item || (int)$item['is_active'] !== 1) {
+        if (!$item || (int)$item['IsActive'] !== 1) {
             $pdo->rollBack();
             return false;
         }
@@ -102,7 +102,7 @@ function add_to_cart($user_id, $item_id, $quantity)
             return false;
         }
 
-        $sql_check = "SELECT quantity FROM cart_items WHERE cart_id = :cart_id AND item_id = :item_id";
+        $sql_check = "SELECT quantity FROM Cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
         $stmt = $pdo->prepare($sql_check);
         $stmt->execute([
             ':cart_id' => $cart_id,
@@ -119,7 +119,7 @@ function add_to_cart($user_id, $item_id, $quantity)
         }
 
         if ($existing) {
-            $sql_update = "UPDATE cart_items
+            $sql_update = "UPDATE Cart_Items
                           SET quantity = :quantity
                           WHERE cart_id = :cart_id AND item_id = :item_id";
             $stmt = $pdo->prepare($sql_update);
@@ -129,7 +129,7 @@ function add_to_cart($user_id, $item_id, $quantity)
                 ':item_id' => $item_id
             ]);
         } else {
-            $sql_insert = "INSERT INTO cart_items (cart_id, item_id, quantity)
+            $sql_insert = "INSERT INTO Cart_Items (cart_id, item_id, quantity)
                           VALUES (:cart_id, :item_id, :quantity)";
             $stmt = $pdo->prepare($sql_insert);
             $stmt->execute([
@@ -152,15 +152,15 @@ function add_to_cart($user_id, $item_id, $quantity)
 /**
  * Ajouter un item dans le catalogue.
  */
-function add_item($name, $description, $gold, $silver, $bronze, $amount, $item_type_id, $is_active)
+function add_item($name, $description, $gold, $silver, $bronze, $amount, $item_type_id, $IsActive)
 {
     $pdo = get_pdo();
 
     try {
-        $sql = "INSERT INTO items
-                (name, description, price_gold, price_silver, price_bronze, stock, item_type_id, is_active)
+        $sql = "INSERT INTO Items
+                (name, description, price_gold, price_silver, price_bronze, stock, item_type_id, IsActive)
                 VALUES
-                (:name, :description, :gold, :silver, :bronze, :amount, :item_type_id, :is_active)";
+                (:name, :description, :gold, :silver, :bronze, :amount, :item_type_id, :IsActive)";
 
         $stmt = $pdo->prepare($sql);
         return $stmt->execute([
@@ -171,7 +171,7 @@ function add_item($name, $description, $gold, $silver, $bronze, $amount, $item_t
             ':bronze' => $bronze,
             ':amount' => $amount,
             ':item_type_id' => $item_type_id,
-            ':is_active' => $is_active
+            ':IsActive' => $IsActive
         ]);
     } catch (PDOException $e) {
         return false;
@@ -196,7 +196,7 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         }
 
         if ((int)$new_quantity <= 0) {
-            $sql = "DELETE FROM cart_items WHERE cart_id = :cart_id AND item_id = :item_id";
+            $sql = "DELETE FROM Cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':cart_id' => $cart_id,
@@ -207,20 +207,20 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         }
 
         $item_stmt = $pdo->prepare(
-            "SELECT item_id, stock, is_active
-             FROM items
+            "SELECT item_id, stock, IsActive
+             FROM Items
              WHERE item_id = :item_id
              FOR UPDATE"
         );
         $item_stmt->execute([':item_id' => $item_id]);
         $item = $item_stmt->fetch();
 
-        if (!$item || (int)$item['is_active'] !== 1 || (int)$new_quantity > (int)$item['stock']) {
+        if (!$item || (int)$item['IsActive'] !== 1 || (int)$new_quantity > (int)$item['stock']) {
             $pdo->rollBack();
             return false;
         }
 
-        $sql = "UPDATE cart_items
+        $sql = "UPDATE Cart_Items
                 SET quantity = :quantity
                 WHERE cart_id = :cart_id AND item_id = :item_id";
         $stmt = $pdo->prepare($sql);
@@ -261,7 +261,7 @@ function remove_from_cart($user_id, $item_id)
             return false;
         }
 
-        $sql = "DELETE FROM cart_items WHERE cart_id = :cart_id AND item_id = :item_id";
+        $sql = "DELETE FROM Cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':cart_id' => $cart_id,
@@ -278,31 +278,31 @@ function remove_from_cart($user_id, $item_id)
     }
 }
 
-function get_active_riddle_by_id($riddle_id)
+function get_active_riddle_by_id($RiddleId)
 {
-    if ($riddle_id <= 0) {
+    if ($RiddleId <= 0) {
         return null;
     }
 
     $pdo = get_pdo();
     $sql = "SELECT
-                r.riddle_id AS id,
-                r.question_text AS question_text,
-                r.answer_text AS answer_text,
-                COALESCE(r.hint_text, '') AS hint_text,
-                r.difficulty AS difficulty,
-                r.riddle_category_id AS category_id,
-                r.reward_gold AS reward_gold,
-                r.reward_silver AS reward_silver,
-                r.reward_bronze AS reward_bronze
-            FROM riddles r
-            WHERE r.riddle_id = :riddle_id
-              AND r.is_active = 1
+                r.RiddleId AS id,
+                r.QuestionText AS QuestionText,
+                r.AnswerText AS AnswerText,
+                COALESCE(r.HintText, '') AS HintText,
+                r.Difficulty AS Difficulty,
+                r.RiddleCategoryId AS CategoryId,
+                r.RewardGold AS RewardGold,
+                r.RewardSilver AS RewardSilver,
+                r.RewardBronze AS RewardBronze
+            FROM Riddles r
+            WHERE r.RiddleId = :RiddleId
+              AND r.IsActive = 1
             LIMIT 1";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':riddle_id' => $riddle_id,
+        ':Riddles' => $RiddleId,
     ]);
 
     $riddle = $stmt->fetch();
@@ -310,34 +310,34 @@ function get_active_riddle_by_id($riddle_id)
     return $riddle ?: null;
 }
 
-function get_random_active_riddle($category_id, $difficulty)
+function get_random_active_riddle($CategoryId, $Difficulty)
 {
-    if ($category_id <= 0 || !is_string($difficulty) || $difficulty === '') {
+    if ($CategoryId <= 0 || !is_string($Difficulty) || $Difficulty === '') {
         return null;
     }
 
     $pdo = get_pdo();
     $sql = "SELECT
-                r.riddle_id AS id,
-                r.question_text AS question_text,
-                r.answer_text AS answer_text,
-                COALESCE(r.hint_text, '') AS hint_text,
-                r.difficulty AS difficulty,
-                r.riddle_category_id AS category_id,
-                r.reward_gold AS reward_gold,
-                r.reward_silver AS reward_silver,
-                r.reward_bronze AS reward_bronze
-            FROM riddles r
-            WHERE r.riddle_category_id = :category_id
-              AND r.difficulty = :difficulty
-              AND r.is_active = 1
+                r.RiddleId AS id,
+                r.QuestionText AS QuestionText,
+                r.AnswerText AS AnswerText,
+                COALESCE(r.HintText, '') AS HintText,
+                r.Difficulty AS Difficulty,
+                r.RiddleCategoryId AS CategoryId,
+                r.RewardGold AS RewardGold,
+                r.RewardSilver AS RewardSilver,
+                r.RewardBronze AS RewardBronze
+            FROM Riddles r
+            WHERE r.RiddleCategoryId = :CategoryId
+              AND r.Difficulty = :Difficulty
+              AND r.IsActive = 1
             ORDER BY RAND()
             LIMIT 1";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
-        ':category_id' => $category_id,
-        ':difficulty' => $difficulty,
+        ':C' => $CategoryId,
+        ':Difficulty' => $Difficulty,
     ]);
 
     $riddle = $stmt->fetch();
