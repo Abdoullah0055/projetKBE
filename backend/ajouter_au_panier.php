@@ -8,6 +8,8 @@ if (session_status() === PHP_SESSION_NONE) {
 $response = ['success' => false, 'message' => 'Une erreur inconnue est survenue.'];
 $isAjaxRequest = is_ajax_request();
 
+error_log("[ajouter_au_panier] isAjaxRequest=" . ($isAjaxRequest ? 'true' : 'false') . " X-Requested-With=" . ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? 'missing') . " Accept=" . ($_SERVER['HTTP_ACCEPT'] ?? 'missing'));
+
 if ($isAjaxRequest && isset($_SESSION['alerte'])) {
     unset($_SESSION['alerte']);
 }
@@ -17,11 +19,14 @@ if (!isset($_SESSION['user'])) {
     handle_response($response, "../login.php", $isAjaxRequest);
 }
 
-$userId   = $_SESSION['user']['id'] ?? null;
-$itemId   = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
+$userId = $_SESSION['user']['id'] ?? null;
+$itemId = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
 $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 0;
 
+error_log("[ajouter_au_panier] POST: item_id=$itemId, quantity=$quantity, userId=" . ($userId ?? 'null') . ", SESSION_user=" . json_encode($_SESSION['user'] ?? null));
+
 if (!$userId) {
+    error_log("[ajouter_au_panier] userId manquant dans la session");
     $response['message'] = "Session utilisateur invalide.";
     handle_response($response, "../login.php", $isAjaxRequest);
 }
@@ -32,6 +37,8 @@ if ($itemId <= 0 || $quantity <= 0) {
 }
 
 $success = add_to_cart($userId, $itemId, $quantity);
+
+error_log("[ajouter_au_panier] add_to_cart result: " . ($success ? 'true' : 'false'));
 
 if ($success) {
     $response['success'] = true;
@@ -62,6 +69,17 @@ if ($success) {
 
 handle_response($response, "../details.php?id=$itemId", $isAjaxRequest);
 
+function handle_response(array $data, string $redirectUrl, bool $isAjaxRequest): void
+{
+    if ($isAjaxRequest) {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($data);
+    } else {
+        header("Location: $redirectUrl");
+    }
+    exit();
+}
+
 function is_ajax_request(): bool
 {
     $isXmlHttpRequest = isset($_SERVER['HTTP_X_REQUESTED_WITH'])
@@ -70,16 +88,7 @@ function is_ajax_request(): bool
     $acceptHeader = (string)($_SERVER['HTTP_ACCEPT'] ?? '');
     $wantsJson = strpos($acceptHeader, 'application/json') !== false;
 
-    return $isXmlHttpRequest || $wantsJson;
-}
+    error_log("[is_ajax_request] isXmlHttpRequest=" . var_export($isXmlHttpRequest, true) . " wantsJson=" . var_export($wantsJson, true));
 
-function handle_response(array $data, string $redirectUrl, bool $isAjaxRequest): void
-{
-    if ($isAjaxRequest) {
-        header('Content-Type: application/json');
-        echo json_encode($data);
-    } else {
-        header("Location: $redirectUrl");
-    }
-    exit();
+    return $isXmlHttpRequest || $wantsJson;
 }

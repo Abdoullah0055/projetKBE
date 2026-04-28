@@ -63,7 +63,7 @@ function get_or_create_cart_id($user_id)
 
         return (int)$pdo->lastInsertId();
     } catch (PDOException $e) {
-        // Si doublon (race condition), on relit le panier.
+        error_log("[get_or_create_cart_id] INSERT Carts failed: " . $e->getMessage());
         $cart_id = get_cart_id($user_id);
         return $cart_id !== null ? $cart_id : 0;
     }
@@ -92,13 +92,15 @@ function add_to_cart($user_id, $item_id, $quantity)
         $item_stmt->execute([':item_id' => $item_id]);
         $item = $item_stmt->fetch();
 
-        if (!$item || (int)$item['is_active'] !== 1) {
+        if (!$item || (int)$item['isactive'] != 1) {
+            error_log("[add_to_cart] Item $item_id introuvable ou inactif. item=" . json_encode($item));
             $pdo->rollBack();
             return false;
         }
 
         $cart_id = get_or_create_cart_id($user_id);
         if ($cart_id <= 0) {
+            error_log("[add_to_cart] Impossible de recuperer/creer le panier pour user_id=$user_id. cart_id=$cart_id");
             $pdo->rollBack();
             return false;
         }
@@ -115,6 +117,7 @@ function add_to_cart($user_id, $item_id, $quantity)
         $new_qty = $existing_qty + (int)$quantity;
 
         if ($new_qty > (int)$item['stock']) {
+            error_log("[add_to_cart] Stock insuffisant pour item $item_id. new_qty=$new_qty, stock={$item['stock']}");
             $pdo->rollBack();
             return false;
         }
@@ -143,6 +146,7 @@ function add_to_cart($user_id, $item_id, $quantity)
         $pdo->commit();
         return true;
     } catch (PDOException $e) {
+        error_log("[add_to_cart] PDOException: " . $e->getMessage());
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
@@ -197,18 +201,18 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         }
 
         if ((int)$new_quantity <= 0) {
-        $sql = "DELETE FROM CartItems WHERE CartId = :cart_id AND ItemId = :item_id";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
-            ':cart_id' => $cart_id,
-            ':item_id' => $item_id
-        ]);
-        $pdo->commit();
-        return true;
-    }
+            $sql = "DELETE FROM CartItems WHERE CartId = :cart_id AND ItemId = :item_id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':cart_id' => $cart_id,
+                ':item_id' => $item_id
+            ]);
+            $pdo->commit();
+            return true;
+        }
 
-    $item_stmt = $pdo->prepare(
-"SELECT ItemId, Stock, IsActive
+        $item_stmt = $pdo->prepare(
+            "SELECT ItemId, Stock, IsActive
             FROM Items
             WHERE ItemId = :item_id
             FOR UPDATE"
@@ -216,12 +220,12 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         $item_stmt->execute([':item_id' => $item_id]);
         $item = $item_stmt->fetch();
 
-        if (!$item || (int)$item['is_active'] !== 1 || (int)$new_quantity > (int)$item['stock']) {
+        if (!$item || (int)$item['isactive'] != 1 || (int)$new_quantity > (int)$item['stock']) {
             $pdo->rollBack();
             return false;
         }
 
-$sql = "UPDATE CartItems
+        $sql = "UPDATE CartItems
             SET Quantity = :quantity
             WHERE CartId = :cart_id AND ItemId = :item_id";
         $stmt = $pdo->prepare($sql);
@@ -262,15 +266,15 @@ function remove_from_cart($user_id, $item_id)
             return false;
         }
 
-    $sql = "DELETE FROM CartItems WHERE CartId = :cart_id AND ItemId = :item_id";
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':cart_id' => $cart_id,
-        ':item_id' => $item_id
-    ]);
+        $sql = "DELETE FROM CartItems WHERE CartId = :cart_id AND ItemId = :item_id";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':cart_id' => $cart_id,
+            ':item_id' => $item_id
+        ]);
 
-    $pdo->commit();
-    return $stmt->rowCount() > 0;
+        $pdo->commit();
+        return $stmt->rowCount() > 0;
     } catch (PDOException $e) {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
