@@ -137,6 +137,15 @@ function buildPageUrl(int $targetPage): string
     .wrapper,
     main {
         background: transparent !important;
+        min-height: 0;
+    }
+
+    aside {
+        overflow-y: auto;
+    }
+
+    .sidebar-content {
+        overflow-y: auto;
     }
 
     .catalog-banner {
@@ -535,27 +544,6 @@ function buildPageUrl(int $targetPage): string
             gap: 12px;
         }
 
-.sidebar-inventory-btn {
-    width: 100%;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid var(--accent);
-    background: transparent;
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.sidebar-inventory-btn:hover {
-    background: rgba(25, 133, 161, 0.1);
-}
-
         aside.collapsed .sidebar-inventory-btn {
             padding: 12px 8px;
         }
@@ -632,20 +620,11 @@ function buildPageUrl(int $targetPage): string
             </div>
 
             <div class="sidebar-bottom-actions">
-                <div class="cta-box">
-                    <div class="hide-text">
-                        <p style="margin:0 0 8px 0; font-size:0.9rem;">
-                            <?= $user['isConnected'] ? "Essais énigmes : <b style='color:var(--accent)'>5 / 5</b>" : "Besoin d'or ?" ?>
-                        </p>
-                        <a href="<?= $user['isConnected'] ? 'roadmap.php' : 'login.php' ?>" style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre des énigmes</a>
-                    </div>
-                </div>
-
                 <?php if ($user['isConnected']): ?>
-                    <a href="inventory.php" class="sidebar-inventory-btn" role="button" title="Ouvrir mon inventaire">
-                        <span aria-hidden="true"><i class="fa-solid fa-box-open"></i></span>
-                        <span class="btn-label">Inventaire</span>
-                    </a>
+                    <button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="fa-solid fa-box-open"></i>
+                        <span>Inventaire</span>
+                    </button>
                 <?php endif; ?>
             </div>
         </div>
