@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../AlgosBD.php';
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../includes/session.php';
 
 header('Content-Type: application/json');
 

@@ -3,10 +3,6 @@ require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/profile_utils.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 if (!isset($_SESSION['user']['id'])) {
     header('Location: login.php');
     exit();

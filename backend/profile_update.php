@@ -1,10 +1,7 @@
 <?php
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../includes/profile_utils.php';
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../includes/session.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../profile.php');

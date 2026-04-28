@@ -2,11 +2,7 @@
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// 1. RÃ‰CUPÃ‰RATION DU THÃˆME
+// 1. RÉCUPÉRATION DU THÈME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";

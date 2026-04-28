@@ -2,10 +2,6 @@
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 $pdo = get_pdo();
 
 // 1. PROTECTION DE LA PAGE
