@@ -187,7 +187,7 @@ try {
 $hasBannedCol = false;
 try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
 
-$query = "SELECT UserId, Alias, Role, Gold, Silver, Bronze " . ($hasBannedCol ? ", IsBanned" : "") . " FROM Users WHERE Role IN ('Player', 'Mage') ORDER BY Alias ASC";
+$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
 $players = $pdo->query($query)->fetchAll();
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 
@@ -589,19 +589,21 @@ include __DIR__ . '/templates/head.php';
                         <table class="glass-table">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Alias</th>
-                                    <th>Capital</th>
-                                    <th>Statut</th>
-                                    <th>Actions</th>
+                <th>ID</th>
+                <th>Alias</th>
+                <th>Capital</th>
+                <th>Magie</th>
+                <th>Statut</th>
+                <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($players as $p): ?>
                                 <tr>
 <td>#<?= $p['userid'] ?></td>
-        <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
-        <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
+                <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
+                <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
+                <td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
         <td>
         <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                             <span style="color: #E74C3C; font-weight:bold;">Bloqué</span>

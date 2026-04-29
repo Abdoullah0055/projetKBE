@@ -19,13 +19,20 @@ function redirect_to_enigmes_source(string $source): void
 
 function normalize_random_difficulty(?string $difficulty): ?string
 {
-    $allowedDifficulties = ['Facile', 'Moyenne', 'Difficile'];
+    $valid = ['Facile', 'Moyenne', 'Difficile'];
 
-    if ($difficulty === null) {
-        return null;
+    if ($difficulty === 'random' || $difficulty === null || $difficulty === '') {
+        return $valid[array_rand($valid)];
     }
 
-    return in_array($difficulty, $allowedDifficulties, true) ? $difficulty : null;
+    $lower = strtolower(trim($difficulty));
+    foreach ($valid as $v) {
+        if (strtolower($v) === $lower) {
+            return $v;
+        }
+    }
+
+    return null;
 }
 
 function get_hint_fallback_text(): string

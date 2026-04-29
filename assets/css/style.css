@@ -519,6 +519,58 @@ aside.collapsed .show-icon {
 }
 
 .show-icon {
-  display: none;
+    display: none;
+}
+
+.user-hp-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.hp-icon {
+    font-size: 1rem;
+}
+
+.hp-bar-track {
+    width: 80px;
+    height: 10px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c, #2ecc71);
+    border-radius: 5px;
+    transition: width 0.4s ease;
+}
+
+.hp-value {
+  color: var(--text-light);
+  font-weight: 600;
+  min-width: 45px;
+}
+
+.mage-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+  color: #f1c40f;
+  font-size: 0.85rem;
+  box-shadow: 0 0 8px rgba(142, 68, 173, 0.5);
+  animation: mage-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes mage-glow {
+  from { box-shadow: 0 0 6px rgba(142, 68, 173, 0.4); }
+  to { box-shadow: 0 0 14px rgba(142, 68, 173, 0.7); }
 }
 

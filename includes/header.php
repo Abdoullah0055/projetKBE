@@ -36,10 +36,18 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
             <div class="user-wallet">
                 <span title="Or" style="color:var(--gold)"><?= $user['balance']['gold'] ?> G</span>
                 <span title="Argent" style="color:var(--text-silver)"><?= $user['balance']['silver'] ?> S</span>
-                <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
-            </div>
+		<span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
+	</div>
+	<div class="user-hp-bar">
+		<span class="hp-icon">❤️</span>
+		<div class="hp-bar-track"><div class="hp-bar-fill" style="width:<?= $user['isConnected'] ? round($user['hp'] / $user['max_hp'] * 100) : 100 ?>%"></div></div>
+		<span class="hp-value"><?= $user['hp'] ?>/<?= $user['max_hp'] ?></span>
+	</div>
+<?php if ($user['isMage']): ?>
+		<span class="mage-badge" title="Mage"><i class="fa-solid fa-hat-wizard"></i></span>
+<?php endif; ?>
 
-            <button class="btn-outline-custom" title="Mon profil" onclick="window.location.href='profile.php'">
+		<button class="btn-outline-custom" title="Mon profil" onclick="window.location.href='profile.php'">
                 <i class="fa-solid fa-user-gear"></i>
             </button>
             <?php if ($isAdminUser): ?>
@@ -91,9 +99,17 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
             <div class="user-wallet" style="display: flex; gap: 15px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
                 <span title="Or" style="color:var(--gold)"><?= $user['balance']['gold'] ?> G</span>
                 <span title="Argent" style="color:var(--text-silver)"><?= $user['balance']['silver'] ?> S</span>
-                <span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
-            </div>
-        <?php endif; ?>
+	<span title="Bronze" style="color:#CD7F32"><?= $user['balance']['bronze'] ?> B</span>
+	</div>
+	<div class="user-hp-bar">
+		<span class="hp-icon">❤️</span>
+		<div class="hp-bar-track"><div class="hp-bar-fill" style="width:<?= round($user['hp'] / $user['max_hp'] * 100) ?>%"></div></div>
+		<span class="hp-value"><?= $user['hp'] ?>/<?= $user['max_hp'] ?></span>
+        </div>
+<?php if ($user['isMage']): ?>
+        <span class="mage-badge" title="Mage"><i class="fa-solid fa-hat-wizard"></i></span>
+<?php endif; ?>
+<?php endif; ?>
 
         <!-- Main actions -->
         <div class="mobile-drawer-actions">

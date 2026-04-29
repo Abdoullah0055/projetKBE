@@ -38,7 +38,8 @@ $randomCategories = [
                 <label class="random-visually-hidden" for="random-difficulty">Choisir une difficulte</label>
                 <div class="random-difficulty-select-wrap">
                     <select class="random-difficulty-select" id="random-difficulty" name="difficulty">
-                        <option value="Facile" selected>Facile</option>
+                        <option value="random" selected>Aléatoire</option>
+<option value="Facile">Facile</option>
                         <option value="Moyenne">Moyenne</option>
                         <option value="Difficile">Difficile</option>
                     </select>

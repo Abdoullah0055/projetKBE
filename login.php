@@ -15,6 +15,8 @@ if (isset($_SESSION['user'])) {
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
         'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'hp' => $_SESSION['user']['hp'] ?? 100,
+        'max_hp' => $_SESSION['user']['max_hp'] ?? 100,
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
@@ -26,6 +28,8 @@ if (isset($_SESSION['user'])) {
         'isConnected' => false,
         'alias' => '',
         'isMage' => false,
+        'hp' => 100,
+        'max_hp' => 100,
         'balance' => [
             'gold' => 0,
             'silver' => 0,
@@ -76,14 +80,23 @@ if ($foundUser && password_verify($password, $foundUser['password'])) {
             if ((int)($foundUser['isbanned'] ?? 0) === 1) {
                 $error = "Ce compte est bloque par un administrateur.";
             } else {
-                $_SESSION['user'] = [
-                    'id' => (int)$foundUser['userid'],
-                    'alias' => $foundUser['alias'],
-                    'role' => $foundUser['role'],
-                    'gold' => (int)$foundUser['gold'],
-                    'silver' => (int)$foundUser['silver'],
-                    'bronze' => (int)$foundUser['bronze']
-                    ];
+            $_SESSION['user'] = [
+                'id' => (int)$foundUser['userid'],
+                'alias' => $foundUser['alias'],
+                'role' => $foundUser['role'],
+                'gold' => (int)$foundUser['gold'],
+                'silver' => (int)$foundUser['silver'],
+                'bronze' => (int)$foundUser['bronze']
+            ];
+
+            $_SESSION['user']['hp'] = $foundUser['CurrentHP'] ?? 100;
+            $_SESSION['user']['max_hp'] = $foundUser['MaxHP'] ?? 100;
+
+            if (!isset($foundUser['CurrentHP'])) {
+                $hpData = get_user_hp($_SESSION['user']['id']);
+                $_SESSION['user']['hp'] = $hpData['current'];
+                $_SESSION['user']['max_hp'] = $hpData['max'];
+            }
                     header("Location: index.php");
                     exit();
                 }

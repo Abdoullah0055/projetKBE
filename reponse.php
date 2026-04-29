@@ -4,6 +4,7 @@ $extraStylesheets = ['assets/css/enigmes.css'];
 $bodyClass = 'enigmes-page reponse-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
+require_once __DIR__ . '/AlgosBD.php';
 
 $context = resolve_enigme_request('reponse.php');
 
@@ -59,7 +60,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $result = verify_enigme_choice((int) $context['riddle']['id'], $choiceIndex);
 
-    if (!$result['is_correct']) {
+if (!$result['is_correct']) {
+    record_riddle_attempt($_SESSION['user']['id'], (int)$context['riddle']['id'], $result['chosen_text'] ?? '', false);
+    increment_riddle_stats($_SESSION['user']['id'], false);
+
+    $hp_loss = match($context['riddle']['difficulty']) {
+        'Facile' => 3,
+        'Moyenne' => 6,
+        'Difficile' => 10,
+        default => 3,
+    };
+    deduct_hp($_SESSION['user']['id'], $hp_loss);
+        $hp_data = get_user_hp($_SESSION['user']['id']);
+        $_SESSION['user']['hp'] = $hp_data['current'];
+        $_SESSION['user']['max_hp'] = $hp_data['max'];
+
         set_enigmes_flash_dialogues([
             [
                 'text' => 'Reponse incorrecte, reessaie.',
@@ -73,19 +88,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
         exit;
     } else {
+        $riddleId = (int)$context['riddle']['id'];
+        $chosenText = $result['chosen_text'] ?? '';
+        $isMagic = is_riddle_magic_category($riddleId);
+
+        record_riddle_attempt($_SESSION['user']['id'], $riddleId, $chosenText, true);
+        increment_riddle_stats($_SESSION['user']['id'], true, $isMagic);
+
+        $gold = (int)($context['riddle']['reward_gold'] ?? 0);
+        $silver = (int)($context['riddle']['reward_silver'] ?? 0);
+        $bronze = (int)($context['riddle']['reward_bronze'] ?? 0);
+        credit_user_currency($_SESSION['user']['id'], $gold, $silver, $bronze);
+        $_SESSION['user']['gold'] += $gold;
+        $_SESSION['user']['silver'] += $silver;
+        $_SESSION['user']['bronze'] += $bronze;
+
+        $promotedToMage = check_and_promote_mage($_SESSION['user']['id']);
+        if ($promotedToMage) {
+            $_SESSION['user']['role'] = 'Mage';
+        }
+
         if ($context['source'] === 'roadmap' && $context['roadmap_node_id'] !== null) {
             mark_enigme_completed($context['roadmap_node_id']);
             $rewardLabel = build_reward_label($context['riddle']);
-            set_roadmap_flash_dialogues([
+            $dialogues = [
                 [
                     'text' => 'Houra, jeune vagabond ! Tu as su surmonter le defi. Ta recompense est ' . $rewardLabel . '.',
                     'frame' => 'assets/img/Magicien/houra.png',
                 ],
-            ]);
+            ];
+            if ($promotedToMage) {
+                $dialogues[] = [
+                    'text' => 'Par les anciens ! Tu as resolu 3 quetes de magie... Tu es desormais un MAGE !',
+                    'frame' => 'assets/img/Magicien/houra.png',
+                ];
+            }
+            set_roadmap_flash_dialogues($dialogues);
             header('Location: roadmap.php');
             exit;
         }
 
+        $streakBonus = credit_streak_bonus($_SESSION['user']['id']);
+        if ($streakBonus) {
+            $_SESSION['user']['gold'] += 100;
+        }
+
+        set_enigmes_flash_dialogues([
+            [
+                'text' => 'Bravo ! Ta recompense est ' . build_reward_label($context['riddle']) . '.' . ($streakBonus ? ' Bonus streak : 100 gold !' : ''),
+                'frame' => 'assets/img/Magicien/houra.png',
+            ],
+        ]);
         header('Location: random.php');
         exit;
     }

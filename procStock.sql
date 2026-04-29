@@ -28,8 +28,8 @@ BEGIN
     ) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cet alias est deja utilise.';
     ELSE
-        INSERT INTO Users (Alias, Password, Role, Gold, Silver, Bronze)
-        VALUES (v_alias, p_Password, 'Player', 1000, 1000, 1000);
+        INSERT INTO Users (Alias, Password, Role, Gold, Silver, Bronze, CurrentHP, MaxHP)
+        VALUES (v_alias, p_Password, 'Player', 1000, 1000, 1000, 100, 100);
     END IF;
 END //
 
@@ -42,7 +42,7 @@ BEGIN
 
     SET v_alias = TRIM(CONVERT(p_Alias USING utf8mb4)) COLLATE utf8mb4_unicode_ci;
 
-    SELECT UserId, Alias, Password, Role, Gold, Silver, Bronze
+    SELECT UserId, Alias, Password, Role, Gold, Silver, Bronze, IsBanned, CurrentHP, MaxHP
     FROM Users
     WHERE TRIM(Alias) COLLATE utf8mb4_unicode_ci = v_alias COLLATE utf8mb4_unicode_ci
     LIMIT 1;

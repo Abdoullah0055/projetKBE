@@ -44,8 +44,12 @@ try {
             i.Name AS item_name,
             i.ImageUrl AS ImageUrl,
             i.Description AS item_description,
-            i.PriceGold AS item_price_gold,
-            t.Name AS item_type,
+        i.PriceGold AS item_price_gold,
+        i.PriceSilver AS item_price_silver,
+        i.PriceBronze AS item_price_bronze,
+        i.ItemTypeId AS item_type_id,
+        i.Rarity AS item_rarity,
+        t.Name AS item_type,
             IFNULL(rating_agg.rating, 0) AS rating,
             IFNULL(rating_agg.review_count, 0) AS review_count,
             CASE WHEN user_review.review_id IS NULL THEN 0 ELSE 1 END AS is_rated_by_user
@@ -266,8 +270,18 @@ $title = "L'Arsenal - Inventory";
                                         <span>Statut</span>
                                         <strong class="slot-status <?= $statusClass ?>"><?= $statusLabel ?></strong>
                                     </div>
-                                </div>
-                            </article>
+		</div>
+        <div class="slot-actions">
+        <?php if (strtolower($entry['item_type']) === 'potion' || strtolower($entry['item_type']) === 'magicspell'): ?>
+        <button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>">
+        <i class="fa-solid fa-hand-sparkles"></i> Utiliser
+        </button>
+        <?php endif; ?>
+        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>">
+        <i class="fa-solid fa-coins"></i> Vendre
+        </button>
+        </div>
+	</article>
                         <?php endforeach; ?>
                     </div>
 
@@ -612,5 +626,6 @@ $title = "L'Arsenal - Inventory";
     });
 </script>
 
+<script src="assets/js/inventory.js"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>

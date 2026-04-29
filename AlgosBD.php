@@ -369,3 +369,273 @@ function get_riddle_answer_text(int $riddle_id): ?string
 
     return $result !== false ? (string) $result : null;
 }
+
+function deduct_hp(int $user_id, int $amount): bool
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("UPDATE Users SET CurrentHP = GREATEST(CurrentHP - ?, 0) WHERE UserId = ?");
+    return $stmt->execute([$amount, $user_id]);
+}
+
+function heal_hp(int $user_id, int $amount): int
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("UPDATE Users SET CurrentHP = LEAST(CurrentHP + ?, MaxHP) WHERE UserId = ?");
+    $stmt->execute([$amount, $user_id]);
+    $stmt2 = $pdo->prepare("SELECT CurrentHP FROM Users WHERE UserId = ?");
+    $stmt2->execute([$user_id]);
+    return (int)$stmt2->fetchColumn();
+}
+
+function get_user_hp(int $user_id): array
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("SELECT CurrentHP, MaxHP FROM Users WHERE UserId = ?");
+    $stmt->execute([$user_id]);
+    $row = $stmt->fetch();
+    return $row ? ['current' => (int)$row['currenthp'], 'max' => (int)$row['maxhp']] : ['current' => 100, 'max' => 100];
+}
+
+function credit_user_currency(int $user_id, int $gold, int $silver, int $bronze): bool
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("UPDATE Users SET Gold = Gold + :gold, Silver = Silver + :silver, Bronze = Bronze + :bronze WHERE UserId = :userId");
+    return $stmt->execute(['gold' => $gold, 'silver' => $silver, 'bronze' => $bronze, 'userId' => $user_id]);
+}
+
+function record_riddle_attempt(int $user_id, int $riddle_id, string $given_answer, bool $is_success): void
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("INSERT INTO UserRiddles (UserId, RiddleId, GivenAnswer, IsSuccess) VALUES (:userId, :riddleId, :givenAnswer, :isSuccess)");
+    $stmt->execute([
+        'userId' => $user_id,
+        'riddleId' => $riddle_id,
+        'givenAnswer' => $given_answer,
+        'isSuccess' => $is_success ? 1 : 0
+    ]);
+}
+
+function increment_riddle_stats(int $user_id, bool $is_success, bool $is_magic = false): void
+{
+    $pdo = get_pdo();
+    $exists = $pdo->prepare("SELECT UserId FROM UserRiddleStats WHERE UserId = ?");
+    $exists->execute([$user_id]);
+    if (!$exists->fetch()) {
+        $insert = $pdo->prepare("INSERT INTO UserRiddleStats (UserId, SolvedCount, FailedCount, MagicSolvedCount) VALUES (?, 0, 0, 0)");
+        $insert->execute([$user_id]);
+    }
+
+    if ($is_success) {
+        $sql = "UPDATE UserRiddleStats SET SolvedCount = SolvedCount + 1";
+        if ($is_magic) {
+            $sql .= ", MagicSolvedCount = MagicSolvedCount + 1";
+        }
+        $sql .= " WHERE UserId = ?";
+    } else {
+        $sql = "UPDATE UserRiddleStats SET FailedCount = FailedCount + 1 WHERE UserId = ?";
+    }
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$user_id]);
+}
+
+function check_and_promote_mage(int $user_id): bool
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("SELECT MagicSolvedCount FROM UserRiddleStats WHERE UserId = ?");
+    $stmt->execute([$user_id]);
+    $row = $stmt->fetch();
+    if ($row && (int)$row['magicsolvedcount'] >= 3) {
+        $upd = $pdo->prepare("UPDATE Users SET Role = 'Mage' WHERE UserId = ? AND Role = 'Player'");
+        $upd->execute([$user_id]);
+        return $upd->rowCount() > 0;
+    }
+    return false;
+}
+
+function get_difficult_streak(int $user_id): int
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("
+        SELECT r.Difficulty, ur.IsSuccess
+        FROM UserRiddles ur
+        JOIN Riddles r ON r.RiddleId = ur.RiddleId
+        WHERE ur.UserId = :userId
+        ORDER BY ur.AnsweredAt DESC
+    ");
+    $stmt->execute(['userId' => $user_id]);
+    $streak = 0;
+    while ($row = $stmt->fetch()) {
+        if ($row['difficulty'] === 'Difficile' && (int)$row['issuccess'] === 1) {
+            $streak++;
+        } else {
+            break;
+        }
+    }
+    return $streak;
+}
+
+function credit_streak_bonus(int $user_id): bool
+{
+    $streak = get_difficult_streak($user_id);
+    if ($streak >= 3 && $streak % 3 === 0) {
+        return credit_user_currency($user_id, 100, 0, 0);
+    }
+    return false;
+}
+
+function get_user_riddle_stats(int $user_id): array
+{
+    $pdo = get_pdo();
+    $stats = [
+        'solved_count' => 0,
+        'failed_count' => 0,
+        'magic_solved_count' => 0,
+        'facile_solved' => 0,
+        'facile_total' => 0,
+        'moyenne_solved' => 0,
+        'moyenne_total' => 0,
+        'difficile_solved' => 0,
+        'difficile_total' => 0,
+    ];
+
+    $statsStmt = $pdo->prepare("SELECT SolvedCount, FailedCount, MagicSolvedCount FROM UserRiddleStats WHERE UserId = ?");
+    $statsStmt->execute([$user_id]);
+    $statsRow = $statsStmt->fetch();
+    if ($statsRow) {
+        $stats['solved_count'] = (int)$statsRow['solvedcount'];
+        $stats['failed_count'] = (int)$statsRow['failedcount'];
+        $stats['magic_solved_count'] = (int)$statsRow['magicsolvedcount'];
+    }
+
+    $totalStmt = $pdo->prepare("SELECT Difficulty, COUNT(*) as cnt FROM Riddles WHERE IsActive = 1 GROUP BY Difficulty");
+    $totalStmt->execute();
+    while ($tRow = $totalStmt->fetch()) {
+        $key = strtolower($tRow['difficulty']) . '_total';
+        if (isset($stats[$key])) {
+            $stats[$key] = (int)$tRow['cnt'];
+        }
+    }
+
+    $solvedStmt = $pdo->prepare("
+        SELECT r.Difficulty, COUNT(*) as cnt
+        FROM UserRiddles ur
+        JOIN Riddles r ON r.RiddleId = ur.RiddleId
+        WHERE ur.UserId = ? AND ur.IsSuccess = 1
+        GROUP BY r.Difficulty
+    ");
+    $solvedStmt->execute([$user_id]);
+    while ($sRow = $solvedStmt->fetch()) {
+        $key = strtolower($sRow['difficulty']) . '_solved';
+        if (isset($stats[$key])) {
+            $stats[$key] = (int)$sRow['cnt'];
+        }
+    }
+
+    return $stats;
+}
+
+function is_riddle_magic_category(int $riddle_id): bool
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("SELECT RiddleCategoryId FROM Riddles WHERE RiddleId = ?");
+    $stmt->execute([$riddle_id]);
+    $row = $stmt->fetch();
+    return $row && (int)$row['riddlecategoryid'] === 1;
+}
+
+function calculate_sell_price(int $item_id): array
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("SELECT i.ItemTypeId, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Rarity FROM Items i WHERE i.ItemId = ?");
+    $stmt->execute([$item_id]);
+    $item = $stmt->fetch();
+
+    if (!$item) {
+        return ['gold' => 0, 'silver' => 0, 'bronze' => 0];
+    }
+
+    $priceGold = (int)$item['pricegold'];
+    $priceSilver = (int)$item['pricesilver'];
+    $priceBronze = (int)$item['pricebronze'];
+
+    if ((int)$item['itemtypeid'] === 4) {
+        $rarity = strtolower(trim($item['rarity'] ?? 'commun'));
+        $multiplier = match($rarity) {
+            'commun' => 1.0,
+            'rare' => 0.95,
+            default => 0.90,
+        };
+    } else {
+        $multiplier = 0.60;
+    }
+
+    return [
+        'gold' => (int)floor($priceGold * $multiplier),
+        'silver' => (int)floor($priceSilver * $multiplier),
+        'bronze' => (int)floor($priceBronze * $multiplier),
+    ];
+}
+
+function sell_inventory_item(int $user_id, int $item_id): array
+{
+    $pdo = get_pdo();
+    try {
+        $pdo->beginTransaction();
+
+        $invStmt = $pdo->prepare("SELECT InventoryId, Quantity FROM Inventory WHERE UserId = :userId AND ItemId = :itemId FOR UPDATE");
+        $invStmt->execute(['userId' => $user_id, 'itemId' => $item_id]);
+        $invRow = $invStmt->fetch();
+
+        if (!$invRow) {
+            $pdo->rollBack();
+            return ['success' => false, 'message' => 'Item non trouve dans l\'inventaire'];
+        }
+
+        if ((int)$invRow['quantity'] < 1) {
+            $pdo->rollBack();
+            return ['success' => false, 'message' => 'Quantite insuffisante'];
+        }
+
+        $sellPrice = calculate_sell_price($item_id);
+
+        $userStmt = $pdo->prepare("SELECT Gold, Silver, Bronze FROM Users WHERE UserId = :userId FOR UPDATE");
+        $userStmt->execute(['userId' => $user_id]);
+        $userRow = $userStmt->fetch();
+
+        if ((int)$invRow['quantity'] > 1) {
+            $updStmt = $pdo->prepare("UPDATE Inventory SET Quantity = Quantity - 1 WHERE UserId = :userId AND ItemId = :itemId");
+            $updStmt->execute(['userId' => $user_id, 'itemId' => $item_id]);
+        } else {
+            $delStmt = $pdo->prepare("DELETE FROM Inventory WHERE UserId = :userId AND ItemId = :itemId");
+            $delStmt->execute(['userId' => $user_id, 'itemId' => $item_id]);
+        }
+
+        $stockStmt = $pdo->prepare("UPDATE Items SET Stock = Stock + 1 WHERE ItemId = :itemId");
+        $stockStmt->execute(['itemId' => $item_id]);
+
+        $creditStmt = $pdo->prepare("UPDATE Users SET Gold = Gold + :gold, Silver = Silver + :silver, Bronze = Bronze + :bronze WHERE UserId = :userId");
+        $creditStmt->execute([
+            'gold' => $sellPrice['gold'],
+            'silver' => $sellPrice['silver'],
+            'bronze' => $sellPrice['bronze'],
+            'userId' => $user_id
+        ]);
+
+        $pdo->commit();
+
+        $newGold = (int)$userRow['gold'] + $sellPrice['gold'];
+        $newSilver = (int)$userRow['silver'] + $sellPrice['silver'];
+        $newBronze = (int)$userRow['bronze'] + $sellPrice['bronze'];
+
+        return [
+            'success' => true,
+            'message' => 'Item vendu !',
+            'sale_price' => $sellPrice,
+            'new_balance' => ['gold' => $newGold, 'silver' => $newSilver, 'bronze' => $newBronze],
+            'item_consumed' => ((int)$invRow['quantity'] <= 1)
+        ];
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        return ['success' => false, 'message' => 'Erreur lors de la vente'];
+    }
+}

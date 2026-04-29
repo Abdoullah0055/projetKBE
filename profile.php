@@ -62,6 +62,7 @@ $user = [
 
 $flash = profile_take_flash();
 $csrfToken = profile_csrf_token();
+$riddleStats = get_user_riddle_stats($_SESSION['user']['id']);
 
 $title = "L'Arsenal - Mon Profil";
 $currentTheme = $_COOKIE['theme'] ?? 'light';
@@ -148,9 +149,37 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
 
                 <button type="submit" class="btn-primary">Enregistrer mes modifications</button>
             </form>
-        </section>
+    </section>
 
-        <section class="profile-card danger-card">
+    <section class="profile-stats-section">
+        <h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Facile</span>
+                <span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Moyenne</span>
+                <span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Difficile</span>
+                <span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
+            </div>
+            <div class="stat-card stat-total">
+                <span class="stat-label">Total</span>
+                <span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
+            </div>
+            <?php if ($user['isMage']): ?>
+            <div class="stat-card stat-mage">
+                <span class="stat-label">Statut</span>
+                <span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
+            </div>
+            <?php endif; ?>
+        </div>
+    </section>
+
+    <section class="profile-card danger-card">
             <h2>Actions sensibles</h2>
             <p class="danger-intro">Cette action est irreversible. Une confirmation explicite est obligatoire.</p>
 

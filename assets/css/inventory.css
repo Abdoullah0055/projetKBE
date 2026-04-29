@@ -672,12 +672,70 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-size: 2.2rem;
   }
 
-  .inventory-layout.has-review-panel .pending-reviews-panel {
+.inventory-layout.has-review-panel .pending-reviews-panel {
     position: sticky;
     top: 20px;
-  }
+}
 
-  .inventory-tooltip {
+.inventory-tooltip {
     width: min(320px, calc(100vw - 20px));
-  }
+}
+
+.slot-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.btn-use-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(46, 204, 113, 0.45);
+    background: rgba(46, 204, 113, 0.18);
+    color: #2ecc71;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-use-item:hover {
+    background: rgba(46, 204, 113, 0.3);
+    border-color: rgba(46, 204, 113, 0.7);
+}
+
+.btn-use-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-sell-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(241, 196, 15, 0.45);
+  background: rgba(241, 196, 15, 0.18);
+  color: var(--gold);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.btn-sell-item:hover {
+  background: rgba(241, 196, 15, 0.3);
+  border-color: rgba(241, 196, 15, 0.7);
+}
+
+.btn-sell-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 }

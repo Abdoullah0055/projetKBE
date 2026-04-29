@@ -449,78 +449,9 @@ function buildPageUrl(int $targetPage): string
         padding: 0 12px;
     }
 
-    /* ========== RESPONSIVE - Flexbox uniquement ========== */
+/* ========== RESPONSIVE - moved to responsive.css ========== */
 
-    /* Responsive - ajustements pour petits écrans */
-    @media (max-width: 768px) {
-        :root {
-            --card-base-width: 180px;
-            --card-min-width: 160px;
-            --card-max-width: 200px;
-            --card-height: 250px;
-        }
-
-        main .product-list {
-            gap: 12px;
-            padding: 8px;
-        }
-
-        .item-card-media .item-icon {
-            font-size: 1.9rem;
-        }
-
-        .item-info h3 {
-            font-size: 0.8rem;
-        }
-
-        .item-rarity-pill,
-        .item-stock-pill {
-            font-size: 0.55rem;
-            padding: 2px 6px;
-        }
-    }
-
-    @media (max-width: 480px) {
-        :root {
-            --card-base-width: 160px;
-            --card-min-width: 140px;
-            --card-max-width: 180px;
-            --card-height: 220px;
-        }
-
-        main .product-list {
-            gap: 10px;
-            padding: 6px;
-        }
-
-        .item-card-media .item-icon {
-            font-size: 1.7rem;
-        }
-
-        .item-info h3 {
-            font-size: 0.75rem;
-        }
-
-        .item-price {
-            font-size: 0.8rem;
-        }
-
-        .catalog-pagination {
-            gap: 6px;
-        }
-
-        .filter-input,
-        .filter-select {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: white;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 5px;
-        }
-
-        #no-results-message {
+#no-results-message {
             display: none;
             text-align: center;
             color: var(--accent);
