@@ -8,7 +8,7 @@
     const mageImage = document.getElementById("enigmesMageImage");
     const dialogText = document.getElementById("enigmesDialogText");
     const hintButton = document.getElementById("enigmesHintBtn");
-    const responseInput = document.getElementById("enigmesResponseInput");
+    const choicesContainer = document.getElementById("enigmesChoices");
     const backLink = stage.querySelector(".enigmes-back");
     const backImage = stage.querySelector(".enigmes-back-image");
 
@@ -89,22 +89,21 @@
       stage.classList.add("is-riddle-active", "is-hint-available");
       intro.setAttribute("aria-hidden", "true");
 
-      if (responseInput) {
-        responseInput.disabled = false;
-        responseInput.focus({ preventScroll: true });
-      }
+  if (choicesContainer) {
+    enableChoiceButtons();
+  }
 
-      setHintButtonEnabled(true);
-      syncBackLink();
-    } else {
+  setHintButtonEnabled(true);
+  syncBackLink();
+} else {
       stage.classList.add("is-intro-active");
       setHintButtonEnabled(false);
 
-      if (responseInput) {
-        responseInput.disabled = true;
-      }
+  if (choicesContainer) {
+    disableChoiceButtons();
+  }
 
-      setMageFrame(currentIndex);
+  setMageFrame(currentIndex);
       typeDialogue(mainDialogues[currentIndex], handleSequenceCompletion);
       syncBackLink();
     }
@@ -313,10 +312,9 @@
 
         intro.setAttribute("aria-hidden", "true");
 
-        if (responseInput) {
-          responseInput.disabled = false;
-          responseInput.focus({ preventScroll: true });
-        }
+    if (choicesContainer) {
+      enableChoiceButtons();
+    }
 
         setHintButtonEnabled(true);
 
@@ -359,9 +357,9 @@
       stage.classList.add("is-fogging");
       mageButton.disabled = true;
 
-      if (responseInput) {
-        responseInput.disabled = true;
-      }
+  if (choicesContainer) {
+    disableChoiceButtons();
+  }
 
       window.setTimeout(() => {
         currentIndex = 0;
@@ -382,7 +380,27 @@
       }, fogDuration);
     }
 
-    function syncBackLink() {
+    function enableChoiceButtons() {
+    if (!choicesContainer) {
+      return;
+    }
+    const buttons = choicesContainer.querySelectorAll(".enigmes-choice-btn");
+    buttons.forEach((btn) => {
+      btn.disabled = false;
+    });
+  }
+
+  function disableChoiceButtons() {
+    if (!choicesContainer) {
+      return;
+    }
+    const buttons = choicesContainer.querySelectorAll(".enigmes-choice-btn");
+    buttons.forEach((btn) => {
+      btn.disabled = true;
+    });
+  }
+
+  function syncBackLink() {
       if (!backLink) {
         return;
       }

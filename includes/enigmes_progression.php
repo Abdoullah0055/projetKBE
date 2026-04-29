@@ -1,8 +1,6 @@
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/session.php';
 
 const ENIGMES_SESSION_KEY = 'enigmes_progression';
 const ENIGMES_MOCK_UNLOCKED_ID = 4;
@@ -203,6 +201,7 @@ function mark_enigme_completed(int $enigmeId): void
     }
 }
 
+/** @deprecated Utilisee uniquement pour la validation par texte libre. Le systeme QCM utilise verify_enigme_choice() a la place. */
 function normalize_enigme_answer(string $answer): string
 {
     $answer = trim($answer);

@@ -2,9 +2,6 @@
 require_once 'AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 $pdo = get_pdo();
 
 // 1. RECUPERATION DU THEME
@@ -466,11 +463,16 @@ $rightImages = [
             });
 
             let data = null;
+            let rawText = '';
             try {
-                data = await response.json();
+                rawText = await response.text();
+                data = JSON.parse(rawText);
             } catch (_error) {
+                console.log("[ajouter-panier] Response is not JSON. Raw:", rawText.substring(0, 200));
                 data = null;
             }
+
+            console.log("[ajouter-panier] response.ok:", response.ok, "data:", data);
 
             if (response.ok && data && data.success) {
                 showDetailAlert(data.message || "Objet ajoute au panier.", 'succes');

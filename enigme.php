@@ -22,7 +22,7 @@ if ($flashDialogues !== []) {
             'frame' => 'assets/img/Magicien/mage2.png',
         ],
         [
-            'text' => 'Dans la page de reponse, le bouton abandonner sera a ta portee, mais prends garde : le choisir te fera perdre un essai. Dans le message suivant se trouvera l’enigme a resoudre.',
+            'text' => 'Quatre choix de reponses te seront presentes. Une seule est la bonne. Choisis avec sagesse. Dans le message suivant se trouvera l’enigme a resoudre.',
             'frame' => 'assets/img/Magicien/mage3.png',
         ],
         [

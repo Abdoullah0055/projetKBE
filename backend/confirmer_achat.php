@@ -1,7 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../AlgosBD.php';
+<<<<<<< HEAD
 session_start();
+=======
+require_once __DIR__ . '/../includes/session.php';
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
 
 header('Content-Type: application/json');
 

@@ -62,7 +62,7 @@ function get_or_create_cart_id($user_id)
 
         return (int)$pdo->lastInsertId();
     } catch (PDOException $e) {
-        // Si doublon (race condition), on relit le panier.
+        error_log("[get_or_create_cart_id] INSERT Carts failed: " . $e->getMessage());
         $cart_id = get_cart_id($user_id);
         return $cart_id !== null ? $cart_id : 0;
     }
@@ -91,13 +91,19 @@ function add_to_cart($user_id, $item_id, $quantity)
         $item_stmt->execute([':item_id' => $item_id]);
         $item = $item_stmt->fetch();
 
+<<<<<<< HEAD
         if (!$item || (int)$item['IsActive'] !== 1) {
+=======
+        if (!$item || (int)$item['isactive'] != 1) {
+            error_log("[add_to_cart] Item $item_id introuvable ou inactif. item=" . json_encode($item));
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
             $pdo->rollBack();
             return false;
         }
 
         $cart_id = get_or_create_cart_id($user_id);
         if ($cart_id <= 0) {
+            error_log("[add_to_cart] Impossible de recuperer/creer le panier pour user_id=$user_id. cart_id=$cart_id");
             $pdo->rollBack();
             return false;
         }
@@ -114,6 +120,7 @@ function add_to_cart($user_id, $item_id, $quantity)
         $new_qty = $existing_qty + (int)$quantity;
 
         if ($new_qty > (int)$item['stock']) {
+            error_log("[add_to_cart] Stock insuffisant pour item $item_id. new_qty=$new_qty, stock={$item['stock']}");
             $pdo->rollBack();
             return false;
         }
@@ -142,6 +149,7 @@ function add_to_cart($user_id, $item_id, $quantity)
         $pdo->commit();
         return true;
     } catch (PDOException $e) {
+        error_log("[add_to_cart] PDOException: " . $e->getMessage());
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
@@ -196,7 +204,11 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         }
 
         if ((int)$new_quantity <= 0) {
+<<<<<<< HEAD
             $sql = "DELETE FROM Cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
+=======
+            $sql = "DELETE FROM CartItems WHERE CartId = :cart_id AND ItemId = :item_id";
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':cart_id' => $cart_id,
@@ -207,22 +219,39 @@ function modify_item_quantity_cart($user_id, $item_id, $new_quantity)
         }
 
         $item_stmt = $pdo->prepare(
+<<<<<<< HEAD
             "SELECT item_id, stock, IsActive
              FROM Items
              WHERE item_id = :item_id
              FOR UPDATE"
+=======
+            "SELECT ItemId, Stock, IsActive
+            FROM Items
+            WHERE ItemId = :item_id
+            FOR UPDATE"
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
         );
         $item_stmt->execute([':item_id' => $item_id]);
         $item = $item_stmt->fetch();
 
+<<<<<<< HEAD
         if (!$item || (int)$item['IsActive'] !== 1 || (int)$new_quantity > (int)$item['stock']) {
+=======
+        if (!$item || (int)$item['isactive'] != 1 || (int)$new_quantity > (int)$item['stock']) {
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
             $pdo->rollBack();
             return false;
         }
 
+<<<<<<< HEAD
         $sql = "UPDATE Cart_Items
                 SET quantity = :quantity
                 WHERE cart_id = :cart_id AND item_id = :item_id";
+=======
+        $sql = "UPDATE CartItems
+            SET Quantity = :quantity
+            WHERE CartId = :cart_id AND ItemId = :item_id";
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':quantity' => (int)$new_quantity,
@@ -261,7 +290,11 @@ function remove_from_cart($user_id, $item_id)
             return false;
         }
 
+<<<<<<< HEAD
         $sql = "DELETE FROM Cart_Items WHERE cart_id = :cart_id AND item_id = :item_id";
+=======
+        $sql = "DELETE FROM CartItems WHERE CartId = :cart_id AND ItemId = :item_id";
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':cart_id' => $cart_id,
@@ -285,6 +318,7 @@ function get_active_riddle_by_id($RiddleId)
     }
 
     $pdo = get_pdo();
+<<<<<<< HEAD
     $sql = "SELECT
                 r.RiddleId AS id,
                 r.QuestionText AS QuestionText,
@@ -299,6 +333,24 @@ function get_active_riddle_by_id($RiddleId)
             WHERE r.RiddleId = :RiddleId
               AND r.IsActive = 1
             LIMIT 1";
+=======
+ $sql = "SELECT
+ r.RiddleId AS id,
+ r.QuestionText AS question_text,
+ COALESCE(r.HintText, '') AS hint_text,
+ r.WrongAnswer1 AS wrong_answer1,
+ r.WrongAnswer2 AS wrong_answer2,
+ r.WrongAnswer3 AS wrong_answer3,
+ r.Difficulty AS difficulty,
+ r.RiddleCategoryId AS category_id,
+ r.RewardGold AS reward_gold,
+ r.RewardSilver AS reward_silver,
+ r.RewardBronze AS reward_bronze
+ FROM Riddles r
+ WHERE r.RiddleId = :riddle_id
+ AND r.IsActive = 1
+ LIMIT 1";
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -317,6 +369,7 @@ function get_random_active_riddle($CategoryId, $Difficulty)
     }
 
     $pdo = get_pdo();
+<<<<<<< HEAD
     $sql = "SELECT
                 r.RiddleId AS id,
                 r.QuestionText AS QuestionText,
@@ -333,6 +386,27 @@ function get_random_active_riddle($CategoryId, $Difficulty)
               AND r.IsActive = 1
             ORDER BY RAND()
             LIMIT 1";
+=======
+
+ $sql = "SELECT
+ r.RiddleId AS id,
+ r.QuestionText AS question_text,
+ COALESCE(r.HintText, '') AS hint_text,
+ r.WrongAnswer1 AS wrong_answer1,
+ r.WrongAnswer2 AS wrong_answer2,
+ r.WrongAnswer3 AS wrong_answer3,
+ r.Difficulty AS difficulty,
+ r.RiddleCategoryId AS category_id,
+ r.RewardGold AS reward_gold,
+ r.RewardSilver AS reward_silver,
+ r.RewardBronze AS reward_bronze
+ FROM Riddles r
+ WHERE r.RiddleCategoryId = :category_id
+ AND r.Difficulty = :difficulty
+ AND r.IsActive = 1
+ ORDER BY RAND()
+ LIMIT 1";
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
@@ -343,4 +417,20 @@ function get_random_active_riddle($CategoryId, $Difficulty)
     $riddle = $stmt->fetch();
 
     return $riddle ?: null;
+}
+
+function get_riddle_answer_text(int $riddle_id): ?string
+{
+    if ($riddle_id <= 0) {
+        return null;
+    }
+
+    $pdo = get_pdo();
+    $sql = "SELECT r.AnswerText FROM Riddles r WHERE r.RiddleId = :riddle_id AND r.IsActive = 1 LIMIT 1";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([':riddle_id' => $riddle_id]);
+
+    $result = $stmt->fetchColumn();
+
+    return $result !== false ? (string) $result : null;
 }

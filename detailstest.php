@@ -5,9 +5,6 @@ ob_start();
 require_once 'AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 $pdo = get_pdo();
 
 // 1. RECUPERATION DU THEME

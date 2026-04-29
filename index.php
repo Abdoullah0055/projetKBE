@@ -2,10 +2,6 @@
 require_once __DIR__ . '/config/config.php';
 require_once 'AlgosBD.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 $pdo = get_pdo();
 
 // 1. GESTION DE LA SESSION
@@ -137,6 +133,15 @@ function buildPageUrl(int $targetPage): string
     .wrapper,
     main {
         background: transparent !important;
+        min-height: 0;
+    }
+
+    aside {
+        overflow-y: auto;
+    }
+
+    .sidebar-content {
+        overflow-y: auto;
     }
 
     .catalog-banner {
@@ -150,41 +155,36 @@ function buildPageUrl(int $targetPage): string
 
     .product-list {
         display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
         gap: 14px !important;
     }
 
-    .product-list .item-row {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: stretch;
-        position: relative;
-        isolation: isolate;
-        width: 100%;
-        aspect-ratio: 4 / 5; /* 👈 carré propre */
-        max-width: 240px;   /* 👈 limite taille */
-        margin: 0 auto;     /* 👈 centre dans la colonne */
-        padding: 12px;
-        overflow: hidden;
-    }
-
-/* Classe pour cacher les items filtrés */
-main .product-list .item-row.hidden {
-    display: none !important;
+.product-list .item-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    min-height: 260px;
+    padding: 12px;
 }
 
-.product-list .item-row::before {
+    /* Classe pour cacher les items filtrés */
+    main .product-list .item-row.hidden {
+        display: none !important;
+    }
+
+    .product-list .item-row::before {
         content: "";
         position: absolute;
         inset: 0;
         border-radius: inherit;
-        background: linear-gradient(
-            135deg,
-            var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%,
-            var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%,
-            rgba(0, 0, 0, 0) 88%
-        );
+        background: linear-gradient(135deg,
+                var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%,
+                var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%,
+                rgba(0, 0, 0, 0) 88%);
         pointer-events: none;
         z-index: -1;
     }
@@ -237,7 +237,10 @@ main .product-list .item-row.hidden {
     }
 
     @keyframes mythic-sheen {
-        0%, 76%, 100% {
+
+        0%,
+        76%,
+        100% {
             opacity: 0;
             transform: translateX(0) rotate(8deg);
         }
@@ -441,147 +444,114 @@ main .product-list .item-row.hidden {
         color: var(--text-silver);
     }
 
-.catalog-pagination .page-nav {
-    min-width: auto;
-    padding: 0 12px;
+    .catalog-pagination .page-nav {
+        min-width: auto;
+        padding: 0 12px;
+    }
+
+    /* ========== RESPONSIVE - Flexbox uniquement ========== */
+
+    /* Responsive - ajustements pour petits écrans */
+    @media (max-width: 768px) {
+        :root {
+            --card-base-width: 180px;
+            --card-min-width: 160px;
+            --card-max-width: 200px;
+            --card-height: 250px;
+        }
+
+        main .product-list {
+            gap: 12px;
+            padding: 8px;
+        }
+
+        .item-card-media .item-icon {
+            font-size: 1.9rem;
+        }
+
+        .item-info h3 {
+            font-size: 0.8rem;
+        }
+
+        .item-rarity-pill,
+        .item-stock-pill {
+            font-size: 0.55rem;
+            padding: 2px 6px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        :root {
+            --card-base-width: 160px;
+            --card-min-width: 140px;
+            --card-max-width: 180px;
+            --card-height: 220px;
+        }
+
+        main .product-list {
+            gap: 10px;
+            padding: 6px;
+        }
+
+        .item-card-media .item-icon {
+            font-size: 1.7rem;
+        }
+
+        .item-info h3 {
+            font-size: 0.75rem;
+        }
+
+        .item-price {
+            font-size: 0.8rem;
+        }
+
+        .catalog-pagination {
+            gap: 6px;
+        }
+
+        .filter-input,
+        .filter-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        #no-results-message {
+            display: none;
+            text-align: center;
+            color: var(--accent);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .sidebar-bottom-actions {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+.sidebar-inventory-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
-/* ========== RESPONSIVE - Flexbox uniquement ========== */
-
-/* Responsive - ajustements pour petits écrans */
-@media (max-width: 768px) {
-    :root {
-        --card-base-width: 180px;
-        --card-min-width: 160px;
-        --card-max-width: 200px;
-        --card-height: 250px;
-    }
-    
-    main .product-list {
-        gap: 12px;
-        padding: 8px;
-    }
-    
-    .item-card-media .item-icon {
-        font-size: 1.9rem;
-    }
-    
-    .item-info h3 {
-        font-size: 0.8rem;
-    }
-    
-    .item-rarity-pill,
-    .item-stock-pill {
-        font-size: 0.55rem;
-        padding: 2px 6px;
-    }
+aside.collapsed .sidebar-inventory-btn {
+    padding: 12px 8px;
+    overflow: hidden;
 }
 
-@media (max-width: 480px) {
-    :root {
-        --card-base-width: 160px;
-        --card-min-width: 140px;
-        --card-max-width: 180px;
-        --card-height: 220px;
-    }
-    
-    main .product-list {
-        gap: 10px;
-        padding: 6px;
-    }
-    
-    .item-card-media .item-icon {
-        font-size: 1.7rem;
-    }
-    
-    .item-info h3 {
-        font-size: 0.75rem;
-    }
-    
-    .item-price {
-        font-size: 0.8rem;
-    }
-    
-    .catalog-pagination {
-        gap: 6px;
-    }
-
-    .filter-input,
-    .filter-select {
-        width: 100%;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: white;
-        padding: 10px;
-        border-radius: 4px;
-        margin-top: 5px;
-    }
-
-    #no-results-message {
-        display: none;
-        text-align: center;
-        color: var(--accent);
-        padding: 20px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
-        margin: 20px 0;
-    }
-
-    .sidebar-bottom-actions {
-        margin-top: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-    .sidebar-inventory-btn {
-        width: 100%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 12px;
-        border-radius: 6px;
-        border: 1px solid rgba(25, 133, 161, 0.45);
-        background: rgba(25, 133, 161, 0.18);
-        color: var(--text-light);
-        text-decoration: none;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 0.7px;
-        transition: 0.2s ease;
-    }
-
-    .sidebar-inventory-btn:hover {
-        background: rgba(25, 133, 161, 0.3);
-        border-color: var(--accent);
-    }
-
-    aside.collapsed .sidebar-inventory-btn {
-        padding: 12px 8px;
-    }
-
-    aside.collapsed .sidebar-inventory-btn .btn-label {
-        display: none;
-    }
-
-    @media (max-width: 1200px) {
-        .product-list {
-            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-        }
-    }
-
-    @media (max-width: 800px) {
-        .product-list {
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        }
-    }
-
-    @media (max-width: 500px) {
-        .product-list {
-            grid-template-columns: 1fr !important;
-        }
-    }
+aside.collapsed .sidebar-inventory-btn .btn-label {
+    display: none !important;
+}
 </style>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -622,7 +592,7 @@ main .product-list .item-row.hidden {
                     </button>
                 </form>
 
-                <a href="roadmap.php" class="enigme-door-button" aria-label="Acceder aux enigmes">
+                <a href="<?= $user['isConnected'] ? 'roadmap.php' : 'login.php' ?>" class="enigme-door-button" aria-label="Acceder aux enigmes">
                     <span class="enigme-door-button__frame">
                         <img
                             src="assets/img/doors/opened.png"
@@ -633,20 +603,11 @@ main .product-list .item-row.hidden {
             </div>
 
             <div class="sidebar-bottom-actions">
-                <div class="cta-box">
-                    <div class="hide-text">
-                        <p style="margin:0 0 8px 0; font-size:0.9rem;">
-                            <?= $user['isConnected'] ? "Essais énigmes : <b style='color:var(--accent)'>5 / 5</b>" : "Besoin d'or ?" ?>
-                        </p>
-                        <a href="roadmap.php" style="color:var(--accent); text-decoration:none; font-weight:bold; font-size:0.85rem;">Résoudre des énigmes</a>
-                    </div>
-                </div>
-
                 <?php if ($user['isConnected']): ?>
-                    <a href="inventory.php" class="sidebar-inventory-btn" title="Ouvrir mon inventaire">
-                        <span aria-hidden="true"><i class="fa-solid fa-box-open"></i></span>
-                        <span class="btn-label">Inventaire</span>
-                    </a>
+<button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+<i class="fa-solid fa-box-open"></i>
+<span class="btn-label">Inventaire</span>
+</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -754,17 +715,17 @@ main .product-list .item-row.hidden {
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const typeFilter = document.getElementById("type-filter");
-    const searchFilter = document.getElementById("search-filter");
-    const resetBtn = document.getElementById("reset-filters");
-    const items = document.querySelectorAll(".item-row");
-    const noResults = document.getElementById("no-results-message");
-    const pagination = document.getElementById("catalog-pagination");
-    
-    // --- GESTION RESPONSIVE DU SIDEBAR ---
-    const sidebar = document.getElementById('sidebar');
-    const productList = document.getElementById('product-list');
+    document.addEventListener("DOMContentLoaded", function() {
+        const typeFilter = document.getElementById("type-filter");
+        const searchFilter = document.getElementById("search-filter");
+        const resetBtn = document.getElementById("reset-filters");
+        const items = document.querySelectorAll(".item-row");
+        const noResults = document.getElementById("no-results-message");
+        const pagination = document.getElementById("catalog-pagination");
+
+        // --- GESTION RESPONSIVE DU SIDEBAR ---
+        const sidebar = document.getElementById('sidebar');
+        const productList = document.getElementById('product-list');
 
         function applyFilters() {
             const selectedType = typeFilter.value;
@@ -798,80 +759,8 @@ document.addEventListener("DOMContentLoaded", function() {
             searchFilter.value = "";
             applyFilters();
         });
-    });
 
-    typeFilter.addEventListener("change", function() {
-        console.log("Type filtre changé:", this.value);
-        applyFilters();
-    });
-    
-    searchFilter.addEventListener("input", function() {
-        console.log("Recherche:", this.value);
-        applyFilters();
-    });
-    
-    resetBtn.addEventListener("click", () => {
-        console.log("Reset des filtres");
-        typeFilter.value = "all";
-        searchFilter.value = "";
-        applyFilters();
-    });
-
-// Appliquer les filtres au chargement pour initialiser correctement
-    applyFilters();
-
-    function updateCardsForSidebar() {
-        if (!sidebar || !productList) return;
-
-        const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
-        const mainWidth = window.innerWidth - sidebarWidth - 40;
-        const gap = parseFloat(getComputedStyle(productList).gap) || 16;
-        const cardMinWidth = 180;
-        const cardMaxWidth = 240;
-
-        // Calculer l'espace disponible
-        const availableSpace = mainWidth;
-        const maxCardsPerRow = Math.floor((availableSpace + gap) / (cardMinWidth + gap));
-        const cardsPerRow = Math.min(maxCardsPerRow, 7);
-
-        // Calculer la taille des cartes
-        const totalGapSpace = (cardsPerRow - 1) * gap;
-        const cardWidth = Math.min(
-            Math.max(cardMinWidth, (availableSpace - totalGapSpace) / cardsPerRow),
-            cardMaxWidth
-        );
-
-        // Appliquer UNIQUEMENT aux cartes visibles
-        document.querySelectorAll('.item-row').forEach(card => {
-            if (card.style.display !== 'none') {
-                card.style.flex = `0 0 ${cardWidth}px`;
-                card.style.maxWidth = `${cardWidth}px`;
-            }
-        });
-    }
-    
-    // Observer les changements du sidebar
-    if (sidebar) {
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.attributeName === 'class') {
-                    // Attendre la fin de la transition
-                    setTimeout(updateCardsForSidebar, 300);
-                }
-            });
-        });
-        observer.observe(sidebar, { attributes: true, attributeFilter: ['class'] });
-    }
-    
-    // Mettre à jour sur redimensionnement
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(updateCardsForSidebar, 100);
-    });
-    
-    // Initialiser
-    setTimeout(updateCardsForSidebar, 100);
+  applyFilters();
 });
 </script>
 

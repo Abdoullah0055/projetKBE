@@ -7,10 +7,6 @@ if (ob_get_level() === 0) {
     ob_start();
 }
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 function is_ajax_request(): bool
 {
     $isXmlHttpRequest = isset($_SERVER['HTTP_X_REQUESTED_WITH'])

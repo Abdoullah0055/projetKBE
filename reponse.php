@@ -6,7 +6,6 @@ $bodyClass = 'enigmes-page reponse-page';
 require_once __DIR__ . '/includes/enigmes_request.php';
 
 $context = resolve_enigme_request('reponse.php');
-$responseValue = '';
 
 function build_reward_label(array $riddle): string
 {
@@ -41,12 +40,12 @@ if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $responseValue = trim((string) ($_POST['reponse_enigme'] ?? ''));
+    $choiceIndex = filter_input(INPUT_POST, 'choice_index', FILTER_VALIDATE_INT);
 
-    if ($responseValue === '') {
+    if ($choiceIndex === false || $choiceIndex === null || $choiceIndex < 0 || $choiceIndex > 3) {
         set_enigmes_flash_dialogues([
             [
-                'text' => 'Entrez une reponse avant de valider cette enigme.',
+                'text' => 'Choisis une reponse parmi les quatre propositions.',
                 'frame' => 'assets/img/Magicien/furieux.png',
             ],
             [
@@ -56,7 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
         exit;
-    } elseif (normalize_enigme_answer($responseValue) !== normalize_enigme_answer($context['riddle']['answer_text'])) {
+    }
+
+    $result = verify_enigme_choice((int) $context['riddle']['id'], $choiceIndex);
+
+    if (!$result['is_correct']) {
         set_enigmes_flash_dialogues([
             [
                 'text' => 'Reponse incorrecte, reessaie.',
@@ -161,27 +164,15 @@ $abandonUrl = build_enigmes_page_url('reponse.php', array_merge($context['query'
             </div>
         </div>
 
-        <div class="enigmes-orb" id="enigmesRiddleArea">
-            <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
-                <input
-                    id="enigmesResponseInput"
-                    type="text"
-                    name="reponse_enigme"
-                    placeholder=""
-                    aria-label="Reponse a l enigme"
-                    value="<?= htmlspecialchars($responseValue, ENT_QUOTES, 'UTF-8') ?>"
-                    autocomplete="off">
-
-                <div class="enigmes-form-actions">
-                    <button class="enigmes-submit-btn" type="submit" aria-label="Valider la reponse">
-                        <img
-                            class="enigmes-submit-image"
-                            src="assets/img/Magicien/valider.png"
-                            alt="">
-                    </button>
+                <div class="enigmes-orb" id="enigmesRiddleArea">
+                    <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
+                        <div class="enigmes-choices" id="enigmesChoices">
+                            <?php foreach ($context['choices'] as $i => $choice): ?>
+                                <button type="submit" name="choice_index" value="<?= $i ?>" class="enigmes-choice-btn"><?= htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') ?></button>
+                            <?php endforeach; ?>
+                        </div>
+                    </form>
                 </div>
-            </form>
-        </div>
     </section>
 </main>
 

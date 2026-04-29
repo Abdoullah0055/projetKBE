@@ -2,10 +2,6 @@
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'Admin') {
     header("Location: index.php");
     exit();
@@ -122,6 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 
     // --- GESTION DES ÉNIGMES (QUÊTES) ---
+<<<<<<< HEAD
     elseif ($_POST['action'] === 'add_riddle') {
         $question = trim($_POST['question']);
         $answer = trim($_POST['answer']);
@@ -131,15 +128,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $rewardGold = (int)$_POST['reward_gold'];
         $rewardSilver = (int)$_POST['reward_silver'];
         $rewardBronze = (int)$_POST['reward_bronze'];
+=======
 
-        try {
-            $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)");
-            $stmt->execute([$question, $answer, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze]);
-            $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
-        } catch (Exception $e) {
-            $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
-        }
+    // 5. Ajouter Énigme
+elseif ($_POST['action'] === 'add_riddle') {
+    $question = trim($_POST['question']);
+    $answer = trim($_POST['answer']);
+    $wrongAnswer1 = trim($_POST['wrong_answer1']);
+    $wrongAnswer2 = trim($_POST['wrong_answer2']);
+    $wrongAnswer3 = trim($_POST['wrong_answer3']);
+    $hint = trim($_POST['hint']) !== '' ? trim($_POST['hint']) : null;
+    $difficulty = $_POST['difficulty'];
+    $categoryId = (int)$_POST['category_id'];
+    $rewardGold = (int)$_POST['reward_gold'];
+    $rewardSilver = (int)$_POST['reward_silver'];
+    $rewardBronze = (int)$_POST['reward_bronze'];
+>>>>>>> ffeb3514bac80d7341dced7515461cff6a741bfd
+
+    try {
+        $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, WrongAnswer1, WrongAnswer2, WrongAnswer3, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
+        $stmt->execute([$question, $answer, $wrongAnswer1, $wrongAnswer2, $wrongAnswer3, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze]);
+        $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
+    } catch (Exception $e) {
+        $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
     }
+}
 
     elseif ($_POST['action'] === 'toggle_riddle') {
         $riddleId = (int)$_POST['riddle_id'];
@@ -407,14 +420,26 @@ include __DIR__ . '/templates/head.php';
                             <textarea name="question" class="admin-input" rows="2" required></textarea>
                         </div>
                         <div class="admin-form-grid">
-                            <div class="admin-form-group">
-                                <label>Réponse attendue</label>
-                                <input type="text" name="answer" class="admin-input" required>
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Indice (Optionnel)</label>
-                                <input type="text" name="hint" class="admin-input">
-                            </div>
+    <div class="admin-form-group">
+        <label>Réponse attendue</label>
+        <input type="text" name="answer" class="admin-input" required>
+    </div>
+    <div class="admin-form-group">
+        <label>Mauvaise réponse 1</label>
+        <input type="text" name="wrong_answer1" class="admin-input" required>
+    </div>
+    <div class="admin-form-group">
+        <label>Mauvaise réponse 2</label>
+        <input type="text" name="wrong_answer2" class="admin-input" required>
+    </div>
+    <div class="admin-form-group">
+        <label>Mauvaise réponse 3</label>
+        <input type="text" name="wrong_answer3" class="admin-input" required>
+    </div>
+    <div class="admin-form-group">
+        <label>Indice (Optionnel)</label>
+        <input type="text" name="hint" class="admin-input">
+    </div>
                             <div class="admin-form-group">
                                 <label>Catégorie</label>
                                 <select name="category_id" class="admin-input" required>
@@ -472,7 +497,8 @@ include __DIR__ . '/templates/head.php';
 <td>#<?= $r['riddleid'] ?></td>
         <td style="max-width: 250px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($r['questiontext']) ?>">
         <strong><?= htmlspecialchars($r['questiontext']) ?></strong><br>
-        <small style="color:var(--accent);">Rép : <?= htmlspecialchars($r['answertext']) ?></small>
+        <small style="color:#2ECC71;">Rép : <?= htmlspecialchars($r['answertext']) ?></small><br>
+    <small style="color:#E67E22;">Faux : <?= htmlspecialchars($r['wronganswer1']) ?> / <?= htmlspecialchars($r['wronganswer2']) ?> / <?= htmlspecialchars($r['wronganswer3']) ?></small>
         </td>
         <td><?= htmlspecialchars($r['categoryname']) ?><br><small><?= $r['difficulty'] ?></small></td>
         <td><?= $r['rewardgold'] ?> / <?= $r['rewardsilver'] ?> / <?= $r['rewardbronze'] ?></td>
