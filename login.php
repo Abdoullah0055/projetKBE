@@ -61,10 +61,10 @@ if ($foundUser && password_verify($password, $foundUser['password'])) {
                 'bronze' => (int)$foundUser['bronze']
             ];
 
-            $_SESSION['user']['hp'] = $foundUser['CurrentHP'] ?? 100;
-            $_SESSION['user']['max_hp'] = $foundUser['MaxHP'] ?? 100;
+$_SESSION['user']['hp'] = $foundUser['currenthp'] ?? 100;
+                $_SESSION['user']['max_hp'] = $foundUser['maxhp'] ?? 100;
 
-            if (!isset($foundUser['CurrentHP'])) {
+                if (!isset($foundUser['currenthp'])) {
                 $hpData = get_user_hp($_SESSION['user']['id']);
                 $_SESSION['user']['hp'] = $hpData['current'];
                 $_SESSION['user']['max_hp'] = $hpData['max'];

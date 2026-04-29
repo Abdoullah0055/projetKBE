@@ -1,0 +1,6 @@
+ALTER TABLE UserRiddles
+    ADD PRIMARY KEY (UserRiddleId),
+    MODIFY COLUMN UserRiddleId INT NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE UserRiddleStats
+    ADD PRIMARY KEY (UserId);

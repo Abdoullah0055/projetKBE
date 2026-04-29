@@ -60,8 +60,8 @@ $_SESSION['user'] = [
                 'gold' => (int)$foundUser['gold'],
                 'silver' => (int)$foundUser['silver'],
                 'bronze' => (int)$foundUser['bronze'],
-                'hp' => (int)($foundUser['CurrentHP'] ?? 100) ?: 100,
-                'max_hp' => (int)($foundUser['MaxHP'] ?? 100) ?: 100
+                'hp' => (int)($foundUser['currenthp'] ?? 100) ?: 100,
+                'max_hp' => (int)($foundUser['maxhp'] ?? 100) ?: 100
             ];
                     header("Location: index.php");
                     exit();
