@@ -201,6 +201,7 @@ function mark_enigme_completed(int $enigmeId): void
     }
 }
 
+/** @deprecated Utilisee uniquement pour la validation par texte libre. Le systeme QCM utilise verify_enigme_choice() a la place. */
 function normalize_enigme_answer(string $answer): string
 {
     $answer = trim($answer);

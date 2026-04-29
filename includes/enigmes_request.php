@@ -61,6 +61,58 @@ function consume_roadmap_flash_dialogues(): array
     return is_array($dialogues) ? $dialogues : [];
 }
 
+function generate_and_store_choices(array $riddle): array
+{
+    $answerText = get_riddle_answer_text((int) $riddle['id']);
+
+    if ($answerText === null) {
+        return [];
+    }
+
+    $choices = [
+        $answerText,
+        $riddle['wrong_answer1'] ?? '',
+        $riddle['wrong_answer2'] ?? '',
+        $riddle['wrong_answer3'] ?? '',
+    ];
+
+    $correctIndex = 0;
+    $keys = array_keys($choices);
+    shuffle($keys);
+    $shuffled = [];
+
+    foreach ($keys as $newIndex => $oldIndex) {
+        $shuffled[$newIndex] = $choices[$oldIndex];
+        if ($oldIndex === 0) {
+            $correctIndex = $newIndex;
+        }
+    }
+
+    $_SESSION['enigme_choices_' . $riddle['id']] = [
+        'correct_index' => $correctIndex,
+        'choice_texts'  => $shuffled,
+    ];
+
+    return $shuffled;
+}
+
+function verify_enigme_choice(int $riddleId, int $choiceIndex): array
+{
+    $key = 'enigme_choices_' . $riddleId;
+    $data = $_SESSION[$key] ?? null;
+
+    if (!is_array($data) || !isset($data['correct_index'], $data['choice_texts'])) {
+        return ['is_correct' => false, 'chosen_text' => ''];
+    }
+
+    $isCorrect  = $choiceIndex === (int) $data['correct_index'];
+    $chosenText = $data['choice_texts'][$choiceIndex] ?? '';
+
+    unset($_SESSION[$key]);
+
+    return ['is_correct' => $isCorrect, 'chosen_text' => $chosenText];
+}
+
 function resolve_enigme_request(string $currentPage): array
 {
     $source = (string) ($_GET['source'] ?? 'roadmap');
@@ -134,12 +186,18 @@ function resolve_enigme_request(string $currentPage): array
         $query['difficulty'] = $difficulty;
     }
 
+    $choices = [];
+    if ($currentPage === 'reponse.php') {
+        $choices = generate_and_store_choices($riddle);
+    }
+
     return [
         'source' => $source,
         'roadmap_node_id' => $roadmapNodeId,
         'back_href' => $backHref,
         'query' => $query,
         'riddle' => $riddle,
+        'choices' => $choices,
     ];
 }
 

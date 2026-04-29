@@ -155,24 +155,21 @@ function buildPageUrl(int $targetPage): string
 
     .product-list {
         display: grid !important;
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
         gap: 14px !important;
     }
 
-    .product-list .item-row {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: stretch;
-        position: relative;
-        isolation: isolate;
-        width: 100%;
-        aspect-ratio: 4 / 5;
-        max-width: 240px;
-        margin: 0 auto;
-        padding: 12px;
-        overflow: hidden;
-    }
+.product-list .item-row {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    position: relative;
+    isolation: isolate;
+    width: 100%;
+    min-height: 260px;
+    padding: 12px;
+}
 
     /* Classe pour cacher les items filtrés */
     main .product-list .item-row.hidden {
@@ -540,31 +537,21 @@ function buildPageUrl(int $targetPage): string
             gap: 12px;
         }
 
-        aside.collapsed .sidebar-inventory-btn {
-            padding: 12px 8px;
-        }
+.sidebar-inventory-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
 
-        aside.collapsed .sidebar-inventory-btn .btn-label {
-            display: none;
-        }
+aside.collapsed .sidebar-inventory-btn {
+    padding: 12px 8px;
+    overflow: hidden;
+}
 
-        @media (max-width: 1200px) {
-            .product-list {
-                grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-            }
-        }
-
-        @media (max-width: 800px) {
-            .product-list {
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            }
-        }
-
-        @media (max-width: 500px) {
-            .product-list {
-                grid-template-columns: 1fr !important;
-            }
-        }
+aside.collapsed .sidebar-inventory-btn .btn-label {
+    display: none !important;
+}
 </style>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -617,10 +604,10 @@ function buildPageUrl(int $targetPage): string
 
             <div class="sidebar-bottom-actions">
                 <?php if ($user['isConnected']): ?>
-                    <button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
-                        <i class="fa-solid fa-box-open"></i>
-                        <span>Inventaire</span>
-                    </button>
+<button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+<i class="fa-solid fa-box-open"></i>
+<span class="btn-label">Inventaire</span>
+</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -773,64 +760,8 @@ function buildPageUrl(int $targetPage): string
             applyFilters();
         });
 
-        applyFilters();
-
-        function updateCardsForSidebar() {
-            if (!sidebar || !productList) return;
-
-            const sidebarWidth = sidebar.classList.contains('collapsed') ? 80 : 280;
-            const mainWidth = window.innerWidth - sidebarWidth - 40;
-            const gap = parseFloat(getComputedStyle(productList).gap) || 16;
-            const cardMinWidth = 180;
-            const cardMaxWidth = 240;
-
-            // Calculer l'espace disponible
-            const availableSpace = mainWidth;
-            const maxCardsPerRow = Math.floor((availableSpace + gap) / (cardMinWidth + gap));
-            const cardsPerRow = Math.min(maxCardsPerRow, 7);
-
-            // Calculer la taille des cartes
-            const totalGapSpace = (cardsPerRow - 1) * gap;
-            const cardWidth = Math.min(
-                Math.max(cardMinWidth, (availableSpace - totalGapSpace) / cardsPerRow),
-                cardMaxWidth
-            );
-
-            // Appliquer UNIQUEMENT aux cartes visibles
-            document.querySelectorAll('.item-row').forEach(card => {
-                if (card.style.display !== 'none') {
-                    card.style.flex = `0 0 ${cardWidth}px`;
-                    card.style.maxWidth = `${cardWidth}px`;
-                }
-            });
-        }
-
-        // Observer les changements du sidebar
-        if (sidebar) {
-            const observer = new MutationObserver((mutations) => {
-                mutations.forEach((mutation) => {
-                    if (mutation.attributeName === 'class') {
-                        // Attendre la fin de la transition
-                        setTimeout(updateCardsForSidebar, 300);
-                    }
-                });
-            });
-            observer.observe(sidebar, {
-                attributes: true,
-                attributeFilter: ['class']
-            });
-        }
-
-        // Mettre à jour sur redimensionnement
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(updateCardsForSidebar, 100);
-        });
-
-        // Initialiser
-        setTimeout(updateCardsForSidebar, 100);
-    });
+  applyFilters();
+});
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
