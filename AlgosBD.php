@@ -393,7 +393,7 @@ function get_user_hp(int $user_id): array
     $stmt = $pdo->prepare("SELECT CurrentHP, MaxHP FROM Users WHERE UserId = ?");
     $stmt->execute([$user_id]);
     $row = $stmt->fetch();
-    return $row ? ['current' => (int)$row['currenthp'], 'max' => (int)$row['maxhp']] : ['current' => 100, 'max' => 100];
+    return $row ? ['current' => (int)$row['CurrentHP'], 'max' => (int)$row['MaxHP']] : ['current' => 100, 'max' => 100];
 }
 
 function credit_user_currency(int $user_id, int $gold, int $silver, int $bronze): bool

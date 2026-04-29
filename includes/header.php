@@ -40,7 +40,7 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
 	</div>
 	<div class="user-hp-bar">
 		<span class="hp-icon">❤️</span>
-		<div class="hp-bar-track"><div class="hp-bar-fill" style="width:<?= $user['isConnected'] ? round($user['hp'] / $user['max_hp'] * 100) : 100 ?>%"></div></div>
+		<div class="hp-bar-track"><div class="hp-bar-fill" style="width:<?= $user['isConnected'] ? ($user['max_hp'] > 0 ? round($user['hp'] / $user['max_hp'] * 100) : 100) : 100 ?>%"></div></div>
 		<span class="hp-value"><?= $user['hp'] ?>/<?= $user['max_hp'] ?></span>
 	</div>
 <?php if ($user['isMage']): ?>
@@ -103,7 +103,7 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
 	</div>
 	<div class="user-hp-bar">
 		<span class="hp-icon">❤️</span>
-		<div class="hp-bar-track"><div class="hp-bar-fill" style="width:<?= round($user['hp'] / $user['max_hp'] * 100) ?>%"></div></div>
+		<div class="hp-bar-track"><div class="hp-bar-fill" style="width:<?= $user['max_hp'] > 0 ? round($user['hp'] / $user['max_hp'] * 100) : 100 ?>%"></div></div>
 		<span class="hp-value"><?= $user['hp'] ?>/<?= $user['max_hp'] ?></span>
         </div>
 <?php if ($user['isMage']): ?>

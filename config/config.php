@@ -11,8 +11,8 @@ if (isset($_SESSION['user'])) {
         'isConnected' => true,
         'alias' => $_SESSION['user']['alias'],
         'isMage' => ($_SESSION['user']['role'] === 'Mage'),
-        'hp' => $_SESSION['user']['hp'] ?? 100,
-        'max_hp' => $_SESSION['user']['max_hp'] ?? 100,
+'hp' => (int)($_SESSION['user']['hp'] ?? 100) ?: 100,
+    'max_hp' => (int)($_SESSION['user']['max_hp'] ?? 100) ?: 100,
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
