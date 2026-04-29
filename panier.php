@@ -10,19 +10,6 @@ if (!isset($_SESSION['user'])) {
     exit();
 }
 
-// Définition de l'utilisateur pour le header
-$user = [
-    'isConnected' => true,
-    'id'          => $_SESSION['user']['id'],
-    'alias'       => $_SESSION['user']['alias'],
-    'isMage'      => ($_SESSION['user']['role'] === 'Mage'),
-    'balance'     => [
-        'gold'    => $_SESSION['user']['gold'],
-        'silver'  => $_SESSION['user']['silver'],
-        'bronze'  => $_SESSION['user']['bronze']
-    ]
-];
-
 // 2. RÉCUPÉRATION DU THÈME ET DE L'IMAGE DE FOND
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';

@@ -9,19 +9,6 @@ if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'Admin') {
 
 $pdo = get_pdo();
 
-$user = [
-    'isConnected' => true,
-    'id'          => $_SESSION['user']['id'],
-    'alias'       => $_SESSION['user']['alias'],
-    'role'        => $_SESSION['user']['role'],
-    'isMage'      => false,
-    'balance'     => [
-        'gold'    => $_SESSION['user']['gold'],
-        'silver'  => $_SESSION['user']['silver'],
-        'bronze'  => $_SESSION['user']['bronze']
-    ]
-];
-
 $message_alerte = null;
 
 // --- ACTIONS BACKEND ---

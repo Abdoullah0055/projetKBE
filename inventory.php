@@ -9,18 +9,6 @@ if (!isset($_SESSION['user'])) {
 
 $pdo = get_pdo();
 
-$user = [
-    'isConnected' => true,
-    'id'          => $_SESSION['user']['id'],
-    'alias'       => $_SESSION['user']['alias'],
-    'isMage'      => ($_SESSION['user']['role'] === 'Mage'),
-    'balance'     => [
-        'gold'    => $_SESSION['user']['gold'],
-        'silver'  => $_SESSION['user']['silver'],
-        'bronze'  => $_SESSION['user']['bronze']
-    ]
-];
-
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";

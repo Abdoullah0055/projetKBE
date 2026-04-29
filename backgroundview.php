@@ -7,21 +7,6 @@ $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-// Gestion de l'utilisateur pour le header
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = ['isConnected' => false];
-}
-
 $title = "Vue d'Ambiance - L'Arsenal";
 ?>
 

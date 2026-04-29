@@ -11,8 +11,12 @@ require_once __DIR__ . '/page.php';
 if (isset($_SESSION['user'])) {
     $user = [
         'isConnected' => true,
+        'id' => (int)($_SESSION['user']['id'] ?? 0),
         'alias' => $_SESSION['user']['alias'],
+        'role' => $_SESSION['user']['role'] ?? 'Player',
         'isMage' => ($_SESSION['user']['role'] === 'Mage'),
+        'hp' => (int)($_SESSION['user']['hp'] ?? 100) ?: 100,
+        'max_hp' => (int)($_SESSION['user']['max_hp'] ?? 100) ?: 100,
         'balance' => [
             'gold' => $_SESSION['user']['gold'],
             'silver' => $_SESSION['user']['silver'],
@@ -22,8 +26,12 @@ if (isset($_SESSION['user'])) {
 } else {
     $user = [
         'isConnected' => false,
+        'id' => 0,
         'alias' => '',
+        'role' => 'Player',
         'isMage' => false,
+        'hp' => 100,
+        'max_hp' => 100,
         'balance' => [
             'gold' => 0,
             'silver' => 0,

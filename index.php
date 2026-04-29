@@ -4,27 +4,6 @@ require_once 'AlgosBD.php';
 
 $pdo = get_pdo();
 
-// 1. GESTION DE LA SESSION
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage') || $_SESSION['user']['role'] === 'Admin',
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = [
-        'isConnected' => false,
-        'alias' => '',
-        'isMage' => false,
-        'balance' => ['gold' => 0, 'silver' => 0, 'bronze' => 0]
-    ];
-}
-
 // 2. RÉCUPÉRATION DES ITEMS
 $itemsPerPage = 25;
 $countStmt = $pdo->query("

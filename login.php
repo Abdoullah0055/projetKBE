@@ -10,34 +10,6 @@ if (!$pdo) {
     die("Erreur critique : Impossible de se connecter a la base de donnees.");
 }
 
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
-'hp' => (int)($_SESSION['user']['hp'] ?? 100) ?: 100,
-    'max_hp' => (int)($_SESSION['user']['max_hp'] ?? 100) ?: 100,
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = [
-        'isConnected' => false,
-        'alias' => '',
-        'isMage' => false,
-        'hp' => 100,
-        'max_hp' => 100,
-        'balance' => [
-            'gold' => 0,
-            'silver' => 0,
-            'bronze' => 0
-        ]
-    ];
-}
-
 $error = "";
 $success = "";
 

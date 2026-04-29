@@ -11,30 +11,6 @@ if (!$pdo) {
     die("Erreur critique : Impossible de se connecter a la base de donnees.");
 }
 
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'isMage' => ($_SESSION['user']['role'] === 'Mage'),
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = [
-        'isConnected' => false,
-        'alias' => '',
-        'isMage' => false,
-        'balance' => [
-            'gold' => 0,
-            'silver' => 0,
-            'bronze' => 0
-        ]
-    ];
-}
-
 $error = "";
 $success = "";
 
@@ -77,14 +53,16 @@ if ($foundUser && password_verify($password, $foundUser['password'])) {
             if ((int)($foundUser['isbanned'] ?? 0) === 1) {
                 $error = "Ce compte est bloque par un administrateur.";
             } else {
-                $_SESSION['user'] = [
-                    'id' => (int)$foundUser['userid'],
-                    'alias' => $foundUser['alias'],
-                    'role' => $foundUser['role'],
-                    'gold' => (int)$foundUser['gold'],
-                    'silver' => (int)$foundUser['silver'],
-                    'bronze' => (int)$foundUser['bronze']
-                    ];
+$_SESSION['user'] = [
+                'id' => (int)$foundUser['userid'],
+                'alias' => $foundUser['alias'],
+                'role' => $foundUser['role'],
+                'gold' => (int)$foundUser['gold'],
+                'silver' => (int)$foundUser['silver'],
+                'bronze' => (int)$foundUser['bronze'],
+                'hp' => (int)($foundUser['CurrentHP'] ?? 100) ?: 100,
+                'max_hp' => (int)($foundUser['MaxHP'] ?? 100) ?: 100
+            ];
                     header("Location: index.php");
                     exit();
                 }

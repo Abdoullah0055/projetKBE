@@ -48,16 +48,13 @@ $_SESSION['user']['alias'] = $dbUser['alias'];
     $loadError = "Impossible de charger toutes les donnees profil actuellement.";
 }
 
-$user = [
-    'isConnected' => true,
-    'id' => $userId,
-    'alias' => $dbUser['alias'],
-    'isMage' => (($dbUser['role'] ?? 'Player') === 'Mage'),
-    'balance' => [
-        'gold' => (int)($dbUser['gold'] ?? 0),
-        'silver' => (int)($dbUser['silver'] ?? 0),
-        'bronze' => (int)($dbUser['bronze'] ?? 0),
-    ],
+$user['id'] = $userId;
+$user['alias'] = $dbUser['alias'];
+$user['isMage'] = (($dbUser['role'] ?? 'Player') === 'Mage');
+$user['balance'] = [
+    'gold' => (int)($dbUser['gold'] ?? 0),
+    'silver' => (int)($dbUser['silver'] ?? 0),
+    'bronze' => (int)($dbUser['bronze'] ?? 0),
 ];
 
 $flash = profile_take_flash();
