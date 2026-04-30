@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="assets/css/panier.css"> -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/responsive.css">
+<link rel="stylesheet" href="assets/css/modal.css">
     <?php if (!empty($extraStylesheets) && is_array($extraStylesheets)): ?>
         <?php foreach ($extraStylesheets as $stylesheet): ?>
             <link rel="stylesheet" href="<?= htmlspecialchars($stylesheet, ENT_QUOTES, 'UTF-8') ?>">
@@ -28,3 +29,4 @@ if (!empty($bodyClass)) {
 ?>
 
 <body<?= $bodyClassAttribute ?>>
+<?php include __DIR__ . '/../includes/modal.php'; ?>

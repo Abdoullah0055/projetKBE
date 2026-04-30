@@ -289,21 +289,6 @@ $rightImages = [
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
-    <div id="custom-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <i class="fa-solid fa-scroll"></i>
-                <h3 id="modal-title">Message de l'Arsenal</h3>
-            </div>
-            <div class="modal-body">
-                <p id="modal-message">Voulez-vous vraiment faire cela ?</p>
-            </div>
-            <div class="modal-footer">
-                <button id="modal-btn-cancel" class="btn-secondary">Annuler</button>
-                <button id="modal-btn-confirm" class="btn-confirm">Confirmer</button>
-            </div>
-        </div>
-    </div>
 </main>
 
 <?php if (!empty($cartItems)): ?>
@@ -486,35 +471,7 @@ $rightImages = [
         }
     }
 
-    function showCustomConfirm(message, title = 'Confirmation') {
-        return new Promise((resolve) => {
-            const modal = document.getElementById('custom-modal');
-            const msgPara = document.getElementById('modal-message');
-            const titleH3 = document.getElementById('modal-title');
-            const btnConfirm = document.getElementById('modal-btn-confirm');
-            const btnCancel = document.getElementById('modal-btn-cancel');
-
-            msgPara.innerText = message;
-            titleH3.innerText = title;
-            modal.style.display = 'flex';
-
-            const close = (result) => {
-                modal.style.display = 'none';
-                btnConfirm.onclick = null;
-                btnCancel.onclick = null;
-                resolve(result);
-            };
-
-            btnConfirm.onclick = () => close(true);
-            btnCancel.onclick = () => close(false);
-
-            modal.onclick = (e) => {
-                if (e.target === modal) close(false);
-            };
-        });
-    }
-
-    async function deleteItemFromCart(itemId, button) {
+async function deleteItemFromCart(itemId, button) {
         const confirmed = await showCustomConfirm("Voulez-vous retirer cet objet de votre besace ?", "Retirer l'objet");
         if (!confirmed) return;
 

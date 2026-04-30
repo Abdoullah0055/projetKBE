@@ -70,40 +70,49 @@ try {
 }
 
 if ($inventoryError === '') {
-    try {
-        $reviewStmt = $pdo->prepare(
-            "SELECT
-                inv.ItemId AS item_id,
-                inv.Quantity AS quantity_owned,
-                i.Name AS item_name,
-                i.ImageUrl AS ImageUrl,
-                t.Name AS item_type,
-                IFNULL(AVG(all_reviews.Rating), 0) AS rating,
-                COUNT(all_reviews.ReviewId) AS review_count
-             FROM Inventory inv
-             JOIN Items i ON inv.ItemId = i.ItemId
-             JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
-             LEFT JOIN Reviews user_review
-                ON user_review.ItemId = inv.ItemId
-               AND user_review.UserId = :user_id_for_review
-             LEFT JOIN Reviews all_reviews
-                ON all_reviews.ItemId = inv.ItemId
-             WHERE inv.UserId = :user_id_for_inventory
-               AND inv.Quantity > 0
-               AND user_review.ReviewId IS NULL
-             GROUP BY inv.ItemId, inv.Quantity, i.Name, i.ImageUrl, t.Name
-             ORDER BY i.Name ASC"
-        );
+try {
+$reviewStmt = $pdo->prepare(
+"SELECT
+purchased.ItemId AS item_id,
+purchased.QuantityOwned AS quantity_owned,
+i.Name AS item_name,
+i.ImageUrl AS ImageUrl,
+t.Name AS item_type,
+IFNULL(AVG(all_reviews.Rating), 0) AS rating,
+COUNT(all_reviews.ReviewId) AS review_count
+FROM (
+SELECT inv.ItemId, inv.Quantity AS QuantityOwned
+FROM Inventory inv
+WHERE inv.UserId = :user_id_for_inventory
+AND inv.Quantity > 0
+UNION
+SELECT oi.ItemId, oi.Quantity AS QuantityOwned
+FROM OrderItems oi
+JOIN Orders o ON o.OrderId = oi.OrderId
+WHERE o.UserId = :user_id_for_orders
+) purchased
+JOIN Items i ON i.ItemId = purchased.ItemId
+JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
+LEFT JOIN Reviews user_review
+ON user_review.ItemId = purchased.ItemId
+AND user_review.UserId = :user_id_for_review
+LEFT JOIN Reviews all_reviews
+ON all_reviews.ItemId = purchased.ItemId
+WHERE user_review.ReviewId IS NULL
+GROUP BY purchased.ItemId, purchased.QuantityOwned, i.Name, i.ImageUrl, t.Name
+ORDER BY i.Name ASC"
+);
 
-        $reviewStmt->execute([
-            ':user_id_for_review' => $user['id'],
-            ':user_id_for_inventory' => $user['id'],
-        ]);
+$reviewStmt->execute([
+':user_id_for_review' => $user['id'],
+':user_id_for_inventory' => $user['id'],
+':user_id_for_orders' => $user['id'],
+]);
 
-        $pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        $pendingReviewItems = [];
-    }
+$pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+$pendingReviewItems = [];
+}
 }
 
 $title = "L'Arsenal - Inventory";
@@ -192,20 +201,21 @@ $title = "L'Arsenal - Inventory";
                 <?php else: ?>
                     <div class="inventory-grid" id="inventory-list">
                         <?php foreach ($inventoryItems as $entry): ?>
-                            <?php
-                            $itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
-                            $itemDescription = trim((string) ($entry['item_description'] ?? ''));
-                            if ($itemDescription === '') {
-                                $itemDescription = "Aucune description disponible.";
-                            }
-                            $itemType = $entry['item_type'] ?? 'Inconnu';
-                            $ratingValue = (float) ($entry['rating'] ?? 0);
-                            $reviewCount = (int) ($entry['review_count'] ?? 0);
-                            $isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
-                            $statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
-                            $statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
-                            $itemImagePath = getItemImagePathForItem($entry);
-                            ?>
+<?php
+$itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
+$itemDescription = trim((string) ($entry['item_description'] ?? ''));
+if ($itemDescription === '') {
+$itemDescription = "Aucune description disponible.";
+}
+$itemType = $entry['item_type'] ?? 'Inconnu';
+$ratingValue = (float) ($entry['rating'] ?? 0);
+$reviewCount = (int) ($entry['review_count'] ?? 0);
+$isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
+$statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
+$statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
+$itemImagePath = getItemImagePathForItem($entry);
+$sellPrice = calculate_sell_price((int)$entry['item_id']);
+?>
 
                             <article class="inventory-slot"
                                 data-item-name="<?= htmlspecialchars($itemName) ?>"
@@ -265,7 +275,7 @@ $title = "L'Arsenal - Inventory";
         <i class="fa-solid fa-hand-sparkles"></i> Utiliser
         </button>
         <?php endif; ?>
-        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>">
+        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>">
         <i class="fa-solid fa-coins"></i> Vendre
         </button>
         </div>

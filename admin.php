@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
             if ($typeName === 'weapon') $pdo->prepare("INSERT INTO WeaponProperties (ItemId, DamageMin, DamageMax) VALUES (?, 10, 20)")->execute([$newItemId]);
             elseif ($typeName === 'armor') $pdo->prepare("INSERT INTO ArmorProperties (ItemId, Defense) VALUES (?, 15)")->execute([$newItemId]);
-            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO PotionProperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 50)")->execute([$newItemId]);
+            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO PotionProperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 3)")->execute([$newItemId]);
             elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO MagicSpellProperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
 
             $pdo->commit();
@@ -410,11 +410,11 @@ include __DIR__ . '/templates/head.php';
                                             </button>
                                         </form>
 
-                                        <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('Voulez-vous vraiment détruire définitivement cet objet ?');">
-                                            <input type="hidden" name="action" value="delete_item">
-                                            <input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
-                                            <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
-                                        </form>
+<form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-form">
+<input type="hidden" name="action" value="delete_item">
+<input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
+<button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
+</form>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -525,11 +525,11 @@ include __DIR__ . '/templates/head.php';
                                             </button>
                                         </form>
 
-                                        <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('Voulez-vous vraiment supprimer cette énigme ?');">
-                                            <input type="hidden" name="action" value="delete_riddle">
-                                            <input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
-                                            <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
-                                        </form>
+<form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-riddle-form">
+<input type="hidden" name="action" value="delete_riddle">
+<input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
+<button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
+</form>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -609,11 +609,11 @@ include __DIR__ . '/templates/head.php';
                                             <?php endif; ?>
                                         </form>
 
-                                        <form style="display:inline;" method="POST" action="admin.php" onsubmit="return confirm('⚠️ ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?');">
-                                            <input type="hidden" name="action" value="delete_user">
-                                            <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
-                                            <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
-                                        </form>
+<form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-user-form">
+<input type="hidden" name="action" value="delete_user">
+<input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
+<button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
+</form>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -692,9 +692,31 @@ include __DIR__ . '/templates/head.php';
         document.getElementById('editModal').style.display = 'flex';
     }
 
-    function closeEditModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
+function closeEditModal() {
+document.getElementById('editModal').style.display = 'none';
+}
+
+document.querySelectorAll('.confirm-delete-form').forEach(function(form) {
+form.addEventListener('submit', async function(e) {
+e.preventDefault();
+var ok = await showCustomConfirm('Voulez-vous vraiment détruire définitivement cet objet ?', 'Suppression');
+if (ok) form.submit();
+});
+});
+document.querySelectorAll('.confirm-delete-riddle-form').forEach(function(form) {
+form.addEventListener('submit', async function(e) {
+e.preventDefault();
+var ok = await showCustomConfirm('Voulez-vous vraiment supprimer cette énigme ?', 'Suppression');
+if (ok) form.submit();
+});
+});
+document.querySelectorAll('.confirm-delete-user-form').forEach(function(form) {
+form.addEventListener('submit', async function(e) {
+e.preventDefault();
+var ok = await showCustomConfirm('ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?', 'Suppression définitive');
+if (ok) form.submit();
+});
+});
 
     setTimeout(() => {
         const alertBox = document.querySelector('.alert-box');

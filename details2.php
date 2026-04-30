@@ -430,24 +430,7 @@ $rightImages = [
         icon.classList.add('magic-shake');
     }
 
-    function showDetailAlert(message, type = 'succes') {
-        const oldAlert = document.querySelector('.alert-box');
-        if (oldAlert) {
-            oldAlert.remove();
-        }
 
-        const box = document.createElement('div');
-        box.className = `alert-box ${type}`;
-        box.innerHTML = `
-            <i class="fa-solid ${type === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-            ${message}
-        `;
-        document.body.appendChild(box);
-
-        setTimeout(() => {
-            box.remove();
-        }, 2600);
-    }
 
     document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -513,16 +496,16 @@ $rightImages = [
             }
 
             if (response.ok && data && data.success) {
-                showDetailAlert(data.message || "Objet ajoute au panier.", 'succes');
+                showToast(data.message || "Objet ajoute au panier.", 'succes');
             } else {
                 const errorMessage = data && data.message ?
                     data.message :
                     "Echec de l'ajout au panier.";
-                showDetailAlert(errorMessage, 'erreur');
+                showToast(errorMessage, 'erreur');
             }
         } catch (error) {
             console.error("Erreur:", error);
-            showDetailAlert("Erreur reseau pendant l'ajout au panier.", 'erreur');
+            showToast("Erreur reseau pendant l'ajout au panier.", 'erreur');
         }
     });
 </script>

@@ -84,27 +84,43 @@ $pdo = get_pdo();
 try {
     $pdo->beginTransaction();
 
-    $ownedStmt = $pdo->prepare(
-        "SELECT Quantity
-         FROM Inventory
-         WHERE UserId = :user_id
-           AND ItemId = :item_id
-         LIMIT 1
-         FOR UPDATE"
-    );
-    $ownedStmt->execute([
-        ':user_id' => $userId,
-        ':item_id' => $itemId,
-    ]);
+$ownedStmt = $pdo->prepare(
+"SELECT inv.Quantity
+FROM Inventory
+WHERE UserId = :user_id
+AND ItemId = :item_id
+LIMIT 1
+FOR UPDATE"
+);
+$ownedStmt->execute([
+':user_id' => $userId,
+':item_id' => $itemId,
+]);
 
 $ownedRow = $ownedStmt->fetch();
-if (!$ownedRow || (int)$ownedRow['quantity'] <= 0) {
-        $pdo->rollBack();
-        review_response([
-            'success' => false,
-            'message' => 'Seuls les items achetes peuvent etre notes.',
-        ], '../inventory.php', $isAjax, 403);
-    }
+$inInventory = $ownedRow && (int)$ownedRow['quantity'] > 0;
+
+$purchasedStmt = $pdo->prepare(
+"SELECT 1
+FROM OrderItems oi
+JOIN Orders o ON o.OrderId = oi.OrderId
+WHERE o.UserId = :user_id
+AND oi.ItemId = :item_id
+LIMIT 1"
+);
+$purchasedStmt->execute([
+':user_id' => $userId,
+':item_id' => $itemId,
+]);
+$wasPurchased = $purchasedStmt->fetchColumn() !== false;
+
+if (!$inInventory && !$wasPurchased) {
+$pdo->rollBack();
+review_response([
+'success' => false,
+'message' => 'Seuls les items achetes peuvent etre notes.',
+], '../inventory.php', $isAjax, 403);
+}
 
     $existingStmt = $pdo->prepare(
         "SELECT ReviewId

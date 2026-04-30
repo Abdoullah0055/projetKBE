@@ -54,7 +54,7 @@ try {
         $propStmt = $pdo->prepare("SELECT EffectValue FROM PotionProperties WHERE ItemId = ?");
         $propStmt->execute([$itemId]);
         $propRow = $propStmt->fetch();
-        $healAmount = $propRow ? min((int)$propRow['effectvalue'], 5) : 5;
+        $healAmount = $propRow ? (int)$propRow['effectvalue'] : 3;
     } elseif ($itemTypeName === 'MagicSpell') {
         $propStmt = $pdo->prepare("SELECT SpellDamage FROM MagicSpellProperties WHERE ItemId = ?");
         $propStmt->execute([$itemId]);
