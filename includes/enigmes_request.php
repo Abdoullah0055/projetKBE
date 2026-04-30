@@ -68,6 +68,20 @@ function consume_roadmap_flash_dialogues(): array
     return is_array($dialogues) ? $dialogues : [];
 }
 
+const ENIGME_RESULT_SESSION_KEY = 'enigme_result';
+
+function set_enigme_result(array $result): void
+{
+    $_SESSION[ENIGME_RESULT_SESSION_KEY] = $result;
+}
+
+function consume_enigme_result(): ?array
+{
+    $result = $_SESSION[ENIGME_RESULT_SESSION_KEY] ?? null;
+    unset($_SESSION[ENIGME_RESULT_SESSION_KEY]);
+    return is_array($result) ? $result : null;
+}
+
 function generate_and_store_choices(array $riddle): array
 {
     $answerText = get_riddle_answer_text((int) $riddle['id']);
@@ -194,7 +208,7 @@ function resolve_enigme_request(string $currentPage): array
     }
 
     $choices = [];
-    if ($currentPage === 'reponse.php') {
+    if ($currentPage === 'reponse.php' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
         $choices = generate_and_store_choices($riddle);
     }
 
