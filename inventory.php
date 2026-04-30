@@ -275,7 +275,7 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
         <i class="fa-solid fa-hand-sparkles"></i> Utiliser
         </button>
         <?php endif; ?>
-        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>">
+        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>" data-original-gold="<?= $sellPrice['original_gold'] ?>" data-original-silver="<?= $sellPrice['original_silver'] ?>" data-original-bronze="<?= $sellPrice['original_bronze'] ?>" data-multiplier="<?= $sellPrice['multiplier'] ?>">
         <i class="fa-solid fa-coins"></i> Vendre
         </button>
         </div>

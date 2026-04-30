@@ -576,6 +576,10 @@ function calculate_sell_price(int $item_id): array
         'gold' => (int)floor($priceGold * $multiplier),
         'silver' => (int)floor($priceSilver * $multiplier),
         'bronze' => (int)floor($priceBronze * $multiplier),
+        'original_gold' => $priceGold,
+        'original_silver' => $priceSilver,
+        'original_bronze' => $priceBronze,
+        'multiplier' => $multiplier,
     ];
 }
 

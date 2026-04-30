@@ -57,17 +57,27 @@ btn.disabled = false;
 });
 });
 
-document.querySelectorAll('.btn-sell-item').forEach(function (btn) {
-btn.addEventListener('click', async function () {
-var itemId = this.dataset.itemId;
-var itemName = this.dataset.itemName;
-var sellGold = this.dataset.sellGold || '0';
-var sellSilver = this.dataset.sellSilver || '0';
-var sellBronze = this.dataset.sellBronze || '0';
+  document.querySelectorAll('.btn-sell-item').forEach(function (btn) {
+  btn.addEventListener('click', async function () {
+    var itemId = this.dataset.itemId;
+    var itemName = this.dataset.itemName;
+    var sellGold = this.dataset.sellGold || '0';
+    var sellSilver = this.dataset.sellSilver || '0';
+    var sellBronze = this.dataset.sellBronze || '0';
+    var originalGold = this.dataset.originalGold || '0';
+    var originalSilver = this.dataset.originalSilver || '0';
+    var originalBronze = this.dataset.originalBronze || '0';
+    var multiplier = parseFloat(this.dataset.multiplier || '0.6');
+    var percentText = Math.round(multiplier * 100);
 
-var priceText = sellGold + ' GP | ' + sellSilver + ' SP | ' + sellBronze + ' BP';
-var confirmed = await showCustomConfirm('Vendre ' + itemName + ' ?\nPrix de revente : ' + priceText, 'Vendre un objet');
-if (!confirmed) return;
+    var originalText = originalGold + ' GP | ' + originalSilver + ' SP | ' + originalBronze + ' BP';
+    var sellText = sellGold + ' GP | ' + sellSilver + ' SP | ' + sellBronze + ' BP';
+    var confirmMsg = 'Vendre ' + itemName + ' ?\n\n' +
+      'Prix original : ' + originalText + '\n' +
+      'Pourcentage de revente : ' + percentText + '%\n' +
+      'Prix de revente : ' + sellText;
+    var confirmed = await showCustomConfirm(confirmMsg, 'Vendre un objet');
+    if (!confirmed) return;
 
 btn.disabled = true;
 
