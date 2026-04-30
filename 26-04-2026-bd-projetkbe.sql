@@ -334,13 +334,13 @@ CREATE TABLE `PotionProperties` (
 --
 
 INSERT INTO `PotionProperties` (`ItemId`, `EffectType`, `EffectValue`, `DurationSeconds`) VALUES
-(46, 'Heal', 25, NULL),
-(47, 'Mana', 25, NULL),
-(48, 'Heal', 50, NULL),
-(49, 'Mana', 50, NULL),
-(50, 'Heal', 100, NULL),
-(51, 'Mana', 100, NULL),
-(54, 'Heal', 50, NULL);
+(46, 'Heal', 3, NULL),
+(47, 'Mana', 3, NULL),
+(48, 'Heal', 5, NULL),
+(49, 'Mana', 5, NULL),
+(50, 'Heal', 5, NULL),
+(51, 'Mana', 5, NULL),
+(54, 'Heal', 5, NULL);
 
 -- --------------------------------------------------------
 
@@ -414,14 +414,14 @@ CREATE TABLE `Riddles` (
 --
 
 INSERT INTO `Riddles` (`RiddleId`, `QuestionText`, `AnswerText`, `WrongAnswer1`, `WrongAnswer2`, `WrongAnswer3`, `HintText`, `Difficulty`, `RiddleCategoryId`, `RewardGold`, `RewardSilver`, `RewardBronze`, `IsActive`) VALUES
-(1, 'Je suis lié à un oiseau obscur et je frappe dans le silence avant d'être vu. Qui suis-je ?', 'Lame du Corbeau Noir', 'Basic Sword', 'Dagger', 'Knight Blade', 'Cherche parmi les armes sombres et discrètes.', 'Difficile', 3, 50, 0, 0, 1),
-(2, 'Je porte la mémoire des anciens et chacun de mes coups sonne comme un tambour. Qui suis-je ?', 'Marteau des Ancêtres', 'Hunter Bow', 'War Axe', 'Dragon Slayer', 'Une arme lourde héritée du passé.', 'Difficile', 3, 50, 0, 0, 1),
-(3, 'Je vise de loin, je me cache dans la brume, puis j'atteins toujours ma cible. Qui suis-je ?', 'Arc de Brume-Lune', 'Basic Sword', 'Dagger', 'War Axe', 'Une arme de précision liée au brouillard.', 'Difficile', 3, 50, 0, 0, 1),
-(4, 'Je protège comme une forteresse grise et je résiste à d'innombrables coups. Qui suis-je ?', 'Cuirasse du Bastion Gris', 'Leather Armor', 'Traveler Vest', 'Chainmail', 'Cherche une protection solide comme un mur.', 'Difficile', 4, 50, 0, 0, 1),
-(5, 'Je suis de métal saint, et l'ombre fuit quand j'avance. Qui suis-je ?', 'Voile d'Acier Sacré', 'Mage Robe', 'Shadow Cloak', 'Dragon Scale Armor', 'Une armure bénie contre les ténèbres.', 'Difficile', 4, 50, 0, 0, 1),
-(6, 'Je viens avec le matin et je rends la vigueur à celui qui me boit. Qui suis-je ?', 'Élixir de l'Aube Claire', 'Small Health Potion', 'Antidote', 'Medium Health Potion', 'Une potion liée à la lumière du jour.', 'Difficile', 2, 50, 0, 0, 1),
-(7, 'Je refroidis les nerfs et fais taire la peur dans la bataille. Qui suis-je ?', 'Breuvage du Sang-Froid', 'Mana Potion', 'Strength Potion', 'Mega Mana Potion', 'Une potion qui calme le cœur.', 'Difficile', 2, 50, 0, 0, 1),
-(8, 'Je suis une colère venue du ciel et je frappe sept fois en lumière. Qui suis-je ?', 'Tempête des Sept Éclairs', 'Fireball', 'Holy Light', 'Ice Spike', 'Un sort ancien lié à la foudre.', 'Difficile', 1, 50, 0, 0, 1),
+(1, 'Je suis lié à un oiseau obscur et je frappe dans le silence avant d'être vu. Qui suis-je ?', 'Lame du Corbeau Noir', 'Basic Sword', 'Dagger', 'Knight Blade', 'Cherche parmi les armes sombres et discrètes.', 'Difficile', 3, 10, 0, 0, 1),
+(2, 'Je porte la mémoire des anciens et chacun de mes coups sonne comme un tambour. Qui suis-je ?', 'Marteau des Ancêtres', 'Hunter Bow', 'War Axe', 'Dragon Slayer', 'Une arme lourde héritée du passé.', 'Difficile', 3, 10, 0, 0, 1),
+(3, 'Je vise de loin, je me cache dans la brume, puis j'atteint toujours ma cible. Qui suis-je ?', 'Arc de Brume-Lune', 'Basic Sword', 'Dagger', 'War Axe', 'Une arme de précision liée au brouillard.', 'Difficile', 3, 10, 0, 0, 1),
+(4, 'Je protège comme une forteresse grise et je résiste à d'innombrables coups. Qui suis-je ?', 'Cuirasse du Bastion Gris', 'Leather Armor', 'Traveler Vest', 'Chainmail', 'Cherche une protection solide comme un mur.', 'Difficile', 4, 10, 0, 0, 1),
+(5, 'Je suis de métal saint, et l'ombre fuit quand j'avance. Qui suis-je ?', 'Voile d'Acier Sacré', 'Mage Robe', 'Shadow Cloak', 'Dragon Scale Armor', 'Une armure bénie contre les ténèbres.', 'Difficile', 4, 10, 0, 0, 1),
+(6, 'Je viens avec le matin et je rends la vigueur à celui qui me boit. Qui suis-je ?', 'Élixir de l'Aube Claire', 'Small Health Potion', 'Antidote', 'Medium Health Potion', 'Une potion liée à la lumière du jour.', 'Difficile', 2, 10, 0, 0, 1),
+(7, 'Je refroidis les nerfs et fais taire la peur dans la bataille. Qui suis-je ?', 'Breuvage du Sang-Froid', 'Mana Potion', 'Strength Potion', 'Mega Mana Potion', 'Une potion qui calme le cœur.', 'Difficile', 2, 10, 0, 0, 1),
+(8, 'Je suis une colère venue du ciel et je frappe sept fois en lumière. Qui suis-je ?', 'Tempête des Sept Éclairs', 'Fireball', 'Holy Light', 'Ice Spike', 'Un sort ancien lié à la foudre.', 'Difficile', 1, 10, 0, 0, 1),
 (9, 'Je suis une petite flamme lancée par la main d'un mage. Qui suis-je ?', 'Fireball', 'Holy Light', 'Ice Spike', 'Wind Slash', 'Va voir les sorts de feu les plus simples.', 'Facile', 1, 0, 0, 10, 1),
 (10, 'Je suis une lumière sacrée qui chasse l'ombre. Qui suis-je ?', 'Holy Light', 'Fireball', 'Ice Spike', 'Lightning Bolt', 'Cherche un sort lumineux et béni.', 'Facile', 1, 0, 0, 10, 1),
 (11, 'Je suis un projectile glacé qui transperce l'air. Qui suis-je ?', 'Ice Spike', 'Wind Slash', 'Lightning Bolt', 'Earthquake', 'Regarde les sorts liés à la glace.', 'Moyenne', 1, 0, 10, 0, 1),
@@ -460,12 +460,13 @@ INSERT INTO `Riddles` (`RiddleId`, `QuestionText`, `AnswerText`, `WrongAnswer1`,
 --
 
 CREATE TABLE `UserRiddles` (
-  `UserRiddleId` int(11) NOT NULL,
-  `UserId` int(11) NOT NULL,
-  `RiddleId` int(11) NOT NULL,
-  `GivenAnswer` varchar(255) DEFAULT NULL,
-  `IsSuccess` tinyint(1) NOT NULL,
-  `AnsweredAt` datetime NOT NULL DEFAULT current_timestamp()
+`UserRiddleId` int(11) NOT NULL AUTO_INCREMENT,
+`UserId` int(11) NOT NULL,
+`RiddleId` int(11) NOT NULL,
+`GivenAnswer` varchar(255) DEFAULT NULL,
+`IsSuccess` tinyint(1) NOT NULL,
+`AnsweredAt` datetime NOT NULL DEFAULT current_timestamp(),
+PRIMARY KEY (`UserRiddleId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -475,10 +476,11 @@ CREATE TABLE `UserRiddles` (
 --
 
 CREATE TABLE `UserRiddleStats` (
-  `UserId` int(11) NOT NULL,
-  `SolvedCount` int(11) NOT NULL DEFAULT 0,
-  `FailedCount` int(11) NOT NULL DEFAULT 0,
-  `MagicSolvedCount` int(11) NOT NULL DEFAULT 0
+`UserId` int(11) NOT NULL,
+`SolvedCount` int(11) NOT NULL DEFAULT 0,
+`FailedCount` int(11) NOT NULL DEFAULT 0,
+`MagicSolvedCount` int(11) NOT NULL DEFAULT 0,
+PRIMARY KEY (`UserId`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

@@ -559,10 +559,13 @@ function calculate_sell_price(int $item_id): array
     $priceBronze = (int)$item['pricebronze'];
 
     if ((int)$item['itemtypeid'] === 4) {
-        $rarity = strtolower(trim($item['rarity'] ?? 'commun'));
+        $rarity = mb_strtolower(trim($item['rarity'] ?? 'commun'), 'UTF-8');
         $multiplier = match($rarity) {
             'commun' => 1.0,
             'rare' => 0.95,
+            'epique', 'épique' => 0.90,
+            'legendaire', 'légendaire' => 0.90,
+            'mythique' => 0.90,
             default => 0.90,
         };
     } else {

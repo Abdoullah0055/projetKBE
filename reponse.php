@@ -15,15 +15,15 @@ function build_reward_label(array $riddle): string
     $bronze = (int) ($riddle['reward_bronze'] ?? 0);
 
     if ($gold > 0) {
-        return $gold . ' piece d\'or';
+        return $gold . ' piece' . ($gold > 1 ? 's' : '') . ' d\'or';
     }
 
     if ($silver > 0) {
-        return $silver . ' piece d\'argent';
+        return $silver . ' piece' . ($silver > 1 ? 's' : '') . ' d\'argent';
     }
 
     if ($bronze > 0) {
-        return $bronze . ' piece de bronze';
+        return $bronze . ' piece' . ($bronze > 1 ? 's' : '') . ' de bronze';
     }
 
     return '0 recompense';

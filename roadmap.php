@@ -1,10 +1,15 @@
-<?php
+﻿<?php
 $title = 'Roadmap des enigmes - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css', 'assets/css/roadmap.css'];
 $bodyClass = 'enigmes-page roadmap-page';
 
 require_once __DIR__ . '/includes/enigmes_progression.php';
 require_once __DIR__ . '/includes/enigmes_request.php';
+require_once __DIR__ . '/AlgosBD.php';
+$riddleStats = null;
+if (isset($_SESSION['user'])) {
+    $riddleStats = get_user_riddle_stats($_SESSION['user']['id']);
+}
 
 $enigmes = get_enigmes_catalogue();
 $states = get_enigmes_states();
@@ -72,7 +77,7 @@ $postRoadmapDialoguesJson = htmlspecialchars(
                             'frame' => 'assets/img/Magicien/furieux.png',
                         ],
                         [
-                            'text' => 'Mon grimoire l’a deja consignee. Retourne sur la roadmap et poursuis ta quete vers de nouveaux 50 gold.',
+                            'text' => 'Mon grimoire l’a deja consignee. Retourne sur la roadmap et poursuis ta quete vers de nouvelles enigmes.',
                             'frame' => 'assets/img/Magicien/mage_grimoire.png',
                         ],
                     ];
@@ -131,7 +136,30 @@ $postRoadmapDialoguesJson = htmlspecialchars(
                 </div>
             </div>
         </div>
-    </section>
+    <?php if ($riddleStats !== null): ?>
+<div class="roadmap-stats" aria-label="Statistiques d'enigmes">
+<h3 class="roadmap-stats-title"><i class="fa-solid fa-chart-bar"></i> Mes quetes</h3>
+<div class="roadmap-stats-grid">
+<div class="roadmap-stat-card">
+<span class="roadmap-stat-label">Facile</span>
+<span class="roadmap-stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
+</div>
+<div class="roadmap-stat-card">
+<span class="roadmap-stat-label">Moyenne</span>
+<span class="roadmap-stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
+</div>
+<div class="roadmap-stat-card">
+<span class="roadmap-stat-label">Difficile</span>
+<span class="roadmap-stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
+</div>
+<div class="roadmap-stat-card roadmap-stat-card--total">
+<span class="roadmap-stat-label">Total</span>
+<span class="roadmap-stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
+</div>
+</div>
+</div>
+<?php endif; ?>
+</section>
 </main>
 
 <script src="assets/js/roadmap.js" defer></script>
