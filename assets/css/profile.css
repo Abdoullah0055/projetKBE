@@ -61,6 +61,14 @@
   gap: 20px;
 }
 
+.profile-card.danger-card {
+  grid-column: 2;
+}
+
+.profile-stats-section {
+  grid-column: 2;
+}
+
 .profile-card {
   background: rgba(20, 22, 25, 0.72);
   border: 1px solid rgba(25, 133, 161, 0.28);
@@ -232,6 +240,11 @@
     gap: var(--spacing-md);
   }
 
+  .profile-card.danger-card,
+  .profile-stats-section {
+    grid-column: 1;
+  }
+
   .profile-card {
     padding: var(--spacing-lg);
     border-radius: 10px;
@@ -323,6 +336,11 @@
     gap: var(--spacing-lg);
   }
 
+  .profile-card.danger-card,
+  .profile-stats-section {
+    grid-column: 1;
+  }
+
   .profile-card {
     padding: var(--spacing-lg);
   }
@@ -370,7 +388,6 @@
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 12px;
   padding: 20px;
-  margin-top: 20px;
 }
 
 .profile-stats-section h2 {

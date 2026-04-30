@@ -21,6 +21,7 @@
 
 <?php
 $bodyClassAttribute = '';
+$bodyDataTheme = htmlspecialchars($_COOKIE['theme'] ?? 'light', ENT_QUOTES, 'UTF-8');
 
 if (!empty($bodyClass)) {
     $bodyClassValue = is_array($bodyClass) ? implode(' ', $bodyClass) : (string) $bodyClass;
@@ -28,5 +29,5 @@ if (!empty($bodyClass)) {
 }
 ?>
 
-<body<?= $bodyClassAttribute ?>>
+<body<?= $bodyClassAttribute ?> data-theme="<?= $bodyDataTheme ?>">
 <?php include __DIR__ . '/../includes/modal.php'; ?>

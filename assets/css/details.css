@@ -352,6 +352,35 @@
   cursor: not-allowed;
 }
 
+.btn-spell-restricted {
+  background: #3a2a1a;
+  border: 1px dashed rgba(241, 196, 15, 0.4);
+  color: #b08a50;
+  cursor: not-allowed;
+}
+
+.btn-spell-restricted:hover {
+  filter: none;
+  transform: none;
+  box-shadow: none;
+}
+
+.spell-restricted-notice {
+  text-align: center;
+  padding: 10px;
+  margin-bottom: 12px;
+  background: rgba(241, 196, 15, 0.06);
+  border: 1px solid rgba(241, 196, 15, 0.15);
+  border-radius: 8px;
+  color: #c0975a;
+  font-size: 0.85rem;
+}
+
+.spell-restricted-notice i {
+  margin-right: 6px;
+  color: #d4a843;
+}
+
 .back-link {
   display: block;
   text-align: center;

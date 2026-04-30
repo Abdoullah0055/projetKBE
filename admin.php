@@ -309,11 +309,11 @@ include __DIR__ . '/templates/head.php';
 <div class="wrapper">
     <main style="width: 100%; max-width: 1200px; margin: 0 auto;">
         
-        <div class="catalog-banner">
-            <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.5rem;">
-                <i class="fa-solid fa-crown"></i> Panneau de Commandement
-            </h2>
-        </div>
+  <div class="catalog-banner catalog-banner--admin">
+    <h2>
+      <i class="fa-solid fa-crown"></i> Panneau de Commandement
+    </h2>
+  </div>
 
         <?php if ($message_alerte): ?>
             <div class="alert-box <?= $message_alerte['type'] ?>" style="margin-top:20px;">

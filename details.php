@@ -182,38 +182,51 @@ $rightImages = [
                 <div class="spec-item"><span>Origine</span><strong>Inconnue</strong></div>
             </div>
 
-            <div class="purchase-section">
-                <?php if ((int) $item['stock'] > 0): ?>
-                    <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
+  <div class="purchase-section">
+  <?php
+    $isSpell = (mb_strtolower($item['type'], 'UTF-8') === 'magicspell');
+    $isRestrictedMage = $isSpell && !$user['isMage'];
+  ?>
 
-                        <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
+  <?php if ($isRestrictedMage): ?>
+    <div class="spell-restricted-notice">
+      <i class="fa-solid fa-hat-wizard"></i>
+      Seuls les mages peuvent acquérir des sorts.
+    </div>
+    <button class="btn-buy-large btn-spell-restricted" disabled>
+      <i class="fa-solid fa-lock"></i> Sort réservé aux Mages
+    </button>
+  <?php elseif ((int) $item['stock'] > 0): ?>
+  <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
 
-                        <div class="purchase-controls">
-                            <div class="quantity-wrapper">
-                                <label for="qty">Quantite :</label>
-                                <select name="quantity" id="qty" class="qty-select">
-                                    <?php for ($i = 1; $i <= min((int) $item['stock'], 10); $i++): ?>
-                                        <option value="<?= $i ?>"><?= $i ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
+    <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
 
-                            <?php if ((int) $item['stock'] < 5): ?>
-                                <div class="urgency-badge">
-                                    <i class="fa-solid fa-bolt"></i>
-                                    Plus que <?= (int) $item['stock'] ?> restant !
-                                </div>
-                            <?php endif; ?>
-                        </div>
+    <div class="purchase-controls">
+      <div class="quantity-wrapper">
+        <label for="qty">Quantite :</label>
+        <select name="quantity" id="qty" class="qty-select">
+        <?php for ($i = 1; $i <= min((int) $item['stock'], 10); $i++): ?>
+          <option value="<?= $i ?>"><?= $i ?></option>
+        <?php endfor; ?>
+        </select>
+      </div>
 
-                        <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
-                    </form>
-                <?php else: ?>
-                    <button class="btn-buy-large btn-out" disabled>Stock Epuise</button>
-                <?php endif; ?>
+      <?php if ((int) $item['stock'] < 5): ?>
+      <div class="urgency-badge">
+        <i class="fa-solid fa-bolt"></i>
+        Plus que <?= (int) $item['stock'] ?> restant !
+      </div>
+      <?php endif; ?>
+    </div>
 
-                <a href="index.php" class="back-link">Retour au catalogue</a>
-            </div>
+    <button type="submit" class="btn-buy-large">Ajouter au Panier</button>
+  </form>
+  <?php else: ?>
+  <button class="btn-buy-large btn-out" disabled>Stock Epuise</button>
+  <?php endif; ?>
+
+  <a href="index.php" class="back-link">Retour au catalogue</a>
+  </div>
         </div>
     </main>
 </div>

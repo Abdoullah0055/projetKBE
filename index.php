@@ -119,20 +119,11 @@ function buildPageUrl(int $targetPage): string
         overflow-y: auto;
     }
 
-    .sidebar-content {
-        overflow-y: auto;
-    }
+.sidebar-content {
+  overflow-y: auto;
+}
 
-    .catalog-banner {
-        margin-bottom: 18px;
-        padding: 14px 18px;
-        border-radius: 12px;
-        background: rgba(12, 15, 19, 0.72);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
-    }
-
-    .product-list {
+.product-list {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
         gap: 14px !important;
@@ -524,11 +515,11 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
     </aside>
 
     <main>
-        <div class="catalog-banner">
-            <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
-                <?= $user['isConnected'] ? "Content de vous revoir, " . htmlspecialchars($user['alias']) : "Catalogue des Reliques" ?>
-            </h2>
-        </div>
+  <div class="catalog-banner">
+    <h2>
+      <?= $user['isConnected'] ? "Content de vous revoir, " . htmlspecialchars($user['alias']) : "Catalogue des Reliques" ?>
+    </h2>
+  </div>
 
         <div class="product-list" id="product-list">
             <?php foreach ($items as $item):

@@ -170,11 +170,11 @@ $title = "L'Arsenal - Inventory";
     </aside>
 
     <main>
-        <div class="catalog-banner">
-            <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
-                Inventory de <?= htmlspecialchars($user['alias']) ?>
-            </h2>
-        </div>
+  <div class="catalog-banner">
+    <h2>
+      Inventory de <?= htmlspecialchars($user['alias']) ?>
+    </h2>
+  </div>
 
         <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
             <?php $flashType = ($reviewFlash['type'] ?? '') === 'success' ? 'success-state' : 'error-state'; ?>

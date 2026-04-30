@@ -110,97 +110,97 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
         </div>
     <?php endif; ?>
 
-    <div class="profile-grid">
-        <section class="profile-card">
-            <h2>Modifier mon profil</h2>
-            <form method="POST" action="backend/profile_update.php" autocomplete="off">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+<div class="profile-grid">
+    <section class="profile-card">
+      <h2>Modifier mon profil</h2>
+      <form method="POST" action="backend/profile_update.php" autocomplete="off">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
-                <label for="alias">Alias</label>
-                <input id="alias" name="alias" type="text" required minlength="3" maxlength="30"
-                    value="<?= htmlspecialchars((string)($dbUser['alias'] ?? '')) ?>">
+        <label for="alias">Alias</label>
+        <input id="alias" name="alias" type="text" required minlength="3" maxlength="30"
+          value="<?= htmlspecialchars((string)($dbUser['alias'] ?? '')) ?>">
 
-                <label for="full_name">Nom complet</label>
-                <input id="full_name" name="full_name" type="text" maxlength="80"
-                    value="<?= htmlspecialchars((string)($dbUser['fullname'] ?? '')) ?>" placeholder="Optionnel">
+        <label for="full_name">Nom complet</label>
+        <input id="full_name" name="full_name" type="text" maxlength="80"
+          value="<?= htmlspecialchars((string)($dbUser['fullname'] ?? '')) ?>" placeholder="Optionnel">
 
-                <label for="email">Email</label>
-                <input id="email" name="email" type="email" maxlength="190"
-                    value="<?= htmlspecialchars((string)($dbUser['email'] ?? '')) ?>" placeholder="Optionnel">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" maxlength="190"
+          value="<?= htmlspecialchars((string)($dbUser['email'] ?? '')) ?>" placeholder="Optionnel">
 
-                <label for="avatar_url">Avatar (URL)</label>
-                <input id="avatar_url" name="avatar_url" type="url" maxlength="255"
-                    value="<?= htmlspecialchars((string)($dbUser['avatarurl'] ?? '')) ?>" placeholder="https://...">
+        <label for="avatar_url">Avatar (URL)</label>
+        <input id="avatar_url" name="avatar_url" type="url" maxlength="255"
+          value="<?= htmlspecialchars((string)($dbUser['avatarurl'] ?? '')) ?>" placeholder="https://...">
 
-                <h3>Changer le mot de passe</h3>
-                <p class="field-help">Remplissez ces champs uniquement si vous voulez changer votre mot de passe.</p>
+        <h3>Changer le mot de passe</h3>
+        <p class="field-help">Remplissez ces champs uniquement si vous voulez changer votre mot de passe.</p>
 
-                <label for="current_password">Mot de passe actuel</label>
-                <input id="current_password" name="current_password" type="password" minlength="6">
+        <label for="current_password">Mot de passe actuel</label>
+        <input id="current_password" name="current_password" type="password" minlength="6">
 
-                <label for="new_password">Nouveau mot de passe</label>
-                <input id="new_password" name="new_password" type="password" minlength="6">
+        <label for="new_password">Nouveau mot de passe</label>
+        <input id="new_password" name="new_password" type="password" minlength="6">
 
-                <label for="confirm_password">Confirmer le nouveau mot de passe</label>
-                <input id="confirm_password" name="confirm_password" type="password" minlength="6">
+        <label for="confirm_password">Confirmer le nouveau mot de passe</label>
+        <input id="confirm_password" name="confirm_password" type="password" minlength="6">
 
-                <button type="submit" class="btn-primary">Enregistrer mes modifications</button>
-            </form>
-    </section>
-
-    <section class="profile-stats-section">
-        <h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <span class="stat-label">Facile</span>
-                <span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Moyenne</span>
-                <span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
-            </div>
-            <div class="stat-card">
-                <span class="stat-label">Difficile</span>
-                <span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
-            </div>
-            <div class="stat-card stat-total">
-                <span class="stat-label">Total</span>
-                <span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
-            </div>
-            <?php if ($user['isMage']): ?>
-            <div class="stat-card stat-mage">
-                <span class="stat-label">Statut</span>
-                <span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
-            </div>
-            <?php endif; ?>
-        </div>
+        <button type="submit" class="btn-primary">Enregistrer mes modifications</button>
+      </form>
     </section>
 
     <section class="profile-card danger-card">
-            <h2>Actions sensibles</h2>
-            <p class="danger-intro">Cette action est irreversible. Une confirmation explicite est obligatoire.</p>
+      <h2>Actions sensibles</h2>
+      <p class="danger-intro">Cette action est irreversible. Une confirmation explicite est obligatoire.</p>
 
-            <form method="POST" action="backend/profile_delete_account.php" class="danger-form confirm-form" data-confirm-text="SUPPRIMER MON COMPTE" data-final-confirm="Derniere confirmation: supprimer definitivement ce compte ?">
-                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
+      <form method="POST" action="backend/profile_delete_account.php" class="danger-form confirm-form" data-confirm-text="SUPPRIMER MON COMPTE" data-final-confirm="Derniere confirmation: supprimer definitivement ce compte ?">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
-                <h3>Supprimer mon compte</h3>
-                <p>Votre compte et son historique seront supprimes definitivement.</p>
+        <h3>Supprimer mon compte</h3>
+        <p>Votre compte et son historique seront supprimes definitivement.</p>
 
-                <label for="account_phrase">Ecrivez "SUPPRIMER MON COMPTE"</label>
-                <input id="account_phrase" name="confirmation_text" type="text" required autocomplete="off">
+        <label for="account_phrase">Ecrivez "SUPPRIMER MON COMPTE"</label>
+        <input id="account_phrase" name="confirmation_text" type="text" required autocomplete="off">
 
-                <label for="account_password">Mot de passe actuel</label>
-                <input id="account_password" name="password" type="password" minlength="6" required autocomplete="off">
+        <label for="account_password">Mot de passe actuel</label>
+        <input id="account_password" name="password" type="password" minlength="6" required autocomplete="off">
 
-                <label class="check-line">
-                    <input type="checkbox" name="confirm_delete_account" value="1" required>
-                    Je comprends que cette suppression est definitive.
-                </label>
+        <label class="check-line">
+          <input type="checkbox" name="confirm_delete_account" value="1" required>
+          Je comprends que cette suppression est definitive.
+        </label>
 
-                <button type="submit" class="btn-danger btn-danger-strong" disabled>Supprimer mon compte</button>
-            </form>
-        </section>
-    </div>
+        <button type="submit" class="btn-danger btn-danger-strong" disabled>Supprimer mon compte</button>
+      </form>
+    </section>
+
+    <section class="profile-stats-section">
+      <h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-label">Facile</span>
+          <span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Moyenne</span>
+          <span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Difficile</span>
+          <span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
+        </div>
+        <div class="stat-card stat-total">
+          <span class="stat-label">Total</span>
+          <span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
+        </div>
+        <?php if ($user['isMage']): ?>
+        <div class="stat-card stat-mage">
+          <span class="stat-label">Statut</span>
+          <span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
+        </div>
+        <?php endif; ?>
+      </div>
+    </section>
+  </div>
 </main>
 
 <script src="assets/js/profile.js"></script>

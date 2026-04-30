@@ -34,6 +34,20 @@ if ($itemId <= 0 || $quantity <= 0) {
     handle_response($response, "../index.php", $isAjaxRequest);
 }
 
+$pdo = get_pdo();
+
+$typeStmt = $pdo->prepare("SELECT t.Name FROM Items i JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId WHERE i.ItemId = ?");
+$typeStmt->execute([$itemId]);
+$itemTypeRow = $typeStmt->fetch(PDO::FETCH_ASSOC);
+$itemTypeName = $itemTypeRow ? mb_strtolower($itemTypeRow['Name'], 'UTF-8') : '';
+
+$isMage = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Mage';
+
+if ($itemTypeName === 'magicspell' && !$isMage) {
+    $response['message'] = "Seuls les mages peuvent acquérir des sorts.";
+    handle_response($response, "../details.php?id=$itemId", $isAjaxRequest);
+}
+
 $success = add_to_cart($userId, $itemId, $quantity);
 
 error_log("[ajouter_au_panier] add_to_cart result: " . ($success ? 'true' : 'false'));
