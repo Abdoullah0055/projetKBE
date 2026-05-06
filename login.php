@@ -12,6 +12,11 @@ if (!$pdo) {
 
 $error = "";
 $success = "";
+$initialMode = 'login';
+
+if (isset($_GET['mode']) && $_GET['mode'] === 'register') {
+    $initialMode = 'register';
+}
 
 if (isset($_GET['account_deleted']) && $_GET['account_deleted'] === '1') {
     $success = "Votre compte a bien ete supprime.";
@@ -30,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alias = trim($_POST['alias'] ?? '');
     $password = $_POST['password'] ?? '';
     $mode = $_POST['mode'] ?? 'login';
+    $initialMode = $mode === 'register' ? 'register' : 'login';
 
    if ($mode === 'register') {
     require_once __DIR__ . '/includes/email_utils.php';
@@ -121,7 +127,7 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
         <?php endif; ?>
 
         <form id="auth-form" method="POST" action="login.php">
-            <input type="hidden" name="mode" id="auth-mode" value="login">
+            <input type="hidden" name="mode" id="auth-mode" value="<?= htmlspecialchars($initialMode, ENT_QUOTES) ?>">
 
             <div class="form-group">
                 <label for="alias" id="label-alias">Alias de l'Aventurier</label>
@@ -158,9 +164,8 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 <script src="assets/js/auth.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        const urlParams = new URLSearchParams(window.location.search);
-
-        if (urlParams.get('mode') === 'register') {
+        const initialMode = document.getElementById('auth-mode')?.value;
+        if (initialMode === 'register') {
             const switchLink = document.getElementById('switch-link');
             if (switchLink) {
                 switchLink.click();
