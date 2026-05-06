@@ -4,13 +4,14 @@ require_once 'AlgosBD.php';
 
 $pdo = get_pdo();
 
-// 2. RÉCUPÉRATION DES ITEMS
-$itemsPerPage = 25;
+$itemsPerPage = 15;
+
 $countStmt = $pdo->query("
     SELECT COUNT(*)
     FROM Items i
     WHERE i.IsActive = TRUE
 ");
+
 $totalItems = (int) $countStmt->fetchColumn();
 $totalPages = max(1, (int) ceil($totalItems / $itemsPerPage));
 
@@ -20,6 +21,7 @@ $pageFromQuery = filter_input(
     FILTER_VALIDATE_INT,
     ['options' => ['default' => 1, 'min_range' => 1]]
 );
+
 $currentPage = min((int) ($pageFromQuery ?: 1), $totalPages);
 $offset = ($currentPage - 1) * $itemsPerPage;
 
@@ -39,27 +41,25 @@ $stmt = $pdo->prepare("
     WHERE i.IsActive = TRUE
     GROUP BY i.ItemId, i.Name, t.Name, i.Rarity, i.PriceGold, i.Stock
     ORDER BY i.ItemId ASC
+    LIMIT :limit OFFSET :offset
 ");
-$stmt->execute();
-$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Plus besoin de pagination côté serveur
-$totalPages = 1;
-$currentPage = 1;
+$stmt->bindValue(':limit', $itemsPerPage, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
+
+$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $title = "L'Arsenal - Marché Noir";
 
-// Gestion du thème
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
 $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
-/**
- * Normalisation pour le filtrage JS
- */
 function normalizeItemType(string $type): string
 {
     $t = mb_strtolower(trim($type), 'UTF-8');
+
     return match ($t) {
         'weapon', 'weapons', 'arme', 'armes' => 'weapon',
         'armor', 'armour', 'armors', 'armours', 'armure', 'armures' => 'armor',
@@ -115,33 +115,29 @@ function buildPageUrl(int $targetPage): string
         min-height: 0;
     }
 
-    aside {
+    aside,
+    .sidebar-content {
         overflow-y: auto;
     }
 
-.sidebar-content {
-  overflow-y: auto;
-}
-
-.product-list {
+    .product-list {
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
         gap: 14px !important;
     }
 
-.product-list .item-row {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: stretch;
-    position: relative;
-    isolation: isolate;
-    width: 100%;
-    min-height: 260px;
-    padding: 12px;
-}
+    .product-list .item-row {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        position: relative;
+        isolation: isolate;
+        width: 100%;
+        min-height: 260px;
+        padding: 12px;
+    }
 
-    /* Classe pour cacher les items filtrés */
     main .product-list .item-row.hidden {
         display: none !important;
     }
@@ -152,9 +148,9 @@ function buildPageUrl(int $targetPage): string
         inset: 0;
         border-radius: inherit;
         background: linear-gradient(135deg,
-                var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%,
-                var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%,
-                rgba(0, 0, 0, 0) 88%);
+            var(--rarity-tint-strong, rgba(43, 85, 61, 0.38)) 0%,
+            var(--rarity-tint-soft, rgba(43, 85, 61, 0.16)) 52%,
+            rgba(0, 0, 0, 0) 88%);
         pointer-events: none;
         z-index: -1;
     }
@@ -198,7 +194,10 @@ function buildPageUrl(int $targetPage): string
         left: -58%;
         width: 90%;
         height: 220%;
-        background: linear-gradient(115deg, rgba(255, 255, 255, 0) 0%, rgba(239, 243, 250, 0.12) 48%, rgba(255, 255, 255, 0) 100%);
+        background: linear-gradient(115deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(239, 243, 250, 0.12) 48%,
+            rgba(255, 255, 255, 0) 100%);
         transform: rotate(8deg);
         opacity: 0;
         mix-blend-mode: screen;
@@ -207,10 +206,7 @@ function buildPageUrl(int $targetPage): string
     }
 
     @keyframes mythic-sheen {
-
-        0%,
-        76%,
-        100% {
+        0%, 76%, 100% {
             opacity: 0;
             transform: translateX(0) rotate(8deg);
         }
@@ -366,6 +362,199 @@ function buildPageUrl(int $targetPage): string
         transform: translateY(-2px);
     }
 
+    #no-results-message {
+        display: none;
+        text-align: center;
+        color: var(--accent);
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        margin: 20px 0;
+    }
+
+    .sidebar-bottom-actions {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .sidebar-inventory-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    aside.collapsed .sidebar-inventory-btn {
+        padding: 12px 8px;
+        overflow: hidden;
+    }
+
+    aside.collapsed .sidebar-inventory-btn .btn-label {
+        display: none !important;
+    }
+
+    .modern-filter-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 16px;
+        border-radius: 18px;
+        background: rgba(12, 15, 20, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(12px);
+    }
+
+    .filter-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--accent);
+        font-weight: 800;
+        letter-spacing: 0.4px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        padding: 0 12px;
+    }
+
+    .search-box input,
+    .modern-filter-bar select {
+        width: 100%;
+        height: 42px;
+        border: none;
+        outline: none;
+        color: #fff;
+        background: transparent;
+    }
+
+    .modern-filter-bar select {
+        padding: 0 12px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        cursor: pointer;
+    }
+
+    .modern-filter-bar option {
+        background: #15191f;
+        color: #fff;
+    }
+
+    .stock-toggle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-light);
+        font-size: 0.9rem;
+        cursor: pointer;
+    }
+
+    .stock-toggle input {
+        accent-color: var(--accent);
+    }
+
+    #reset-filters {
+        height: 42px;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        background: rgba(25, 133, 161, 0.12);
+        border-radius: 14px;
+        cursor: pointer;
+        font-weight: 800;
+        transition: 0.2s ease;
+    }
+
+    #reset-filters:hover {
+        background: rgba(25, 133, 161, 0.24);
+        transform: translateY(-2px);
+    }
+
+    .filter-accordion {
+        border-radius: 16px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(8px);
+    }
+
+    .accordion-header {
+        width: 100%;
+        border: none;
+        background: transparent;
+        color: white;
+        padding: 14px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 0.92rem;
+        transition: 0.2s ease;
+    }
+
+    .accordion-header:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .accordion-header span {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .accordion-icon {
+        transition: transform 0.25s ease;
+    }
+
+    .accordion-header.active .accordion-icon {
+        transform: rotate(180deg);
+    }
+
+    .accordion-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .accordion-content.open {
+        max-height: 300px;
+    }
+
+    .multi-filter-options {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0 16px 16px;
+    }
+
+    .multi-filter-options label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ddd;
+        cursor: pointer;
+        padding: 6px 8px;
+        border-radius: 10px;
+        transition: 0.2s ease;
+    }
+
+    .multi-filter-options label:hover {
+        background: rgba(255, 255, 255, 0.06);
+    }
+
+    .multi-filter-options input {
+        accent-color: var(--accent);
+    }
+
     .catalog-pagination {
         display: flex;
         align-items: center;
@@ -418,41 +607,6 @@ function buildPageUrl(int $targetPage): string
         min-width: auto;
         padding: 0 12px;
     }
-
-/* ========== RESPONSIVE - moved to responsive.css ========== */
-
-#no-results-message {
-            display: none;
-            text-align: center;
-            color: var(--accent);
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-
-        .sidebar-bottom-actions {
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-.sidebar-inventory-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-aside.collapsed .sidebar-inventory-btn {
-    padding: 12px 8px;
-    overflow: hidden;
-}
-
-aside.collapsed .sidebar-inventory-btn .btn-label {
-    display: none !important;
-}
 </style>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
@@ -468,79 +622,132 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
             <div class="show-icon">🔍</div>
 
             <div class="hide-text">
-                <form class="filter-section" onsubmit="return false;">
-                    <div class="filter-group">
-                        <label>Recherche</label>
-                        <input type="text" id="search-filter" class="filter-input" placeholder="Nom de l'objet...">
+                <form class="modern-filter-bar" onsubmit="return false;">
+                    <div class="filter-title">
+                        <i class="fa-solid fa-filter"></i>
+                        <span>Filtres du marché</span>
                     </div>
 
-                    <div class="filter-group" style="margin-top:15px;">
-                        <label>Catégorie</label>
-                        <select id="type-filter" class="filter-select">
-                            <option value="all">Tous les items</option>
-                            <option value="weapon">Armes</option>
-                            <option value="armor">Armures</option>
-                            <option value="potion">Potions</option>
-                            <option value="magicspell">Sorts</option>
-                        </select>
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-filter" placeholder="Rechercher une relique...">
                     </div>
 
-                    <button
-                        type="button"
-                        id="reset-filters"
-                        style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+                    <div class="filter-accordion">
+                        <button type="button" class="accordion-header active">
+                            <span>
+                                <i class="fa-solid fa-swords"></i>
+                                Types
+                            </span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </button>
+
+                        <div class="accordion-content open">
+                            <div class="multi-filter-options">
+                                <label><input type="checkbox" class="type-checkbox" value="weapon"> Armes</label>
+                                <label><input type="checkbox" class="type-checkbox" value="armor"> Armures</label>
+                                <label><input type="checkbox" class="type-checkbox" value="potion"> Potions</label>
+                                <label><input type="checkbox" class="type-checkbox" value="magicspell"> Sorts</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="filter-accordion">
+                        <button type="button" class="accordion-header active">
+                            <span>
+                                <i class="fa-solid fa-gem"></i>
+                                Raretés
+                            </span>
+                            <i class="fa-solid fa-chevron-down accordion-icon"></i>
+                        </button>
+
+                        <div class="accordion-content open">
+                            <div class="multi-filter-options">
+                                <label><input type="checkbox" class="rarity-checkbox" value="rarity-commun"> Commun</label>
+                                <label><input type="checkbox" class="rarity-checkbox" value="rarity-rare"> Rare</label>
+                                <label><input type="checkbox" class="rarity-checkbox" value="rarity-epique"> Épique</label>
+                                <label><input type="checkbox" class="rarity-checkbox" value="rarity-legendaire"> Légendaire</label>
+                                <label><input type="checkbox" class="rarity-checkbox" value="rarity-mythique"> Mythique</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <select id="sort-filter">
+                        <option value="default">Tri par défaut</option>
+                        <option value="price-asc">Prix croissant</option>
+                        <option value="price-desc">Prix décroissant</option>
+                        <option value="rating-desc">Meilleure note</option>
+                        <option value="name-asc">Nom A-Z</option>
+                    </select>
+
+                    <label class="stock-toggle">
+                        <input type="checkbox" id="stock-filter">
+                        <span>En stock seulement</span>
+                    </label>
+
+                    <button type="button" id="reset-filters">
+                        <i class="fa-solid fa-rotate-left"></i>
                         Réinitialiser
                     </button>
                 </form>
 
                 <a href="<?= $user['isConnected'] ? 'roadmap.php' : 'login.php' ?>" class="enigme-door-button" aria-label="Acceder aux enigmes">
                     <span class="enigme-door-button__frame">
-                        <img
-                            src="assets/img/doors/opened.png"
-                            alt=""
-                            class="enigme-door-button__image">
+                        <img src="assets/img/doors/opened.png" alt="" class="enigme-door-button__image">
                     </span>
                 </a>
             </div>
 
             <div class="sidebar-bottom-actions">
+                <span class="btn-label">
+                    <a href="fund_request.php">Demande de monnaie</a>
+                </span>
+
                 <?php if ($user['isConnected']): ?>
-<button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
-<i class="fa-solid fa-box-open"></i>
-<span class="btn-label">Inventaire</span>
-</button>
+                    <button
+                        type="button"
+                        onclick="location.href='inventory.php'"
+                        title="Ouvrir mon inventaire"
+                        class="sidebar-inventory-btn"
+                        style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+                        <i class="fa-solid fa-box-open"></i>
+                        <span class="btn-label">Inventaire</span>
+                    </button>
                 <?php endif; ?>
             </div>
         </div>
     </aside>
 
     <main>
-  <div class="catalog-banner">
-    <h2>
-      <?= $user['isConnected'] ? "Content de vous revoir, " . htmlspecialchars($user['alias']) : "Catalogue des Reliques" ?>
-    </h2>
-  </div>
+        <div class="catalog-banner">
+            <h2>
+                <?= $user['isConnected'] ? "Content de vous revoir, " . htmlspecialchars($user['alias']) : "Catalogue des Reliques" ?>
+            </h2>
+        </div>
 
         <div class="product-list" id="product-list">
             <?php foreach ($items as $item):
                 $normType = normalizeItemType($item['type']);
-                $rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
+                $rarityLabel = formatRarityLabel((string) ($item['rarete'] ?? 'Commun'));
                 $rarityClass = getRarityClass($rarityLabel);
-                $itemImagePath = getItemImagePath((string)$item['nom']);
+                $itemImagePath = getItemImagePath((string) $item['nom']);
             ?>
                 <div
-                    class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
+                    class="item-row <?= ((int) $item['stock'] === 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
                     data-type="<?= htmlspecialchars($normType) ?>"
                     data-name="<?= htmlspecialchars(mb_strtolower($item['nom'], 'UTF-8')) ?>"
                     data-rarity="<?= htmlspecialchars($rarityClass) ?>"
-                    onclick="window.location.href='details.php?id=<?= (int)$item['id'] ?>'">
+                    data-price="<?= htmlspecialchars((float) $item['prix']) ?>"
+                    data-rating="<?= htmlspecialchars((float) $item['rating']) ?>"
+                    data-stock="<?= htmlspecialchars((int) $item['stock']) ?>"
+                    onclick="window.location.href='details.php?id=<?= (int) $item['id'] ?>'">
 
                     <div class="item-card-head">
                         <span class="item-rarity-pill <?= htmlspecialchars($rarityClass) ?>">
                             <?= htmlspecialchars($rarityLabel) ?>
                         </span>
 
-                        <?php if ((int)$item['stock'] === 0): ?>
+                        <?php if ((int) $item['stock'] === 0): ?>
                             <span class="item-stock-pill">Épuisé</span>
                         <?php endif; ?>
                     </div>
@@ -560,12 +767,14 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
                         <h3><?= htmlspecialchars($item['nom']) ?></h3>
 
                         <div class="item-price-line">
-                            <p class="item-price"><?= number_format((float)$item['prix'], 0, ',', ' ') ?> GP</p>
+                            <p class="item-price">
+                                <?= number_format((float) $item['prix'], 0, ',', ' ') ?> GP
+                            </p>
                         </div>
 
                         <div class="item-rating">
-                            <?= renderRatingStars((float)$item['rating']) ?>
-                            <small><?= formatRatingValue((float)$item['rating']) ?>/5</small>
+                            <?= renderRatingStars((float) $item['rating']) ?>
+                            <small><?= formatRatingValue((float) $item['rating']) ?>/5</small>
                         </div>
                     </div>
                 </div>
@@ -577,7 +786,9 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
         <?php if ($totalPages > 1): ?>
             <nav class="catalog-pagination" id="catalog-pagination" aria-label="Pagination des items">
                 <?php if ($currentPage > 1): ?>
-                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage - 1)) ?>">&laquo; Prec.</a>
+                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage - 1)) ?>">
+                        &laquo; Préc.
+                    </a>
                 <?php endif; ?>
 
                 <?php
@@ -587,6 +798,7 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
 
                 <?php if ($windowStart > 1): ?>
                     <a class="page-link" href="<?= htmlspecialchars(buildPageUrl(1)) ?>">1</a>
+
                     <?php if ($windowStart > 2): ?>
                         <span class="page-ellipsis">...</span>
                     <?php endif; ?>
@@ -596,7 +808,9 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
                     <?php if ($page === $currentPage): ?>
                         <span class="page-current"><?= $page ?></span>
                     <?php else: ?>
-                        <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($page)) ?>"><?= $page ?></a>
+                        <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($page)) ?>">
+                            <?= $page ?>
+                        </a>
                     <?php endif; ?>
                 <?php endfor; ?>
 
@@ -604,11 +818,16 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
                     <?php if ($windowEnd < ($totalPages - 1)): ?>
                         <span class="page-ellipsis">...</span>
                     <?php endif; ?>
-                    <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($totalPages)) ?>"><?= $totalPages ?></a>
+
+                    <a class="page-link" href="<?= htmlspecialchars(buildPageUrl($totalPages)) ?>">
+                        <?= $totalPages ?>
+                    </a>
                 <?php endif; ?>
 
                 <?php if ($currentPage < $totalPages): ?>
-                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage + 1)) ?>">Suiv. &raquo;</a>
+                    <a class="page-link page-nav" href="<?= htmlspecialchars(buildPageUrl($currentPage + 1)) ?>">
+                        Suiv. &raquo;
+                    </a>
                 <?php endif; ?>
             </nav>
         <?php endif; ?>
@@ -616,53 +835,138 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const typeFilter = document.getElementById("type-filter");
+    document.addEventListener("DOMContentLoaded", function () {
+        const typeCheckboxes = document.querySelectorAll(".type-checkbox");
+        const rarityCheckboxes = document.querySelectorAll(".rarity-checkbox");
         const searchFilter = document.getElementById("search-filter");
+        const sortFilter = document.getElementById("sort-filter");
+        const stockFilter = document.getElementById("stock-filter");
         const resetBtn = document.getElementById("reset-filters");
-        const items = document.querySelectorAll(".item-row");
+
+        const productList = document.getElementById("product-list");
+        const items = Array.from(document.querySelectorAll(".item-row"));
         const noResults = document.getElementById("no-results-message");
         const pagination = document.getElementById("catalog-pagination");
 
-        // --- GESTION RESPONSIVE DU SIDEBAR ---
-        const sidebar = document.getElementById('sidebar');
-        const productList = document.getElementById('product-list');
-
         function applyFilters() {
-            const selectedType = typeFilter.value;
+            const selectedTypes = Array.from(typeCheckboxes)
+                .filter(c => c.checked)
+                .map(c => c.value);
+
+            const selectedRarities = Array.from(rarityCheckboxes)
+                .filter(c => c.checked)
+                .map(c => c.value);
+
             const searchValue = searchFilter.value.toLowerCase().trim();
-            let count = 0;
+            const onlyStock = stockFilter.checked;
+
+            let visibleItems = [];
 
             items.forEach(item => {
-                const matchesType = (selectedType === "all" || item.dataset.type === selectedType);
-                const matchesSearch = (searchValue === "" || item.dataset.name.includes(searchValue));
+                const itemType = item.dataset.type;
+                const itemName = item.dataset.name;
+                const itemRarity = item.dataset.rarity;
+                const itemStock = parseInt(item.dataset.stock || "0");
 
-                if (matchesType && matchesSearch) {
-                    item.style.display = "";
-                    count++;
+                const matchesType =
+                    selectedTypes.length === 0 ||
+                    selectedTypes.includes(itemType);
+
+                const matchesRarity =
+                    selectedRarities.length === 0 ||
+                    selectedRarities.includes(itemRarity);
+
+                const matchesSearch =
+                    searchValue === "" ||
+                    itemName.includes(searchValue);
+
+                const matchesStock =
+                    !onlyStock ||
+                    itemStock > 0;
+
+                if (matchesType && matchesRarity && matchesSearch && matchesStock) {
+                    item.classList.remove("hidden");
+                    visibleItems.push(item);
                 } else {
-                    item.style.display = "none";
+                    item.classList.add("hidden");
                 }
             });
 
-            noResults.style.display = (count === 0) ? "block" : "none";
+            sortItems(visibleItems);
+
+            noResults.style.display = visibleItems.length === 0 ? "block" : "none";
 
             if (pagination) {
-                pagination.style.display = (count === 0) ? "none" : "flex";
+                pagination.style.display = visibleItems.length === 0 ? "none" : "flex";
             }
         }
 
-        typeFilter.addEventListener("change", applyFilters);
+        function sortItems(visibleItems) {
+            const sortValue = sortFilter.value;
+
+            visibleItems.sort((a, b) => {
+                const nameA = a.dataset.name;
+                const nameB = b.dataset.name;
+                const priceA = parseFloat(a.dataset.price || "0");
+                const priceB = parseFloat(b.dataset.price || "0");
+                const ratingA = parseFloat(a.dataset.rating || "0");
+                const ratingB = parseFloat(b.dataset.rating || "0");
+
+                switch (sortValue) {
+                    case "price-asc":
+                        return priceA - priceB;
+
+                    case "price-desc":
+                        return priceB - priceA;
+
+                    case "rating-desc":
+                        return ratingB - ratingA;
+
+                    case "name-asc":
+                        return nameA.localeCompare(nameB);
+
+                    default:
+                        return 0;
+                }
+            });
+
+            visibleItems.forEach(item => productList.appendChild(item));
+        }
+
+        typeCheckboxes.forEach(cb => {
+            cb.addEventListener("change", applyFilters);
+        });
+
+        rarityCheckboxes.forEach(cb => {
+            cb.addEventListener("change", applyFilters);
+        });
+
+        sortFilter.addEventListener("change", applyFilters);
+        stockFilter.addEventListener("change", applyFilters);
         searchFilter.addEventListener("input", applyFilters);
 
         resetBtn.addEventListener("click", () => {
-            typeFilter.value = "all";
+            typeCheckboxes.forEach(cb => cb.checked = false);
+            rarityCheckboxes.forEach(cb => cb.checked = false);
+            sortFilter.value = "default";
+            stockFilter.checked = false;
             searchFilter.value = "";
             applyFilters();
         });
 
-  applyFilters();
-});
+        const accordionHeaders = document.querySelectorAll(".accordion-header");
+
+        accordionHeaders.forEach(header => {
+            header.addEventListener("click", () => {
+                header.classList.toggle("active");
+
+                const content = header.nextElementSibling;
+                content.classList.toggle("open");
+            });
+        });
+
+        applyFilters();
+    });
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

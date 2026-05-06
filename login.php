@@ -31,23 +31,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $mode = $_POST['mode'] ?? 'login';
 
-   if ($mode === 'register') {
-    require_once __DIR__ . '/includes/email_utils.php';
-    $email = normalize_email($_POST['email'] ?? '');
-    
-    if (!validate_email($email)) {
-        $error = "L'adresse courriel est invalide ou le domaine n'existe pas.";
-    } else {
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        try {
-            $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?, ?)");
-            $stmt->execute([$alias, $hashedPassword, $email]);
-            flushProcedureResults($stmt);
-            $success = "Compte forge avec succes !";
-        } catch (PDOException $e) {
-            $error = "Erreur : " . $e->getMessage();
+    if ($mode === 'register') {
+        require_once __DIR__ . '/includes/email_utils.php';
+        $email = normalize_email($_POST['email'] ?? '');
+
+        if (!validate_email($email)) {
+            $error = "L'adresse courriel est invalide ou le domaine n'existe pas.";
+        } else {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            try {
+                $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?, ?)");
+                $stmt->execute([$alias, $hashedPassword, $email]);
+                flushProcedureResults($stmt);
+                $token = bin2hex(random_bytes(32));
+
+                $stmt = $pdo->prepare("
+                        REPLACE INTO EmailVerifications 
+                        (Email, Token, ExpiresAt, VerifiedAt)
+                        VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY), NULL)
+                    ");
+                $stmt->execute([$email, $token]);
+
+                $verificationLink = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/verify_email.php?token=" . $token;
+
+                mail(
+                    $email,
+                    "Validation de votre compte DarQuest",
+                    "Cliquez ici pour valider votre compte : " . $verificationLink
+                );
+
+                $success = "Compte cree avec succes. Verifiez votre courriel avant de vous connecter.";
+            } catch (PDOException $e) {
+                $error = "Erreur : " . $e->getMessage();
+            }
         }
-    }
     } else {
         try {
             $stmt = $pdo->prepare("CALL sp_GetUserByAlias(?)");
@@ -55,27 +72,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $foundUser = $stmt->fetch();
             flushProcedureResults($stmt);
 
-if ($foundUser && password_verify($password, $foundUser['password'])) {
-            if ((int)($foundUser['isbanned'] ?? 0) === 1) {
-                $error = "Ce compte est bloque par un administrateur.";
-            } else {
-            $_SESSION['user'] = [
-                'id' => (int)$foundUser['userid'],
-                'alias' => $foundUser['alias'],
-                'role' => $foundUser['role'],
-                'gold' => (int)$foundUser['gold'],
-                'silver' => (int)$foundUser['silver'],
-                'bronze' => (int)$foundUser['bronze']
-            ];
+            if ($foundUser && password_verify($password, $foundUser['password'])) {
+                if ((int) ($foundUser['isbanned'] ?? 0) === 1) {
+                    $error = "Ce compte est bloque par un administrateur.";
+                } else {
+                    $_SESSION['user'] = [
+                        'id' => (int) $foundUser['userid'],
+                        'alias' => $foundUser['alias'],
+                        'role' => $foundUser['role'],
+                        'gold' => (int) $foundUser['gold'],
+                        'silver' => (int) $foundUser['silver'],
+                        'bronze' => (int) $foundUser['bronze']
+                    ];
 
-$_SESSION['user']['hp'] = $foundUser['currenthp'] ?? 100;
-                $_SESSION['user']['max_hp'] = $foundUser['maxhp'] ?? 100;
+                    $_SESSION['user']['hp'] = $foundUser['currenthp'] ?? 100;
+                    $_SESSION['user']['max_hp'] = $foundUser['maxhp'] ?? 100;
 
-                if (!isset($foundUser['currenthp'])) {
-                $hpData = get_user_hp($_SESSION['user']['id']);
-                $_SESSION['user']['hp'] = $hpData['current'];
-                $_SESSION['user']['max_hp'] = $hpData['max'];
-            }
+                    if (!isset($foundUser['currenthp'])) {
+                        $hpData = get_user_hp($_SESSION['user']['id']);
+                        $_SESSION['user']['hp'] = $hpData['current'];
+                        $_SESSION['user']['max_hp'] = $hpData['max'];
+                    }
                     header("Location: index.php");
                     exit();
                 }
@@ -129,9 +146,9 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
             </div>
 
             <div class="form-group" id="email-group" style="display: none;">
-    <label for="email">Adresse Courriel</label>
-    <input type="email" id="email" name="email" placeholder="aventurier@exemple.com">
-</div>
+                <label for="email">Adresse Courriel</label>
+                <input type="email" id="email" name="email" placeholder="aventurier@exemple.com">
+            </div>
 
             <div class="form-group">
                 <label for="password">Mot de passe</label>
@@ -157,7 +174,7 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 </main>
 <script src="assets/js/auth.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const urlParams = new URLSearchParams(window.location.search);
 
         if (urlParams.get('mode') === 'register') {
