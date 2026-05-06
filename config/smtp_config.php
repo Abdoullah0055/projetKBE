@@ -2,8 +2,8 @@
 return [
     'host' => 'smtp.gmail.com', // Ou votre serveur SMTP
     'auth' => true,
-    'username' => 'votre-email@gmail.com',
-    'password' => 'votre-mot-de-passe-d-application',
+    'username' => 'abdoullahrouge@gmail.com',
+    'password' => 'lixjxbpyyjgxcfgw',
     'secure' => 'tls',
     'port' => 587,
     'from_email' => 'noreply@darquest.com',
