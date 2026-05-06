@@ -31,16 +31,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $mode = $_POST['mode'] ?? 'login';
 
-    if ($mode === 'register') {
+   if ($mode === 'register') {
+    require_once __DIR__ . '/includes/email_utils.php';
+    $email = normalize_email($_POST['email'] ?? '');
+    
+    if (!validate_email($email)) {
+        $error = "L'adresse courriel est invalide ou le domaine n'existe pas.";
+    } else {
         $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
         try {
-            $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
-            $stmt->execute([$alias, $hashedPassword]);
+            $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?, ?)");
+            $stmt->execute([$alias, $hashedPassword, $email]);
             flushProcedureResults($stmt);
-            $success = "Compte forge avec succes ! Vous pouvez maintenant vous connecter.";
+            $success = "Compte forge avec succes !";
         } catch (PDOException $e) {
             $error = "Erreur : " . $e->getMessage();
         }
+    }
     } else {
         try {
             $stmt = $pdo->prepare("CALL sp_GetUserByAlias(?)");
@@ -120,6 +127,11 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
                 <label for="alias" id="label-alias">Alias de l'Aventurier</label>
                 <input type="text" id="alias" name="alias" placeholder="Ex: Slayer99" required minlength="3">
             </div>
+
+            <div class="form-group" id="email-group" style="display: none;">
+    <label for="email">Adresse Courriel</label>
+    <input type="email" id="email" name="email" placeholder="aventurier@exemple.com">
+</div>
 
             <div class="form-group">
                 <label for="password">Mot de passe</label>
