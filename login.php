@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require_once __DIR__ . '/AlgosBD.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -173,4 +173,3 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
     });
 </script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-
