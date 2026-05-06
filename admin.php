@@ -157,6 +157,67 @@ elseif ($_POST['action'] === 'add_riddle') {
             $message_alerte = ["type" => "erreur", "texte" => "Erreur inattendue lors de la suppression. " . $e->getMessage()];
         }
     }
+    elseif ($_POST['action'] === 'accept_request') {
+        $requestId = (int)($_POST['request_id'] ?? 0);
+        try {
+            $pdo->beginTransaction();
+            $reqStmt = $pdo->prepare("SELECT DemandeId, UserId, Status FROM Demandes WHERE DemandeId = ? FOR UPDATE");
+            $reqStmt->execute([$requestId]);
+            $requestRow = $reqStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$requestRow) {
+                throw new RuntimeException("Demande introuvable.");
+            }
+            if (($requestRow['status'] ?? '') !== 'Pending') {
+                throw new RuntimeException("Cette demande a deja ete traitee.");
+            }
+
+            $targetUserId = (int)$requestRow['userid'];
+            $acceptedCountStmt = $pdo->prepare("SELECT COUNT(*) FROM Demandes WHERE UserId = ? AND Status = 'Accepted'");
+            $acceptedCountStmt->execute([$targetUserId]);
+            $acceptedCount = (int)$acceptedCountStmt->fetchColumn();
+
+            $addGold = 0; $addSilver = 0; $addBronze = 0;
+            $rewardLabel = '';
+
+            if ($acceptedCount >= 3) {
+                throw new RuntimeException("Ce joueur a deja atteint le maximum de 3 demandes acceptees.");
+            }
+
+            if ($acceptedCount === 0) {
+                $addGold = 10; $rewardLabel = '10 pieces d or';
+            } elseif ($acceptedCount === 1) {
+                $addSilver = 10; $rewardLabel = '10 pieces d argent';
+            } else {
+                $addBronze = 10; $rewardLabel = '10 pieces de bronze';
+            }
+
+            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")
+                ->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+            $pdo->prepare("UPDATE Demandes SET Status = 'Accepted', ProcessedAt = NOW() WHERE DemandeId = ?")
+                ->execute([$requestId]);
+
+            $pdo->commit();
+            $message_alerte = ["type" => "succes", "texte" => "Demande acceptee. Capital ajoute: " . $rewardLabel . "."];
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $message_alerte = ["type" => "erreur", "texte" => "Echec de l'acceptation: " . $e->getMessage()];
+        }
+    }
+    elseif ($_POST['action'] === 'reject_request') {
+        $requestId = (int)($_POST['request_id'] ?? 0);
+        try {
+            $stmt = $pdo->prepare("UPDATE Demandes SET Status = 'Refused', ProcessedAt = NOW() WHERE DemandeId = ? AND Status = 'Pending'");
+            $stmt->execute([$requestId]);
+            $message_alerte = $stmt->rowCount() > 0
+                ? ["type" => "succes", "texte" => "Demande refusee."]
+                : ["type" => "erreur", "texte" => "Demande introuvable ou deja traitee."];
+        } catch (Exception $e) {
+            $message_alerte = ["type" => "erreur", "texte" => "Echec du refus: " . $e->getMessage()];
+        }
+    }
 }
 
 // --- RÉCUPÉRATION DES DONNÉES ---
@@ -179,8 +240,8 @@ $players = $pdo->query($query)->fetchAll();
 $capitalRequestsByPlayer = [];
 $capitalRequests = [];
 try {
-    $capitalRequestsByPlayer = $pdo->query("SELECT u.UserId, u.Alias, COUNT(d.DemandeId) AS RequestCount FROM Demandes d JOIN Users u ON u.UserId = d.UserId GROUP BY u.UserId, u.Alias ORDER BY RequestCount DESC, u.Alias ASC")->fetchAll();
-    $capitalRequests = $pdo->query("SELECT d.DemandeId, d.CreatedAt, u.UserId, u.Alias FROM Demandes d JOIN Users u ON u.UserId = d.UserId ORDER BY d.CreatedAt DESC, d.DemandeId DESC LIMIT 200")->fetchAll();
+    $capitalRequestsByPlayer = $pdo->query("SELECT u.UserId AS userid, u.Alias AS alias, COUNT(d.DemandeId) AS requestcount, SUM(CASE WHEN d.Status = 'Pending' THEN 1 ELSE 0 END) AS pendingcount, SUM(CASE WHEN d.Status = 'Accepted' THEN 1 ELSE 0 END) AS acceptedcount, SUM(CASE WHEN d.Status = 'Refused' THEN 1 ELSE 0 END) AS refusedcount FROM Demandes d JOIN Users u ON u.UserId = d.UserId GROUP BY u.UserId, u.Alias ORDER BY requestcount DESC, u.Alias ASC")->fetchAll();
+    $capitalRequests = $pdo->query("SELECT d.DemandeId AS demandeid, d.CreatedAt AS createdat, d.ProcessedAt AS processedat, d.Status AS status, u.UserId AS userid, u.Alias AS alias FROM Demandes d JOIN Users u ON u.UserId = d.UserId ORDER BY d.CreatedAt DESC, d.DemandeId DESC LIMIT 200")->fetchAll();
 } catch (Exception $e) {}
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 
@@ -639,18 +700,24 @@ include __DIR__ . '/templates/head.php';
                                 <tr>
                                     <th>Joueur</th>
                                     <th>ID</th>
-                                    <th>Demandes</th>
+                                    <th>Total</th>
+                                    <th>En attente</th>
+                                    <th>Acceptees</th>
+                                    <th>Refusees</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($capitalRequestsByPlayer)): ?>
-                                    <tr><td colspan="3">Aucune demande pour le moment.</td></tr>
+                                    <tr><td colspan="6">Aucune demande pour le moment.</td></tr>
                                 <?php else: ?>
                                     <?php foreach ($capitalRequestsByPlayer as $requestRow): ?>
                                         <tr>
                                             <td><strong><?= htmlspecialchars($requestRow['alias']) ?></strong></td>
                                             <td>#<?= (int) $requestRow['userid'] ?></td>
                                             <td><?= (int) $requestRow['requestcount'] ?></td>
+                                            <td><?= (int) $requestRow['pendingcount'] ?></td>
+                                            <td><?= (int) $requestRow['acceptedcount'] ?></td>
+                                            <td><?= (int) $requestRow['refusedcount'] ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -667,11 +734,13 @@ include __DIR__ . '/templates/head.php';
                                     <th>Joueur</th>
                                     <th>ID Joueur</th>
                                     <th>Date</th>
+                                    <th>Statut</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php if (empty($capitalRequests)): ?>
-                                    <tr><td colspan="4">Aucune demande enregistree.</td></tr>
+                                    <tr><td colspan="6">Aucune demande enregistree.</td></tr>
                                 <?php else: ?>
                                     <?php foreach ($capitalRequests as $request): ?>
                                         <tr>
@@ -679,6 +748,31 @@ include __DIR__ . '/templates/head.php';
                                             <td><strong><?= htmlspecialchars($request['alias']) ?></strong></td>
                                             <td>#<?= (int) $request['userid'] ?></td>
                                             <td><?= htmlspecialchars((string) $request['createdat']) ?></td>
+                                            <td>
+                                                <?php if (($request['status'] ?? '') === 'Pending'): ?>
+                                                    <span style="color:#f1c40f; font-weight:bold;">En attente</span>
+                                                <?php elseif (($request['status'] ?? '') === 'Accepted'): ?>
+                                                    <span style="color:#2ECC71; font-weight:bold;">Acceptee</span>
+                                                <?php else: ?>
+                                                    <span style="color:#E74C3C; font-weight:bold;">Refusee</span>
+                                                <?php endif; ?>
+                                            </td>
+                                            <td>
+                                                <?php if (($request['status'] ?? '') === 'Pending'): ?>
+                                                    <form style="display:inline;" method="POST" action="admin.php">
+                                                        <input type="hidden" name="action" value="accept_request">
+                                                        <input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
+                                                        <button type="submit" class="btn-outline-custom" style="padding:6px 10px; border-color:#2ECC71; color:#2ECC71;" title="Accepter">Accepter</button>
+                                                    </form>
+                                                    <form style="display:inline;" method="POST" action="admin.php">
+                                                        <input type="hidden" name="action" value="reject_request">
+                                                        <input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
+                                                        <button type="submit" class="btn-danger" style="padding:6px 10px;" title="Refuser">Refuser</button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <span style="opacity:.7;">Traitee</span>
+                                                <?php endif; ?>
+                                            </td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -796,3 +890,5 @@ if (ok) form.submit();
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php'; 
 ?>
+
+
