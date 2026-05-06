@@ -7,6 +7,7 @@ require_once __DIR__ . '/includes/enigmes_request.php';
 require_once __DIR__ . '/AlgosBD.php';
 
 $context = resolve_enigme_request('reponse.php');
+$riddleType = strtolower(trim((string) ($context['riddle']['riddle_type'] ?? 'qcm')));
 
 function build_reward_label(array $riddle): string
 {
@@ -50,24 +51,47 @@ if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $choiceIndex = filter_input(INPUT_POST, 'choice_index', FILTER_VALIDATE_INT);
+    $result = null;
 
-    if ($choiceIndex === false || $choiceIndex === null || $choiceIndex < 0 || $choiceIndex > 3) {
-        set_enigmes_flash_dialogues([
-            [
-                'text' => 'Choisis une reponse parmi les quatre propositions.',
-                'frame' => 'assets/img/Magicien/furieux.png',
-            ],
-            [
-                'text' => 'Allez, je te renvoie.',
-                'frame' => 'assets/img/Magicien/mage8.png',
-            ],
-        ]);
-        header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
-        exit;
+    if ($riddleType === 'phrase_courte') {
+        $typedAnswer = trim((string) ($_POST['typed_answer'] ?? ''));
+        if ($typedAnswer === '') {
+            set_enigmes_flash_dialogues([
+                [
+                    'text' => 'Tu dois ecrire une reponse avant de valider.',
+                    'frame' => 'assets/img/Magicien/furieux.png',
+                ],
+                [
+                    'text' => 'Recommencons proprement.',
+                    'frame' => 'assets/img/Magicien/mage8.png',
+                ],
+            ]);
+            header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
+            exit;
+        }
+
+        $result = verify_enigme_phrase((int) $context['riddle']['id'], $typedAnswer);
+    } else {
+        $choiceIndex = filter_input(INPUT_POST, 'choice_index', FILTER_VALIDATE_INT);
+        $maxChoiceIndex = ($riddleType === 'vrai_faux') ? 1 : 3;
+
+        if ($choiceIndex === false || $choiceIndex === null || $choiceIndex < 0 || $choiceIndex > $maxChoiceIndex) {
+            set_enigmes_flash_dialogues([
+                [
+                    'text' => 'Choisis une reponse valide pour poursuivre.',
+                    'frame' => 'assets/img/Magicien/furieux.png',
+                ],
+                [
+                    'text' => 'Allez, je te renvoie.',
+                    'frame' => 'assets/img/Magicien/mage8.png',
+                ],
+            ]);
+            header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
+            exit;
+        }
+
+        $result = verify_enigme_choice((int) $context['riddle']['id'], $choiceIndex);
     }
-
-    $result = verify_enigme_choice((int) $context['riddle']['id'], $choiceIndex);
 
     if (!$result['is_correct']) {
         record_riddle_attempt($_SESSION['user']['id'], (int)$context['riddle']['id'], $result['chosen_text'] ?? '', false);
@@ -226,11 +250,31 @@ $abandonUrl = build_enigmes_page_url('reponse.php', array_merge($context['query'
 
         <div class="enigmes-orb" id="enigmesRiddleArea">
             <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
-                <div class="enigmes-choices" id="enigmesChoices">
-                <?php foreach ($context['choices'] as $i => $choice): ?>
-                    <button type="submit" name="choice_index" value="<?= $i ?>" class="enigmes-choice-btn"><?= htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') ?></button>
-                <?php endforeach; ?>
-                </div>
+                <?php if ($riddleType === 'phrase_courte'): ?>
+                    <div class="enigmes-phrase-input-wrapper" id="enigmesPhraseWrapper">
+                        <input
+                            type="text"
+                            name="typed_answer"
+                            id="enigmesTypedAnswer"
+                            class="enigmes-phrase-input"
+                            placeholder="Ecrivez votre reponse ici..."
+                            maxlength="255"
+                            required>
+                        <button type="submit" class="enigmes-submit-btn" id="enigmesSubmitBtn">Valider</button>
+                    </div>
+                <?php else: ?>
+                    <div class="enigmes-choices<?= $riddleType === 'vrai_faux' ? ' enigmes-choices--vf' : '' ?>" id="enigmesChoices">
+                    <?php foreach ($context['choices'] as $i => $choice): ?>
+                        <button
+                            type="submit"
+                            name="choice_index"
+                            value="<?= $i ?>"
+                            class="enigmes-choice-btn<?= $riddleType === 'vrai_faux' ? ' enigmes-choice-btn--vf' : '' ?>">
+                            <?= htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') ?>
+                        </button>
+                    <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </form>
         </div>
     </section>

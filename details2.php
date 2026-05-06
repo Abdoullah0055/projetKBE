@@ -48,6 +48,37 @@ $itemImagePath = getItemImagePathForItem($item);
 $properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
 $title = "Détails - " . $item['nom'];
 $itemRatingText = formatRatingValue((float)$item['rating']);
+$currentUserId = (int) ($user['id'] ?? 0);
+
+$ratingLevels = [5.0, 4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0];
+$ratingDistribution = [];
+foreach ($ratingLevels as $level) {
+    $ratingDistribution[number_format($level, 1, '.', '')] = 0;
+}
+
+$distributionStmt = $pdo->prepare(
+    "SELECT Rating, COUNT(*) AS rating_count
+     FROM Reviews
+     WHERE ItemId = :item_id
+     GROUP BY Rating"
+);
+$distributionStmt->execute([':item_id' => $itemId]);
+foreach ($distributionStmt->fetchAll(PDO::FETCH_ASSOC) as $distRow) {
+    $key = number_format((float) ($distRow['rating'] ?? 0), 1, '.', '');
+    if (isset($ratingDistribution[$key])) {
+        $ratingDistribution[$key] = (int) ($distRow['rating_count'] ?? 0);
+    }
+}
+
+$reviewsStmt = $pdo->prepare(
+    "SELECT r.ReviewId, r.UserId, r.Rating, r.Comment, r.CreatedAt, u.Alias
+     FROM Reviews r
+     JOIN Users u ON u.UserId = r.UserId
+     WHERE r.ItemId = :item_id
+     ORDER BY r.CreatedAt DESC, r.ReviewId DESC"
+);
+$reviewsStmt->execute([':item_id' => $itemId]);
+$itemReviews = $reviewsStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $detailAlert = null;
 if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
@@ -285,6 +316,62 @@ $rightImages = [
     Retour au catalogue
   </a>
   </div>
+
+            <section class="reviews-section" id="reviews-section">
+                <h3>Repartition des notes</h3>
+                <div class="rating-breakdown">
+                    <?php foreach ($ratingLevels as $level): ?>
+                        <?php
+                        $levelKey = number_format($level, 1, '.', '');
+                        $count = (int) ($ratingDistribution[$levelKey] ?? 0);
+                        $percentage = ((int) $item['nb_avis'] > 0) ? round(($count / (int) $item['nb_avis']) * 100, 1) : 0;
+                        ?>
+                        <div class="breakdown-row">
+                            <span class="breakdown-label"><?= $levelKey ?> ★</span>
+                            <div class="breakdown-bar-track">
+                                <div class="breakdown-bar-fill" style="width: <?= $percentage ?>%;"></div>
+                            </div>
+                            <span class="breakdown-meta"><?= $percentage ?>% (<?= $count ?>)</span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
+                <h3 style="margin-top: 16px;">Avis des joueurs</h3>
+                <?php if (empty($itemReviews)): ?>
+                    <p class="review-comment is-empty">Aucun avis pour le moment.</p>
+                <?php else: ?>
+                    <?php foreach ($itemReviews as $review): ?>
+                        <?php
+                        $reviewId = (int) ($review['reviewid'] ?? 0);
+                        $reviewUserId = (int) ($review['userid'] ?? 0);
+                        $reviewComment = trim((string) ($review['comment'] ?? ''));
+                        ?>
+                        <article class="review-card" data-review-id="<?= $reviewId ?>">
+                            <div class="review-head">
+                                <span class="review-author"><?= htmlspecialchars((string) ($review['alias'] ?? 'Joueur')) ?></span>
+                                <span class="review-rating">
+                                    <?= renderRatingStars((float) ($review['rating'] ?? 0)) ?>
+                                    <?= formatRatingValue((float) ($review['rating'] ?? 0)) ?>/5
+                                </span>
+                            </div>
+                            <p class="review-comment<?= $reviewComment === '' ? ' is-empty' : '' ?>">
+                                <?= $reviewComment === '' ? 'Aucun commentaire.' : nl2br(htmlspecialchars($reviewComment)) ?>
+                            </p>
+                            <?php if ($currentUserId > 0 && $reviewUserId === $currentUserId): ?>
+                                <div class="review-actions">
+                                    <button
+                                        type="button"
+                                        class="btn-delete-review"
+                                        data-review-id="<?= $reviewId ?>"
+                                        data-item-id="<?= (int) $item['id'] ?>">
+                                        Retirer mon avis
+                                    </button>
+                                </div>
+                            <?php endif; ?>
+                        </article>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </section>
         </div>
     </main>
 </div>
@@ -519,6 +606,49 @@ $rightImages = [
         } catch (error) {
             console.error("Erreur:", error);
             showToast("Erreur reseau pendant l'ajout au panier.", 'erreur');
+        }
+    });
+
+    document.addEventListener('click', async function (event) {
+        const deleteButton = event.target.closest('.btn-delete-review');
+        if (!deleteButton) {
+            return;
+        }
+
+        const reviewId = deleteButton.dataset.reviewId || '';
+        const confirmed = await showCustomConfirm('Retirer votre avis pour cet item ?', 'Supprimer mon avis');
+        if (!confirmed) {
+            return;
+        }
+
+        const payload = new FormData();
+        payload.append('review_id', reviewId);
+
+        try {
+            const response = await fetch('backend/supprimer_review.php', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: payload
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                showToast((data && data.message) ? data.message : 'Suppression impossible.', 'erreur');
+                return;
+            }
+
+            const card = deleteButton.closest('.review-card');
+            if (card) {
+                card.remove();
+            }
+
+            showToast(data.message || 'Avis retire.', 'succes');
+            window.location.reload();
+        } catch (_error) {
+            showToast('Erreur reseau pendant la suppression.', 'erreur');
         }
     });
 </script>

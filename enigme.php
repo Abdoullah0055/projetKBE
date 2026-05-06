@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 $title = 'Enigme - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css'];
 $bodyClass = 'enigmes-page';
@@ -12,17 +12,24 @@ $flashDialogues = consume_enigmes_flash_dialogues();
 if ($flashDialogues !== []) {
     $mainDialogues = $flashDialogues;
 } else {
+    $riddleType = strtolower(trim((string) ($context['riddle']['riddle_type'] ?? 'qcm')));
+    $modeHint = match ($riddleType) {
+        'vrai_faux' => 'Cette fois, tu devras choisir entre Vrai et Faux.',
+        'phrase_courte' => 'Cette fois, tu devras saisir ta reponse au clavier.',
+        default => 'Quatre choix de reponses te seront presentes. Une seule est la bonne.',
+    };
+
     $mainDialogues = [
         [
             'text' => 'Te voila dans le portail du savoir. Le but du jeu est de repondre correctement a une question qui te sera posee.',
             'frame' => 'assets/img/Magicien/mage1.png',
         ],
         [
-            'text' => 'Les reponses peuvent se trouver directement sur le site, dans les descriptions d’objets, ou concerner des evenements historiques de notre monde.',
+            'text' => 'Les reponses peuvent se trouver directement sur le site, dans les descriptions d\'objets, ou concerner des evenements historiques de notre monde.',
             'frame' => 'assets/img/Magicien/mage2.png',
         ],
         [
-            'text' => 'Quatre choix de reponses te seront presentes. Une seule est la bonne. Choisis avec sagesse. Dans le message suivant se trouvera l’enigme a resoudre.',
+            'text' => $modeHint . ' Choisis avec sagesse. Dans le message suivant se trouvera l\'enigme a resoudre.',
             'frame' => 'assets/img/Magicien/mage3.png',
         ],
         [
@@ -84,4 +91,3 @@ $mainDialoguesJson = htmlspecialchars(
 
 <script src="assets/js/enigme_intro.js" defer></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-

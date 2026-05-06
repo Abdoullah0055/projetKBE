@@ -9,6 +9,8 @@
     const dialogText = document.getElementById("enigmesDialogText");
     const hintButton = document.getElementById("enigmesHintBtn");
     const choicesContainer = document.getElementById("enigmesChoices");
+    const typedAnswerInput = document.getElementById("enigmesTypedAnswer");
+    const typedSubmitButton = document.getElementById("enigmesSubmitBtn");
     const backLink = stage.querySelector(".enigmes-back");
     const backImage = stage.querySelector(".enigmes-back-image");
 
@@ -382,22 +384,48 @@
 
     function enableChoiceButtons() {
     if (!choicesContainer) {
+      if (typedAnswerInput) {
+        typedAnswerInput.disabled = false;
+      }
+      if (typedSubmitButton) {
+        typedSubmitButton.disabled = false;
+      }
       return;
     }
     const buttons = choicesContainer.querySelectorAll(".enigmes-choice-btn");
     buttons.forEach((btn) => {
       btn.disabled = false;
     });
+
+    if (typedAnswerInput) {
+      typedAnswerInput.disabled = false;
+    }
+    if (typedSubmitButton) {
+      typedSubmitButton.disabled = false;
+    }
   }
 
   function disableChoiceButtons() {
     if (!choicesContainer) {
+      if (typedAnswerInput) {
+        typedAnswerInput.disabled = true;
+      }
+      if (typedSubmitButton) {
+        typedSubmitButton.disabled = true;
+      }
       return;
     }
     const buttons = choicesContainer.querySelectorAll(".enigmes-choice-btn");
     buttons.forEach((btn) => {
       btn.disabled = true;
     });
+
+    if (typedAnswerInput) {
+      typedAnswerInput.disabled = true;
+    }
+    if (typedSubmitButton) {
+      typedSubmitButton.disabled = true;
+    }
   }
 
   function syncBackLink() {

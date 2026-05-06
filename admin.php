@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
@@ -34,10 +34,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 throw new RuntimeException("Type d'objet invalide.");
             }
 
-            if ($typeName === 'weapon') $pdo->prepare("INSERT INTO WeaponProperties (ItemId, DamageMin, DamageMax) VALUES (?, 10, 20)")->execute([$newItemId]);
-            elseif ($typeName === 'armor') $pdo->prepare("INSERT INTO ArmorProperties (ItemId, Defense) VALUES (?, 15)")->execute([$newItemId]);
-            elseif ($typeName === 'potion') $pdo->prepare("INSERT INTO PotionProperties (ItemId, EffectType, EffectValue) VALUES (?, 'Heal', 3)")->execute([$newItemId]);
-            elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO MagicSpellProperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
+            if ($typeName === 'weapon') {
+                $damageMin = max(0, (int) ($_POST['weapon_damage_min'] ?? 10));
+                $damageMax = max($damageMin, (int) ($_POST['weapon_damage_max'] ?? 20));
+                $durability = max(1, (int) ($_POST['weapon_durability'] ?? 100));
+                $requiredLevel = max(1, (int) ($_POST['weapon_required_level'] ?? 1));
+                $attackSpeed = max(0.1, (float) ($_POST['weapon_attack_speed'] ?? 1.0));
+                $pdo->prepare("INSERT INTO WeaponProperties (ItemId, DamageMin, DamageMax, Durability, RequiredLevel, AttackSpeed) VALUES (?, ?, ?, ?, ?, ?)")
+                    ->execute([$newItemId, $damageMin, $damageMax, $durability, $requiredLevel, $attackSpeed]);
+            } elseif ($typeName === 'armor') {
+                $defense = max(0, (int) ($_POST['armor_defense'] ?? 15));
+                $durability = max(1, (int) ($_POST['armor_durability'] ?? 100));
+                $requiredLevel = max(1, (int) ($_POST['armor_required_level'] ?? 1));
+                $pdo->prepare("INSERT INTO ArmorProperties (ItemId, Defense, Durability, RequiredLevel) VALUES (?, ?, ?, ?)")
+                    ->execute([$newItemId, $defense, $durability, $requiredLevel]);
+            } elseif ($typeName === 'potion') {
+                $effectType = trim((string) ($_POST['potion_effect_type'] ?? 'Heal'));
+                $effectValue = max(1, (int) ($_POST['potion_effect_value'] ?? 3));
+                $durationSeconds = ($_POST['potion_duration_seconds'] ?? '') !== '' ? max(0, (int) $_POST['potion_duration_seconds']) : null;
+                $pdo->prepare("INSERT INTO PotionProperties (ItemId, EffectType, EffectValue, DurationSeconds) VALUES (?, ?, ?, ?)")
+                    ->execute([$newItemId, $effectType, $effectValue, $durationSeconds]);
+            } elseif ($typeName === 'magicspell') {
+                $spellDamage = max(1, (int) ($_POST['spell_damage'] ?? 30));
+                $manaCost = max(0, (int) ($_POST['spell_mana_cost'] ?? 15));
+                $elementType = trim((string) ($_POST['spell_element_type'] ?? 'Magic'));
+                $requiredLevel = max(1, (int) ($_POST['spell_required_level'] ?? 1));
+                $cooldownSeconds = max(0, (int) ($_POST['spell_cooldown_seconds'] ?? 0));
+                $pdo->prepare("INSERT INTO MagicSpellProperties (ItemId, SpellDamage, ManaCost, ElementType, RequiredLevel, CooldownSeconds) VALUES (?, ?, ?, ?, ?, ?)")
+                    ->execute([$newItemId, $spellDamage, $manaCost, $elementType, $requiredLevel, $cooldownSeconds]);
+            }
 
             $pdo->commit();
             $message_alerte = ["type" => "succes", "texte" => "L'artefact '$name' a été ajouté avec succès."];
@@ -128,6 +153,50 @@ elseif ($_POST['action'] === 'add_riddle') {
 
     // --- GESTION DES JOUEURS ---
 
+    elseif ($_POST['action'] === 'cycle_funds') {
+        $targetUserId = (int) $_POST['user_id'];
+        try {
+            $pdo->beginTransaction();
+
+            $cycleStmt = $pdo->prepare("SELECT UserId, Alias, FundsGivenCount FROM Users WHERE UserId = ? FOR UPDATE");
+            $cycleStmt->execute([$targetUserId]);
+            $target = $cycleStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$target) {
+                throw new RuntimeException("Joueur introuvable.");
+            }
+
+            $count = (int) ($target['fundsgivencount'] ?? 0);
+            $cycle = $count % 3;
+            $addGold = 0;
+            $addSilver = 0;
+            $addBronze = 0;
+            $currency = '';
+
+            if ($cycle === 0) {
+                $addGold = 10;
+                $currency = 'or';
+            } elseif ($cycle === 1) {
+                $addSilver = 10;
+                $currency = 'argent';
+            } else {
+                $addBronze = 10;
+                $currency = 'bronze';
+            }
+
+            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")
+                ->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+
+            $pdo->commit();
+            $message_alerte = ["type" => "succes", "texte" => "Renflouement effectue pour {$target['alias']} : +10 {$currency}."];
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $message_alerte = ["type" => "erreur", "texte" => "Impossible de renflouer ce joueur pour le moment."];
+        }
+    }
+
     // 8. Ajouter Fonds au Joueur
     elseif ($_POST['action'] === 'add_funds') {
         $targetUserId = (int)$_POST['user_id'];
@@ -174,8 +243,25 @@ try {
 $hasBannedCol = false;
 try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
 
-$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
+$hasFundsGivenCountCol = false;
+try { $pdo->query("SELECT FundsGivenCount FROM Users LIMIT 1"); $hasFundsGivenCountCol = true; } catch (Exception $e) {}
+
+$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze"
+    . ($hasBannedCol ? ", u.IsBanned" : "")
+    . ($hasFundsGivenCountCol ? ", u.FundsGivenCount" : ", 0 AS FundsGivenCount")
+    . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
 $players = $pdo->query($query)->fetchAll();
+
+$reviewsForAdmin = [];
+try {
+    $reviewsForAdmin = $pdo->query(
+        "SELECT r.ReviewId, r.Rating, r.Comment, r.CreatedAt, u.Alias AS UserAlias, i.Name AS ItemName
+         FROM Reviews r
+         JOIN Users u ON u.UserId = r.UserId
+         JOIN Items i ON i.ItemId = r.ItemId
+         ORDER BY r.CreatedAt DESC, r.ReviewId DESC"
+    )->fetchAll();
+} catch (Exception $e) {}
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 
 $title = "Administration - L'Arsenal";
@@ -272,6 +358,31 @@ include __DIR__ . '/templates/head.php';
         color: white;
     }
 
+    .admin-props-fieldset {
+        border: 1px dashed rgba(25, 133, 161, 0.4);
+        border-radius: 8px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .admin-props-fieldset legend {
+        color: var(--accent);
+        font-size: 0.86rem;
+        padding: 0 6px;
+    }
+
+    .inv-props-tag {
+        display: inline-block;
+        margin: 2px 4px 2px 0;
+        padding: 3px 8px;
+        border-radius: 999px;
+        background: rgba(25, 133, 161, 0.18);
+        border: 1px solid rgba(25, 133, 161, 0.45);
+        color: #cbe8f2;
+        font-size: 0.74rem;
+        font-weight: 600;
+    }
+
     .btn-danger { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; border-radius: 4px; cursor: pointer; transition: 0.3s; }
     .btn-danger:hover { background: #e74c3c; color: white; }
 
@@ -327,6 +438,7 @@ include __DIR__ . '/templates/head.php';
                 <button type="button" class="admin-tab-btn active" onclick="switchTab(event, 'items')"><i class="fa-solid fa-box-open"></i> Catalogue Items</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'riddles')"><i class="fa-solid fa-scroll"></i> Quêtes & Énigmes</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'users')"><i class="fa-solid fa-users"></i> Registre Joueurs</button>
+                <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'reviews')"><i class="fa-solid fa-comments"></i> Gestion des Évaluations</button>
             </div>
 
             <div class="admin-content">
@@ -343,7 +455,7 @@ include __DIR__ . '/templates/head.php';
                             </div>
                             <div class="admin-form-group">
                                 <label>Catégorie</label>
-                                <select name="type_id" class="admin-input" required>
+                                <select name="type_id" id="item-type-select" class="admin-input" required>
                                     <?php foreach ($itemTypes as $type): ?>
                                         <option value="<?= $type['itemtypeid'] ?>"><?= htmlspecialchars($type['name']) ?></option>
                                     <?php endforeach; ?>
@@ -366,6 +478,47 @@ include __DIR__ . '/templates/head.php';
                                 <input type="number" min="1" name="stock" class="admin-input" value="1" required>
                             </div>
                         </div>
+
+                        <fieldset id="props-weapon" class="admin-props-fieldset" style="display:none; margin-bottom:15px;">
+                            <legend>Propriétés Arme</legend>
+                            <div class="admin-form-grid">
+                                <div class="admin-form-group"><label>Dégâts min</label><input type="number" min="0" name="weapon_damage_min" class="admin-input" value="10"></div>
+                                <div class="admin-form-group"><label>Dégâts max</label><input type="number" min="0" name="weapon_damage_max" class="admin-input" value="20"></div>
+                                <div class="admin-form-group"><label>Durabilité</label><input type="number" min="1" name="weapon_durability" class="admin-input" value="100"></div>
+                                <div class="admin-form-group"><label>Niveau requis</label><input type="number" min="1" name="weapon_required_level" class="admin-input" value="1"></div>
+                                <div class="admin-form-group"><label>Vitesse d'attaque</label><input type="number" min="0.1" step="0.1" name="weapon_attack_speed" class="admin-input" value="1.0"></div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="props-armor" class="admin-props-fieldset" style="display:none; margin-bottom:15px;">
+                            <legend>Propriétés Armure</legend>
+                            <div class="admin-form-grid">
+                                <div class="admin-form-group"><label>Défense</label><input type="number" min="0" name="armor_defense" class="admin-input" value="15"></div>
+                                <div class="admin-form-group"><label>Durabilité</label><input type="number" min="1" name="armor_durability" class="admin-input" value="100"></div>
+                                <div class="admin-form-group"><label>Niveau requis</label><input type="number" min="1" name="armor_required_level" class="admin-input" value="1"></div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="props-potion" class="admin-props-fieldset" style="display:none; margin-bottom:15px;">
+                            <legend>Propriétés Potion</legend>
+                            <div class="admin-form-grid">
+                                <div class="admin-form-group"><label>Type d'effet</label><input type="text" name="potion_effect_type" class="admin-input" value="Heal"></div>
+                                <div class="admin-form-group"><label>Valeur d'effet</label><input type="number" min="1" name="potion_effect_value" class="admin-input" value="3"></div>
+                                <div class="admin-form-group"><label>Durée (secondes)</label><input type="number" min="0" name="potion_duration_seconds" class="admin-input"></div>
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="props-magicspell" class="admin-props-fieldset" style="display:none; margin-bottom:15px;">
+                            <legend>Propriétés Sort</legend>
+                            <div class="admin-form-grid">
+                                <div class="admin-form-group"><label>Dégâts du sort</label><input type="number" min="1" name="spell_damage" class="admin-input" value="30"></div>
+                                <div class="admin-form-group"><label>Coût en mana</label><input type="number" min="0" name="spell_mana_cost" class="admin-input" value="15"></div>
+                                <div class="admin-form-group"><label>Élément</label><input type="text" name="spell_element_type" class="admin-input" value="Magic"></div>
+                                <div class="admin-form-group"><label>Niveau requis</label><input type="number" min="1" name="spell_required_level" class="admin-input" value="1"></div>
+                                <div class="admin-form-group"><label>Cooldown (secondes)</label><input type="number" min="0" name="spell_cooldown_seconds" class="admin-input" value="0"></div>
+                            </div>
+                        </fieldset>
+
                         <div class="admin-form-group" style="margin-bottom: 15px;">
                             <label>Description du Lore</label>
                             <textarea name="description" class="admin-input" rows="3" required></textarea>
@@ -539,66 +692,59 @@ include __DIR__ . '/templates/head.php';
                 </div>
 
                 <div id="tab-users" class="admin-section details-glass-card">
-                    <h3><i class="fa-solid fa-coins"></i> Renflouer un Joueur</h3>
-                    
-                    <form method="POST" action="admin.php">
-                        <input type="hidden" name="action" value="add_funds">
-                        <div class="admin-form-grid">
-                            <div class="admin-form-group">
-                                <label>Sélectionner le joueur</label>
-                                <select name="user_id" class="admin-input" required>
-                                    <option value="" disabled selected>-- Choisir un joueur --</option>
-                                    <?php foreach ($players as $p): ?>
-                                        <option value="<?= $p['userid'] ?>"><?= htmlspecialchars($p['alias']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Or (+)</label>
-                                <input type="number" min="0" name="add_gold" class="admin-input" value="0">
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Argent (+)</label>
-                                <input type="number" min="0" name="add_silver" class="admin-input" value="0">
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Bronze (+)</label>
-                                <input type="number" min="0" name="add_bronze" class="admin-input" value="0">
-                            </div>
-                        </div>
-                        <button type="submit" class="sidebar-inventory-btn" style="width:auto; padding: 10px 20px;">Transférer les fonds</button>
-                    </form>
-
-                    <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
-
                     <h3><i class="fa-solid fa-address-book"></i> Registre des Aventuriers</h3>
+                    <p style="color: var(--text-silver); margin-top: 6px;">
+                        Renflouement cyclique automatique: <strong style="color:gold;">+10 or</strong> -> <strong style="color:silver;">+10 argent</strong> -> <strong style="color:#cd7f32;">+10 bronze</strong>
+                    </p>
                     <div style="overflow-x:auto;">
                         <table class="glass-table">
                             <thead>
                                 <tr>
-                <th>ID</th>
-                <th>Alias</th>
-                <th>Capital</th>
-                <th>Magie</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                                    <th>ID</th>
+                                    <th>Alias</th>
+                                    <th>Capital</th>
+                                    <th>Cycle</th>
+                                    <th>Prochaine monnaie</th>
+                                    <th>Magie</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($players as $p): ?>
                                 <tr>
-<td>#<?= $p['userid'] ?></td>
-                <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
-                <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
-                <td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
-        <td>
-        <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
+                                    <?php
+                                    $fundCount = (int) ($p['fundsgivencount'] ?? 0);
+                                    $nextCycle = $fundCount % 3;
+                                    $nextCurrency = $nextCycle === 0 ? 'or' : ($nextCycle === 1 ? 'argent' : 'bronze');
+                                    $nextColor = $nextCycle === 0 ? 'gold' : ($nextCycle === 1 ? 'silver' : '#cd7f32');
+                                    ?>
+                                    <td>#<?= $p['userid'] ?></td>
+                                    <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
+                                    <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
+                                    <td><?= $fundCount ?></td>
+                                    <td><strong style="color: <?= $nextColor ?>;"><?= htmlspecialchars($nextCurrency) ?></strong></td>
+                                    <td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
+                                    <td>
+                                        <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                             <span style="color: #E74C3C; font-weight:bold;">Bloqué</span>
                                         <?php else: ?>
                                             <span style="color: #2ECC71;">Normal</span>
                                         <?php endif; ?>
                                     </td>
                                     <td>
+                                        <form style="display:inline;" method="POST" action="admin.php">
+                                            <input type="hidden" name="action" value="cycle_funds">
+                                            <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
+                                            <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#f1c40f; color:#f1c40f;" title="Renflouer (cycle)">
+                                                <i class="fa-solid fa-coins"></i>
+                                            </button>
+                                        </form>
+
+                                        <button type="button" class="btn-outline-custom admin-btn-view-inventory" style="padding:5px; border-color:#8fd0ff; color:#8fd0ff;" data-user-id="<?= $p['userid'] ?>" data-user-alias="<?= htmlspecialchars($p['alias'], ENT_QUOTES, 'UTF-8') ?>" title="Voir inventaire">
+                                            <i class="fa-solid fa-box-open"></i>
+                                        </button>
+
                                         <form style="display:inline;" method="POST" action="admin.php">
                                             <input type="hidden" name="action" value="toggle_ban">
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
@@ -614,6 +760,42 @@ include __DIR__ . '/templates/head.php';
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
 </form>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-reviews" class="admin-section details-glass-card">
+                    <h3><i class="fa-solid fa-comments"></i> Gestion des Évaluations</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="glass-table" id="admin-reviews-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Joueur</th>
+                                    <th>Item</th>
+                                    <th>Note</th>
+                                    <th>Commentaire</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($reviewsForAdmin as $rev): ?>
+                                <tr data-review-id="<?= (int) $rev['reviewid'] ?>">
+                                    <td>#<?= (int) $rev['reviewid'] ?></td>
+                                    <td><?= htmlspecialchars((string) $rev['useralias']) ?></td>
+                                    <td><?= htmlspecialchars((string) $rev['itemname']) ?></td>
+                                    <td><?= formatRatingValue((float) ($rev['rating'] ?? 0)) ?>/5</td>
+                                    <td><?= htmlspecialchars(trim((string) ($rev['comment'] ?? '')) !== '' ? (string) $rev['comment'] : 'Aucun commentaire') ?></td>
+                                    <td><?= htmlspecialchars((string) $rev['createdat']) ?></td>
+                                    <td>
+                                        <button type="button" class="btn-danger admin-btn-delete-review" style="padding:5px;" data-review-id="<?= (int) $rev['reviewid'] ?>" title="Supprimer l'avis">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
@@ -671,14 +853,27 @@ include __DIR__ . '/templates/head.php';
     </div>
 </div>
 
+<div id="inventoryModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+    <div class="modal-content details-glass-card" style="background:#1a1b1e; padding:24px; border-radius:8px; width:min(980px, 95%); max-height:85vh; overflow:auto; border: 1px solid var(--accent);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <h3 id="inventory-modal-title" style="margin:0; color:var(--accent);"><i class="fa-solid fa-box-open"></i> Inventaire</h3>
+            <button type="button" class="btn-outline-custom" onclick="closeInventoryModal()">Fermer</button>
+        </div>
+        <div id="inventory-modal-content" style="margin-top:14px; color:var(--text-silver);">Chargement...</div>
+    </div>
+</div>
+
 <script>
     function switchTab(evt, tabId) {
-        document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
+        document.querySelectorAll('.admin-tab-btn').forEach((btn) => btn.classList.remove('active'));
+        document.querySelectorAll('.admin-section').forEach((sec) => sec.classList.remove('active'));
         if (evt && evt.currentTarget) {
             evt.currentTarget.classList.add('active');
         }
-        document.getElementById('tab-' + tabId).classList.add('active');
+        const target = document.getElementById('tab-' + tabId);
+        if (target) {
+            target.classList.add('active');
+        }
     }
 
     function openEditModal(id, name, desc, gold, silver, bronze, stock) {
@@ -692,37 +887,174 @@ include __DIR__ . '/templates/head.php';
         document.getElementById('editModal').style.display = 'flex';
     }
 
-function closeEditModal() {
-document.getElementById('editModal').style.display = 'none';
-}
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
 
-document.querySelectorAll('.confirm-delete-form').forEach(function(form) {
-form.addEventListener('submit', async function(e) {
-e.preventDefault();
-var ok = await showCustomConfirm('Voulez-vous vraiment détruire définitivement cet objet ?', 'Suppression');
-if (ok) form.submit();
-});
-});
-document.querySelectorAll('.confirm-delete-riddle-form').forEach(function(form) {
-form.addEventListener('submit', async function(e) {
-e.preventDefault();
-var ok = await showCustomConfirm('Voulez-vous vraiment supprimer cette énigme ?', 'Suppression');
-if (ok) form.submit();
-});
-});
-document.querySelectorAll('.confirm-delete-user-form').forEach(function(form) {
-form.addEventListener('submit', async function(e) {
-e.preventDefault();
-var ok = await showCustomConfirm('ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?', 'Suppression définitive');
-if (ok) form.submit();
-});
-});
+    function closeInventoryModal() {
+        document.getElementById('inventoryModal').style.display = 'none';
+    }
 
-    setTimeout(() => {
+    function toggleTypeProps() {
+        const select = document.getElementById('item-type-select');
+        if (!select) {
+            return;
+        }
+
+        const selectedOption = (select.options[select.selectedIndex] || { text: '' }).text.toLowerCase();
+        const typeMap = ['weapon', 'armor', 'potion', 'magicspell'];
+
+        typeMap.forEach(function (type) {
+            const node = document.getElementById('props-' + type);
+            if (!node) {
+                return;
+            }
+            node.style.display = selectedOption.includes(type) ? 'block' : 'none';
+        });
+    }
+
+    function renderInventoryTable(items) {
+        if (!Array.isArray(items) || items.length === 0) {
+            return '<p>Aucun item dans cet inventaire.</p>';
+        }
+
+        const rows = items.map(function (item) {
+            const tags = [];
+            if (item.damagemin !== null && item.damagemax !== null) tags.push('DMG ' + item.damagemin + '-' + item.damagemax);
+            if (item.defense !== null) tags.push('DEF ' + item.defense);
+            if (item.effecttype) tags.push(item.effecttype + ' +' + (item.effectvalue || 0));
+            if (item.spelldamage !== null) tags.push('SORT ' + item.spelldamage);
+            if (item.elementtype) tags.push(item.elementtype);
+            const tagsHtml = tags.map(function (tag) { return '<span class=\"inv-props-tag\">' + tag + '</span>'; }).join(' ');
+
+            return '<tr>'
+                + '<td>#' + item.itemid + '</td>'
+                + '<td>' + item.name + '</td>'
+                + '<td>' + item.itemtypename + '</td>'
+                + '<td>x' + item.quantity + '</td>'
+                + '<td>' + item.pricegold + '/' + item.pricesilver + '/' + item.pricebronze + '</td>'
+                + '<td>' + tagsHtml + '</td>'
+                + '</tr>';
+        }).join('');
+
+        return '<table class=\"glass-table\">'
+            + '<thead><tr><th>ID</th><th>Item</th><th>Type</th><th>Quantité</th><th>Prix G/S/B</th><th>Propriétés</th></tr></thead>'
+            + '<tbody>' + rows + '</tbody>'
+            + '</table>';
+    }
+
+    function viewPlayerInventory(userId, alias) {
+        const modal = document.getElementById('inventoryModal');
+        const title = document.getElementById('inventory-modal-title');
+        const content = document.getElementById('inventory-modal-content');
+
+        if (!modal || !title || !content) {
+            return;
+        }
+
+        title.innerHTML = '<i class=\"fa-solid fa-box-open\"></i> Inventaire de ' + alias;
+        content.textContent = 'Chargement...';
+        modal.style.display = 'flex';
+
+        fetch('backend/admin_get_inventory.php?user_id=' + encodeURIComponent(userId), {
+            headers: { 'Accept': 'application/json' }
+        })
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (!data.success) {
+                    content.textContent = data.message || 'Erreur de chargement.';
+                    return;
+                }
+                content.innerHTML = renderInventoryTable(data.items || []);
+            })
+            .catch(function () {
+                content.textContent = 'Erreur réseau.';
+            });
+    }
+
+    document.querySelectorAll('.confirm-delete-form').forEach(function (form) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const ok = await showCustomConfirm('Voulez-vous vraiment détruire définitivement cet objet ?', 'Suppression');
+            if (ok) form.submit();
+        });
+    });
+
+    document.querySelectorAll('.confirm-delete-riddle-form').forEach(function (form) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const ok = await showCustomConfirm('Voulez-vous vraiment supprimer cette énigme ?', 'Suppression');
+            if (ok) form.submit();
+        });
+    });
+
+    document.querySelectorAll('.confirm-delete-user-form').forEach(function (form) {
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const ok = await showCustomConfirm('ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?', 'Suppression définitive');
+            if (ok) form.submit();
+        });
+    });
+
+    document.querySelectorAll('.admin-btn-view-inventory').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const userId = this.dataset.userId;
+            const alias = this.dataset.userAlias || 'Joueur';
+            viewPlayerInventory(userId, alias);
+        });
+    });
+
+    document.querySelectorAll('.admin-btn-delete-review').forEach(function (btn) {
+        btn.addEventListener('click', async function () {
+            const reviewId = this.dataset.reviewId;
+            const row = this.closest('tr');
+            const ok = await showCustomConfirm('Supprimer cet avis ?', 'Modération');
+            if (!ok) return;
+
+            const payload = new FormData();
+            payload.append('review_id', reviewId || '0');
+
+            try {
+                const response = await fetch('backend/admin_supprimer_review.php', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: payload
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    showToast((data && data.message) ? data.message : 'Suppression impossible', 'erreur');
+                    return;
+                }
+
+                if (row) {
+                    row.style.transition = 'opacity 0.25s ease, transform 0.25s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateX(-8px)';
+                    setTimeout(function () { row.remove(); }, 260);
+                }
+
+                showToast(data.message || 'Avis supprimé', 'succes');
+            } catch (_error) {
+                showToast('Erreur réseau', 'erreur');
+            }
+        });
+    });
+
+    const typeSelect = document.getElementById('item-type-select');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', toggleTypeProps);
+        toggleTypeProps();
+    }
+
+    setTimeout(function () {
         const alertBox = document.querySelector('.alert-box');
         if (alertBox) {
             alertBox.style.opacity = '0';
-            setTimeout(() => alertBox.remove(), 500);
+            setTimeout(function () { alertBox.remove(); }, 500);
         }
     }, 4000);
 </script>
@@ -731,3 +1063,4 @@ if (ok) form.submit();
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php'; 
 ?>
+

@@ -1,4 +1,5 @@
-<?php
+﻿<?php
+require_once __DIR__ . '/includes/business_logic.php';
 function get_pdo()
 {
     static $pdo = null;
@@ -297,6 +298,7 @@ function get_active_riddle_by_id($riddle_id)
  r.WrongAnswer1 AS wrong_answer1,
  r.WrongAnswer2 AS wrong_answer2,
  r.WrongAnswer3 AS wrong_answer3,
+ r.RiddleType AS riddle_type,
  r.Difficulty AS difficulty,
  r.RiddleCategoryId AS category_id,
  r.RewardGold AS reward_gold,
@@ -332,6 +334,7 @@ function get_random_active_riddle($category_id, $difficulty)
  r.WrongAnswer1 AS wrong_answer1,
  r.WrongAnswer2 AS wrong_answer2,
  r.WrongAnswer3 AS wrong_answer3,
+ r.RiddleType AS riddle_type,
  r.Difficulty AS difficulty,
  r.RiddleCategoryId AS category_id,
  r.RewardGold AS reward_gold,
@@ -496,6 +499,7 @@ function get_user_riddle_stats(int $user_id): array
         'moyenne_total' => 0,
         'difficile_solved' => 0,
         'difficile_total' => 0,
+        'category_stats' => [],
     ];
 
     $statsStmt = $pdo->prepare("SELECT SolvedCount, FailedCount, MagicSolvedCount FROM UserRiddleStats WHERE UserId = ?");
@@ -531,6 +535,37 @@ function get_user_riddle_stats(int $user_id): array
         }
     }
 
+    $categoryStmt = $pdo->prepare("
+        SELECT
+            c.Name AS category_name,
+            COUNT(r.RiddleId) AS total_count,
+            SUM(CASE WHEN ur.UserRiddleId IS NOT NULL AND ur.IsSuccess = 1 THEN 1 ELSE 0 END) AS solved_count,
+            SUM(CASE WHEN ur.UserRiddleId IS NOT NULL AND ur.IsSuccess = 0 THEN 1 ELSE 0 END) AS failed_count
+        FROM RiddleCategories c
+        LEFT JOIN Riddles r
+            ON r.RiddleCategoryId = c.RiddleCategoryId
+           AND r.IsActive = 1
+        LEFT JOIN UserRiddles ur
+            ON ur.RiddleId = r.RiddleId
+           AND ur.UserId = :userId
+        GROUP BY c.RiddleCategoryId, c.Name
+        ORDER BY c.Name ASC
+    ");
+    $categoryStmt->execute(['userId' => $user_id]);
+    while ($catRow = $categoryStmt->fetch()) {
+        $total = (int)($catRow['total_count'] ?? 0);
+        $solved = (int)($catRow['solved_count'] ?? 0);
+        $failed = (int)($catRow['failed_count'] ?? 0);
+
+        $stats['category_stats'][] = [
+            'category' => (string)($catRow['category_name'] ?? 'Inconnu'),
+            'total' => $total,
+            'solved' => $solved,
+            'failed' => $failed,
+            'success_rate' => $total > 0 ? round(($solved / $total) * 100, 2) : 0.0,
+        ];
+    }
+
     return $stats;
 }
 
@@ -558,19 +593,7 @@ function calculate_sell_price(int $item_id): array
     $priceSilver = (int)$item['pricesilver'];
     $priceBronze = (int)$item['pricebronze'];
 
-    if ((int)$item['itemtypeid'] === 4) {
-        $rarity = mb_strtolower(trim($item['rarity'] ?? 'commun'), 'UTF-8');
-        $multiplier = match($rarity) {
-            'commun' => 1.0,
-            'rare' => 0.95,
-            'epique', 'épique' => 0.90,
-            'legendaire', 'légendaire' => 0.90,
-            'mythique' => 0.90,
-            default => 0.90,
-        };
-    } else {
-        $multiplier = 0.60;
-    }
+    $multiplier = compute_sell_multiplier((int)$item['itemtypeid'], (string)($item['rarity'] ?? 'commun'));
 
     return [
         'gold' => (int)floor($priceGold * $multiplier),
@@ -646,3 +669,5 @@ function sell_inventory_item(int $user_id, int $item_id): array
         return ['success' => false, 'message' => 'Erreur lors de la vente'];
     }
 }
+
+

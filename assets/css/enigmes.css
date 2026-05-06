@@ -416,6 +416,70 @@ body.random-page main {
   transform: none;
 }
 
+.enigmes-choices--vf {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.enigmes-choice-btn--vf {
+  min-height: 68px;
+  font-size: 1.08rem;
+}
+
+.enigmes-choice-btn--vf:nth-child(1) {
+  border-color: rgba(46, 204, 113, 0.6);
+  background: linear-gradient(180deg, rgba(182, 255, 210, 0.95), rgba(129, 233, 170, 0.95));
+  color: #0f3f26;
+}
+
+.enigmes-choice-btn--vf:nth-child(2) {
+  border-color: rgba(231, 76, 60, 0.62);
+  background: linear-gradient(180deg, rgba(255, 206, 198, 0.95), rgba(255, 161, 151, 0.95));
+  color: #5a1711;
+}
+
+.enigmes-phrase-input-wrapper {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px;
+}
+
+.enigmes-phrase-input {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(175, 110, 255, 0.5);
+  background: rgba(20, 12, 35, 0.82);
+  color: #f8f0ff;
+  font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 1rem;
+  outline: none;
+}
+
+.enigmes-phrase-input:focus {
+  border-color: rgba(219, 181, 255, 0.9);
+  box-shadow: 0 0 0 2px rgba(175, 110, 255, 0.2);
+}
+
+.enigmes-submit-btn {
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(250, 217, 120, 0.6);
+  background: linear-gradient(180deg, rgba(250, 217, 120, 0.95), rgba(220, 168, 64, 0.95));
+  color: #3f2407;
+  font-family: "MedievalSharp", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.enigmes-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .enigmes-form-feedback {
   margin: 0;
   max-width: min(100%, 320px);
@@ -668,6 +732,14 @@ body.random-page main {
     padding: 12px 14px;
     font-size: 0.88rem;
 }
+
+  .enigmes-phrase-input-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .enigmes-submit-btn {
+    width: 100%;
+  }
 }
 
 .resultat-summary {

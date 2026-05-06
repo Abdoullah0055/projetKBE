@@ -2,6 +2,8 @@
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../includes/profile_utils.php';
 require_once __DIR__ . '/../includes/session.php';
+require_once __DIR__ . '/../includes/email_utils.php';
+require_once __DIR__ . '/../includes/validation_utils.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ../profile.php');
@@ -28,7 +30,7 @@ $emailRaw = trim((string)($_POST['email'] ?? ''));
 $avatarRaw = trim((string)($_POST['avatar_url'] ?? ''));
 
 $fullName = ($fullNameRaw === '') ? null : $fullNameRaw;
-$email = ($emailRaw === '') ? null : $emailRaw;
+$email = ($emailRaw === '') ? null : normalize_email($emailRaw);
 $avatarUrl = ($avatarRaw === '') ? null : $avatarRaw;
 
 $currentPassword = (string)($_POST['current_password'] ?? '');
@@ -36,13 +38,7 @@ $newPassword = (string)($_POST['new_password'] ?? '');
 $confirmPassword = (string)($_POST['confirm_password'] ?? '');
 $wantsPasswordUpdate = ($currentPassword !== '' || $newPassword !== '' || $confirmPassword !== '');
 
-if ($alias === '' || mb_strlen($alias, 'UTF-8') < 3 || mb_strlen($alias, 'UTF-8') > 30) {
-    profile_set_flash('error', "Alias invalide: 3 a 30 caracteres obligatoires.");
-    header('Location: ../profile.php');
-    exit();
-}
-
-if (!preg_match('/^[\p{L}\p{N}_-]+$/u', $alias)) {
+if (!validate_alias($alias)) {
     profile_set_flash('error', "Alias invalide: utilisez uniquement lettres, chiffres, tirets et underscores.");
     header('Location: ../profile.php');
     exit();
@@ -66,7 +62,7 @@ if ($avatarUrl !== null && mb_strlen($avatarUrl, 'UTF-8') > 255) {
     exit();
 }
 
-if ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if ($email !== null && !validate_email($email)) {
     profile_set_flash('error', "Email invalide.");
     header('Location: ../profile.php');
     exit();

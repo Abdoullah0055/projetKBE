@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/item_heal_helpers.php';
 
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
@@ -36,10 +37,11 @@ try {
         i.PriceSilver AS item_price_silver,
         i.PriceBronze AS item_price_bronze,
         i.ItemTypeId AS item_type_id,
-        i.Rarity AS item_rarity,
-        t.Name AS item_type,
+            i.Rarity AS item_rarity,
+            t.Name AS item_type,
             IFNULL(rating_agg.rating, 0) AS rating,
             IFNULL(rating_agg.review_count, 0) AS review_count,
+            user_review.review_id AS user_review_id,
             CASE WHEN user_review.review_id IS NULL THEN 0 ELSE 1 END AS is_rated_by_user
          FROM Inventory inv
          LEFT JOIN Items i ON inv.ItemId = i.ItemId
@@ -114,6 +116,46 @@ $pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
 $pendingReviewItems = [];
 }
 }
+
+$currentHp = (int) ($user['hp'] ?? 100);
+$maxHp = (int) ($user['max_hp'] ?? 100);
+$missingHp = max(0, $maxHp - $currentHp);
+
+$recommendedHealItemId = 0;
+$recommendedEffectiveHeal = -1;
+$recommendedWastedHeal = PHP_INT_MAX;
+
+foreach ($inventoryItems as &$entry) {
+    $entry['heal_amount'] = 0;
+    $entry['effective_heal'] = 0;
+    $entry['wasted_heal'] = 0;
+
+    $itemTypeLower = mb_strtolower((string) ($entry['item_type'] ?? ''), 'UTF-8');
+    if ($itemTypeLower !== 'potion' && $itemTypeLower !== 'magicspell') {
+        continue;
+    }
+
+    $itemHeal = get_item_heal_amount((int) ($entry['item_id'] ?? 0));
+    $effectiveHeal = min($itemHeal, $missingHp);
+    $wastedHeal = max(0, $itemHeal - $effectiveHeal);
+
+    $entry['heal_amount'] = $itemHeal;
+    $entry['effective_heal'] = $effectiveHeal;
+    $entry['wasted_heal'] = $wastedHeal;
+
+    if (
+        $effectiveHeal > $recommendedEffectiveHeal
+        || (
+            $effectiveHeal === $recommendedEffectiveHeal
+            && $wastedHeal < $recommendedWastedHeal
+        )
+    ) {
+        $recommendedHealItemId = (int) $entry['item_id'];
+        $recommendedEffectiveHeal = $effectiveHeal;
+        $recommendedWastedHeal = $wastedHeal;
+    }
+}
+unset($entry);
 
 $title = "L'Arsenal - Inventory";
 ?>
@@ -211,10 +253,21 @@ $itemType = $entry['item_type'] ?? 'Inconnu';
 $ratingValue = (float) ($entry['rating'] ?? 0);
 $reviewCount = (int) ($entry['review_count'] ?? 0);
 $isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
+$userReviewId = (int) ($entry['user_review_id'] ?? 0);
 $statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
 $statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
 $itemImagePath = getItemImagePathForItem($entry);
 $sellPrice = calculate_sell_price((int)$entry['item_id']);
+$itemTypeLower = mb_strtolower((string) $itemType, 'UTF-8');
+$isHealItem = ($itemTypeLower === 'potion' || $itemTypeLower === 'magicspell');
+$healAmount = (int) ($entry['heal_amount'] ?? 0);
+$effectiveHeal = (int) ($entry['effective_heal'] ?? 0);
+$wastedHeal = (int) ($entry['wasted_heal'] ?? 0);
+$isRecommendedHeal = $isHealItem
+    && $missingHp > 0
+    && $effectiveHeal > 0
+    && ((int) $entry['item_id'] === $recommendedHealItemId);
+$isHpMaxed = $currentHp >= $maxHp;
 ?>
 
                             <article class="inventory-slot"
@@ -223,7 +276,8 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
                                 data-item-quantity="<?= (int) $entry['quantity'] ?>"
                                 data-item-type="<?= htmlspecialchars($itemType) ?>"
                                 data-item-id="<?= (int) $entry['item_id'] ?>"
-                                data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>">
+                                data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>"
+                                data-user-review-id="<?= $userReviewId ?>">
 
                                 <div class="slot-top-row">
                                     <div class="slot-thumb" aria-hidden="true">
@@ -270,15 +324,43 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
                                     </div>
 		</div>
         <div class="slot-actions">
-        <?php if (strtolower($entry['item_type']) === 'potion' || strtolower($entry['item_type']) === 'magicspell'): ?>
-        <button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>">
-        <i class="fa-solid fa-hand-sparkles"></i> Utiliser
+        <?php if ($isHealItem): ?>
+        <button
+            type="button"
+            class="btn-use-item<?= $isHpMaxed ? ' is-disabled-hp' : '' ?>"
+            data-item-id="<?= (int)$entry['item_id'] ?>"
+            data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>"
+            data-heal-amount="<?= $healAmount ?>"
+            data-effective-heal="<?= $effectiveHeal ?>"
+            data-wasted-heal="<?= $wastedHeal ?>"
+            data-is-recommended="<?= $isRecommendedHeal ? '1' : '0' ?>"
+            <?= $isHpMaxed ? 'disabled' : '' ?>>
+            <i class="fa-solid fa-hand-sparkles"></i> Utiliser
         </button>
         <?php endif; ?>
         <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>" data-original-gold="<?= $sellPrice['original_gold'] ?>" data-original-silver="<?= $sellPrice['original_silver'] ?>" data-original-bronze="<?= $sellPrice['original_bronze'] ?>" data-multiplier="<?= $sellPrice['multiplier'] ?>">
         <i class="fa-solid fa-coins"></i> Vendre
         </button>
+        <?php if ($isRatedByUser && $userReviewId > 0): ?>
+        <button
+            type="button"
+            class="btn-delete-review"
+            data-review-id="<?= $userReviewId ?>"
+            data-item-id="<?= (int) $entry['item_id'] ?>">
+            <i class="fa-solid fa-trash"></i> Retirer mon avis
+        </button>
+        <?php endif; ?>
         </div>
+
+        <?php if ($isHealItem && $healAmount > 0): ?>
+            <div class="slot-heal-meta">
+                <span class="heal-amount-label">+<?= $healAmount ?> PV</span>
+                <span class="recommend-badge<?= $isRecommendedHeal ? ' is-active' : '' ?>">Recommande</span>
+            </div>
+            <?php if ($wastedHeal > 0): ?>
+                <p class="overheal-warning">Attention: <?= $wastedHeal ?> PV seraient perdus.</p>
+            <?php endif; ?>
+        <?php endif; ?>
 	</article>
                         <?php endforeach; ?>
                     </div>
@@ -368,6 +450,17 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
                                     <div class="rating-picker-preview" id="<?= $ratingPreviewId ?>">
                                         <?= renderRatingStars(5.0) ?>
                                         <span class="rating-value-inline">5.0/5</span>
+                                    </div>
+
+                                    <div class="form-group" style="margin-top: 10px;">
+                                        <label for="review-comment-<?= $reviewItemId ?>" style="font-size:0.8rem; color: var(--text-silver);">Commentaire (optionnel)</label>
+                                        <textarea
+                                            id="review-comment-<?= $reviewItemId ?>"
+                                            name="comment"
+                                            rows="3"
+                                            maxlength="1000"
+                                            placeholder="Partagez votre avis sur cet item..."
+                                            style="width:100%; border-radius:8px; border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.35); color:#fff; padding:8px 10px; resize:vertical;"></textarea>
                                     </div>
 
                                     <button type="submit" class="btn-submit-rating">Envoyer ma note</button>
@@ -582,6 +675,7 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
                         const reviewCountNode = linkedSlot.querySelector('.slot-review-count');
                         const ratingValueNode = linkedSlot.querySelector('.slot-rating-value');
                         const ratingLineNode = linkedSlot.querySelector('.slot-rating-line');
+                        const slotActions = linkedSlot.querySelector('.slot-actions');
 
                         if (statusNode) {
                             statusNode.textContent = 'Evalue';
@@ -598,6 +692,20 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
                             ratingLineNode.innerHTML =
                                 renderStarsMarkup(parsedRating) +
                                 '<span class="rating-value-inline slot-rating-value">' + parsedRating.toFixed(1) + '/5</span>';
+                        }
+
+                        if (slotActions && data.reviewId) {
+                            linkedSlot.dataset.userReviewId = String(data.reviewId);
+                            let deleteBtn = slotActions.querySelector('.btn-delete-review');
+                            if (!deleteBtn) {
+                                deleteBtn = document.createElement('button');
+                                deleteBtn.type = 'button';
+                                deleteBtn.className = 'btn-delete-review';
+                                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Retirer mon avis';
+                                slotActions.appendChild(deleteBtn);
+                            }
+                            deleteBtn.dataset.reviewId = String(data.reviewId);
+                            deleteBtn.dataset.itemId = reviewedItemId;
                         }
                     }
 

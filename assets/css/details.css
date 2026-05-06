@@ -1011,3 +1011,124 @@
     transform: rotateY(0deg);
   }
 }
+
+/* Reviews and breakdown */
+.rating-breakdown {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.breakdown-row {
+  display: grid;
+  grid-template-columns: 76px 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.breakdown-label {
+  font-size: 0.78rem;
+  color: #d8dee6;
+}
+
+.breakdown-bar-track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  overflow: hidden;
+}
+
+.breakdown-bar-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f6da6c 0%, #d8aa2f 100%);
+}
+
+.breakdown-meta {
+  font-size: 0.76rem;
+  color: #c7ced6;
+  white-space: nowrap;
+}
+
+.reviews-section {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.reviews-section h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--accent, #1985a1);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.review-card {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.review-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.review-author {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.review-rating {
+  color: #eed68a;
+  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.review-comment {
+  margin: 8px 0 0;
+  color: #d7dde6;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.review-comment.is-empty {
+  color: #98a3b2;
+  font-style: italic;
+}
+
+.review-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-delete-review {
+  border: 1px solid rgba(231, 76, 60, 0.55);
+  background: rgba(231, 76, 60, 0.18);
+  color: #ffb6af;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-delete-review:hover {
+  background: rgba(231, 76, 60, 0.3);
+}

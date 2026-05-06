@@ -84,18 +84,35 @@ function consume_enigme_result(): ?array
 
 function generate_and_store_choices(array $riddle): array
 {
+    $riddleType = strtolower(trim((string) ($riddle['riddle_type'] ?? 'qcm')));
     $answerText = get_riddle_answer_text((int) $riddle['id']);
 
     if ($answerText === null) {
         return [];
     }
 
-    $choices = [
-        $answerText,
-        $riddle['wrong_answer1'] ?? '',
-        $riddle['wrong_answer2'] ?? '',
-        $riddle['wrong_answer3'] ?? '',
-    ];
+    if ($riddleType === 'phrase_courte') {
+        $_SESSION['enigme_choices_' . $riddle['id']] = [
+            'mode' => 'phrase_courte',
+            'correct_answer' => $answerText,
+        ];
+        return [];
+    }
+
+    if ($riddleType === 'vrai_faux') {
+        $normalizedAnswer = normalize_enigme_answer($answerText);
+        $isTrue = in_array($normalizedAnswer, ['vrai', 'true', '1', 'oui'], true);
+        $correctAnswer = $isTrue ? 'Vrai' : 'Faux';
+        $incorrectAnswer = $isTrue ? 'Faux' : 'Vrai';
+        $choices = [$correctAnswer, $incorrectAnswer];
+    } else {
+        $choices = [
+            $answerText,
+            $riddle['wrong_answer1'] ?? '',
+            $riddle['wrong_answer2'] ?? '',
+            $riddle['wrong_answer3'] ?? '',
+        ];
+    }
 
     $correctIndex = 0;
     $keys = array_keys($choices);
@@ -110,6 +127,7 @@ function generate_and_store_choices(array $riddle): array
     }
 
     $_SESSION['enigme_choices_' . $riddle['id']] = [
+        'mode' => $riddleType,
         'correct_index' => $correctIndex,
         'choice_texts'  => $shuffled,
     ];
@@ -132,6 +150,27 @@ function verify_enigme_choice(int $riddleId, int $choiceIndex): array
     unset($_SESSION[$key]);
 
     return ['is_correct' => $isCorrect, 'chosen_text' => $chosenText];
+}
+
+function verify_enigme_phrase(int $riddleId, string $typedAnswer): array
+{
+    $key = 'enigme_choices_' . $riddleId;
+    $data = $_SESSION[$key] ?? null;
+
+    if (!is_array($data) || !isset($data['correct_answer'])) {
+        return ['is_correct' => false, 'chosen_text' => trim($typedAnswer)];
+    }
+
+    $expected = normalize_enigme_answer((string) $data['correct_answer']);
+    $given = normalize_enigme_answer($typedAnswer);
+    $isCorrect = ($expected !== '' && $given === $expected);
+
+    unset($_SESSION[$key]);
+
+    return [
+        'is_correct' => $isCorrect,
+        'chosen_text' => trim($typedAnswer),
+    ];
 }
 
 function resolve_enigme_request(string $currentPage): array

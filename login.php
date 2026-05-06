@@ -3,6 +3,8 @@ ob_start(); // Prevents "Headers already sent" errors
 
 require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/AlgosBD.php';
+require_once __DIR__ . '/includes/email_utils.php';
+require_once __DIR__ . '/includes/validation_utils.php';
 
 $pdo = get_pdo();
 
@@ -29,17 +31,27 @@ function flushProcedureResults(PDOStatement $stmt): void
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $alias = trim($_POST['alias'] ?? '');
     $password = $_POST['password'] ?? '';
+    $confirmPassword = $_POST['confirm_password'] ?? '';
+    $email = normalize_email($_POST['email'] ?? null);
     $mode = $_POST['mode'] ?? 'login';
 
     if ($mode === 'register') {
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        try {
-            $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?)");
-            $stmt->execute([$alias, $hashedPassword]);
-            flushProcedureResults($stmt);
-            $success = "Compte forge avec succes ! Vous pouvez maintenant vous connecter.";
-        } catch (PDOException $e) {
-            $error = "Erreur : " . $e->getMessage();
+        if (!validate_alias($alias)) {
+            $error = "Alias invalide: 3 a 30 caracteres, lettres/chiffres/_/- uniquement.";
+        } elseif (!validate_email($email)) {
+            $error = "Adresse email invalide ou domaine introuvable.";
+        } elseif ($password !== $confirmPassword) {
+            $error = "Les mots de passe ne correspondent pas.";
+        } else {
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            try {
+                $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?, ?)");
+                $stmt->execute([$alias, $hashedPassword, $email]);
+                flushProcedureResults($stmt);
+                $success = "Compte forge avec succes ! Vous pouvez maintenant vous connecter.";
+            } catch (PDOException $e) {
+                $error = "Erreur : " . $e->getMessage();
+            }
         }
     } else {
         try {
@@ -134,7 +146,15 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
                 </div>
             </div>
 
+            <div class="form-group" id="email-group" style="display: none;">
+                <label for="email">Adresse courriel</label>
+                <input type="email" id="email" name="email" placeholder="exemple@domaine.com">
+            </div>
+
             <button type="submit" class="btn-primary" id="submit-btn">Se connecter</button>
+            <div style="margin-top:10px; text-align:right;">
+                <a href="forgot_password.php" style="color: var(--accent); font-size: 0.85rem; text-decoration: none;">Mot de passe oublie ?</a>
+            </div>
         </form>
 
         <div class="switch-mode">

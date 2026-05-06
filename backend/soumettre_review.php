@@ -1,8 +1,9 @@
-<?php
+﻿<?php
 
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/validation_utils.php';
 
 if (ob_get_level() === 0) {
     ob_start();
@@ -56,27 +57,20 @@ if (!isset($_SESSION['user']['id'])) {
 
 $userId = (int)$_SESSION['user']['id'];
 $itemId = (int)($_POST['item_id'] ?? 0);
-$ratingRaw = str_replace(',', '.', trim((string)($_POST['rating'] ?? '')));
+$comment = trim((string) ($_POST['comment'] ?? ''));
 
-if ($itemId <= 0 || $ratingRaw === '' || !is_numeric($ratingRaw)) {
+$normalizedRating = normalize_review_rating((string) ($_POST['rating'] ?? ''));
+if ($itemId <= 0 || $normalizedRating === null) {
     review_response([
         'success' => false,
         'message' => 'Donnees de notation invalides.',
     ], '../inventory.php', $isAjax, 422);
 }
 
-$ratingAsFloat = (float)$ratingRaw;
-$ratingSteps = (int)round($ratingAsFloat * 2);
-$normalizedRating = $ratingSteps / 2;
-
-if (
-    $ratingSteps < 2
-    || $ratingSteps > 10
-    || abs(($ratingAsFloat * 2) - $ratingSteps) > 0.001
-) {
+if ($comment !== '' && mb_strlen($comment, 'UTF-8') > 1000) {
     review_response([
         'success' => false,
-        'message' => 'La note doit etre comprise entre 1 et 5 par pas de 0.5.',
+        'message' => 'Commentaire trop long (1000 caracteres max).',
     ], '../inventory.php', $isAjax, 422);
 }
 
@@ -85,43 +79,43 @@ $pdo = get_pdo();
 try {
     $pdo->beginTransaction();
 
-$ownedStmt = $pdo->prepare(
-"SELECT inv.Quantity
-FROM Inventory
-WHERE UserId = :user_id
-AND ItemId = :item_id
-LIMIT 1
-FOR UPDATE"
-);
-$ownedStmt->execute([
-':user_id' => $userId,
-':item_id' => $itemId,
-]);
+    $ownedStmt = $pdo->prepare(
+        "SELECT inv.Quantity
+         FROM Inventory inv
+         WHERE inv.UserId = :user_id
+           AND inv.ItemId = :item_id
+         LIMIT 1
+         FOR UPDATE"
+    );
+    $ownedStmt->execute([
+        ':user_id' => $userId,
+        ':item_id' => $itemId,
+    ]);
 
-$ownedRow = $ownedStmt->fetch();
-$inInventory = $ownedRow && (int)$ownedRow['quantity'] > 0;
+    $ownedRow = $ownedStmt->fetch();
+    $inInventory = $ownedRow && (int)$ownedRow['quantity'] > 0;
 
-$purchasedStmt = $pdo->prepare(
-"SELECT 1
-FROM OrderItems oi
-JOIN Orders o ON o.OrderId = oi.OrderId
-WHERE o.UserId = :user_id
-AND oi.ItemId = :item_id
-LIMIT 1"
-);
-$purchasedStmt->execute([
-':user_id' => $userId,
-':item_id' => $itemId,
-]);
-$wasPurchased = $purchasedStmt->fetchColumn() !== false;
+    $purchasedStmt = $pdo->prepare(
+        "SELECT 1
+         FROM OrderItems oi
+         JOIN Orders o ON o.OrderId = oi.OrderId
+         WHERE o.UserId = :user_id
+           AND oi.ItemId = :item_id
+         LIMIT 1"
+    );
+    $purchasedStmt->execute([
+        ':user_id' => $userId,
+        ':item_id' => $itemId,
+    ]);
+    $wasPurchased = $purchasedStmt->fetchColumn() !== false;
 
-if (!$inInventory && !$wasPurchased) {
-$pdo->rollBack();
-review_response([
-'success' => false,
-'message' => 'Seuls les items achetes peuvent etre notes.',
-], '../inventory.php', $isAjax, 403);
-}
+    if (!$inInventory && !$wasPurchased) {
+        $pdo->rollBack();
+        review_response([
+            'success' => false,
+            'message' => 'Seuls les items achetes peuvent etre notes.',
+        ], '../inventory.php', $isAjax, 403);
+    }
 
     $existingStmt = $pdo->prepare(
         "SELECT ReviewId
@@ -146,13 +140,16 @@ review_response([
 
     $insertStmt = $pdo->prepare(
         "INSERT INTO Reviews (UserId, ItemId, Rating, Comment)
-         VALUES (:user_id, :item_id, :rating, NULL)"
+         VALUES (:user_id, :item_id, :rating, :comment)"
     );
     $insertStmt->execute([
         ':user_id' => $userId,
         ':item_id' => $itemId,
         ':rating' => $normalizedRating,
+        ':comment' => ($comment === '' ? null : $comment),
     ]);
+
+    $newReviewId = (int) $pdo->lastInsertId();
 
     $aggregateStmt = $pdo->prepare(
         "SELECT
@@ -176,6 +173,7 @@ review_response([
         'success' => true,
         'message' => 'Merci, votre note a ete enregistree.',
         'rating' => formatRatingValue((float)$aggregate['rating']),
+        'reviewId' => $newReviewId,
         'reviewCount' => (int)$aggregate['review_count'],
     ], '../inventory.php', $isAjax);
 } catch (Throwable $e) {
