@@ -13,7 +13,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const switchText = document.getElementById("switch-text");
   const confirmInput = document.getElementById("confirm-password");
 
-  let isLoginMode = true;
+  if (!authForm || !authMode) {
+    return;
+  }
+
+  let isLoginMode = authMode.value !== "register";
 
   if (switchLink) {
     switchLink.addEventListener("click", function (e) {

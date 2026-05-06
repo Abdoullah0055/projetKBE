@@ -2,9 +2,26 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . '/../vendor/autoload.php';
+function darquest_mailer_bootstrap(): bool
+{
+    if (class_exists(PHPMailer::class)) {
+        return true;
+    }
+
+    $autoload = __DIR__ . '/../vendor/autoload.php';
+    if (is_file($autoload)) {
+        require_once $autoload;
+    }
+
+    return class_exists(PHPMailer::class);
+}
 
 function send_darquest_mail($to, $subject, $body) {
+    if (!darquest_mailer_bootstrap()) {
+        error_log("send_darquest_mail: PHPMailer is missing. Run composer install.");
+        return false;
+    }
+
     $config = require __DIR__ . '/../config/smtp_config.php';
     $mail = new PHPMailer(true);
 
@@ -17,7 +34,11 @@ function send_darquest_mail($to, $subject, $body) {
         $mail->SMTPSecure = $config['secure'];
         $mail->Port       = $config['port'];
 
-        $mail->setFrom($config['from_email'], $config['from_name']);
+        $fromEmail = !empty($config['from_email']) ? $config['from_email'] : $config['username'];
+        if (strcasecmp($fromEmail, (string)$config['username']) !== 0) {
+            $fromEmail = $config['username'];
+        }
+        $mail->setFrom($fromEmail, $config['from_name']);
         $mail->addAddress($to);
         $mail->isHTML(true);
         $mail->Subject = $subject;

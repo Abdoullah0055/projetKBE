@@ -3,6 +3,8 @@ ob_start(); // Prevents "Headers already sent" errors
 
 require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/AlgosBD.php';
+require_once __DIR__ . '/includes/mailer_utils.php';
+require_once __DIR__ . '/includes/email_verification_utils.php';
 
 $pdo = get_pdo();
 
@@ -21,6 +23,18 @@ if (isset($_GET['mode']) && $_GET['mode'] === 'register') {
 if (isset($_GET['account_deleted']) && $_GET['account_deleted'] === '1') {
     $success = "Votre compte a bien ete supprime.";
 }
+if (isset($_GET['success']) && $_GET['success'] === '1') {
+    $success = "Votre mot de passe a ete reinitialise. Vous pouvez maintenant vous connecter.";
+}
+if (isset($_GET['verify'])) {
+    if ($_GET['verify'] === 'ok') {
+        $success = "Votre courriel a ete verifie. Vous pouvez maintenant vous connecter.";
+    } elseif ($_GET['verify'] === 'expired') {
+        $error = "Le lien de verification est invalide ou expire.";
+    } elseif ($_GET['verify'] === 'invalid') {
+        $error = "Lien de verification invalide.";
+    }
+}
 
 function flushProcedureResults(PDOStatement $stmt): void
 {
@@ -29,6 +43,16 @@ function flushProcedureResults(PDOStatement $stmt): void
     } while ($stmt->nextRowset());
 
     $stmt->closeCursor();
+}
+
+function first_available(array $row, array $keys, $default = null)
+{
+    foreach ($keys as $key) {
+        if (array_key_exists($key, $row)) {
+            return $row[$key];
+        }
+    }
+    return $default;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -49,7 +73,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $pdo->prepare("CALL sp_RegisterUser(?, ?, ?)");
             $stmt->execute([$alias, $hashedPassword, $email]);
             flushProcedureResults($stmt);
-            $success = "Compte forge avec succes !";
+
+            $token = generate_email_verification_token();
+            upsert_email_verification($pdo, $email, $token);
+            $verifyLink = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http")
+                . "://" . $_SERVER['HTTP_HOST']
+                . dirname($_SERVER['PHP_SELF'])
+                . "/verify_email.php?token=" . urlencode($token);
+
+            $subject = "Verification de votre compte Darquest";
+            $body = "<p>Bienvenue dans l'Arsenal.</p>"
+                . "<p>Cliquez pour verifier votre courriel :</p>"
+                . "<p><a href=\"{$verifyLink}\">Verifier mon courriel</a></p>"
+                . "<p>Ce lien expire dans 24 heures.</p>";
+
+            if (send_darquest_mail($email, $subject, $body)) {
+                $success = "Compte forge. Verifiez votre courriel avant de vous connecter.";
+            } else {
+                $error = "Compte cree, mais l'envoi du courriel de verification a echoue.";
+            }
         } catch (PDOException $e) {
             $error = "Erreur : " . $e->getMessage();
         }
@@ -61,23 +103,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $foundUser = $stmt->fetch();
             flushProcedureResults($stmt);
 
-if ($foundUser && password_verify($password, $foundUser['password'])) {
-            if ((int)($foundUser['isbanned'] ?? 0) === 1) {
+            $storedHash = (string) first_available($foundUser, ['Password', 'password'], '');
+
+if ($foundUser && $storedHash !== '' && password_verify($password, $storedHash)) {
+            $userId = (int) first_available($foundUser, ['UserId', 'userid'], 0);
+            $userEmail = (string) first_available($foundUser, ['Email', 'email'], '');
+            $isBanned = (int) first_available($foundUser, ['IsBanned', 'isbanned'], 0);
+
+            if ($userEmail === '' && $userId > 0) {
+                $emailStmt = $pdo->prepare("SELECT Email FROM Users WHERE UserId = ? LIMIT 1");
+                $emailStmt->execute([$userId]);
+                $emailRow = $emailStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+                $userEmail = (string) first_available($emailRow, ['Email', 'email'], '');
+            }
+
+            if ($isBanned === 1) {
                 $error = "Ce compte est bloque par un administrateur.";
+            } elseif (!empty($userEmail) && !is_email_verified($pdo, $userEmail)) {
+                $error = "Veuillez verifier votre courriel avant de vous connecter.";
             } else {
             $_SESSION['user'] = [
-                'id' => (int)$foundUser['userid'],
-                'alias' => $foundUser['alias'],
-                'role' => $foundUser['role'],
-                'gold' => (int)$foundUser['gold'],
-                'silver' => (int)$foundUser['silver'],
-                'bronze' => (int)$foundUser['bronze']
+                'id' => $userId,
+                'alias' => (string) first_available($foundUser, ['Alias', 'alias'], ''),
+                'role' => (string) first_available($foundUser, ['Role', 'role'], 'Player'),
+                'gold' => (int) first_available($foundUser, ['Gold', 'gold'], 0),
+                'silver' => (int) first_available($foundUser, ['Silver', 'silver'], 0),
+                'bronze' => (int) first_available($foundUser, ['Bronze', 'bronze'], 0)
             ];
 
-$_SESSION['user']['hp'] = $foundUser['currenthp'] ?? 100;
-                $_SESSION['user']['max_hp'] = $foundUser['maxhp'] ?? 100;
+$_SESSION['user']['hp'] = (int) first_available($foundUser, ['CurrentHP', 'currenthp'], 100);
+                $_SESSION['user']['max_hp'] = (int) first_available($foundUser, ['MaxHP', 'maxhp'], 100);
 
-                if (!isset($foundUser['currenthp'])) {
+                if (!array_key_exists('CurrentHP', $foundUser) && !array_key_exists('currenthp', $foundUser)) {
                 $hpData = get_user_hp($_SESSION['user']['id']);
                 $_SESSION['user']['hp'] = $hpData['current'];
                 $_SESSION['user']['max_hp'] = $hpData['max'];
@@ -158,6 +215,9 @@ $bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
         <div class="switch-mode">
             <span id="switch-text">Nouveau ici ?</span>
             <a href="#" id="switch-link">Creer un compte</a>
+        </div>
+        <div class="switch-mode" style="margin-top: 8px;">
+            <a href="forgot_password.php">Mot de passe oublie ?</a>
         </div>
     </div>
 </main>
