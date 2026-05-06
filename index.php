@@ -505,6 +505,10 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
 
             <div class="sidebar-bottom-actions">
                 <?php if ($user['isConnected']): ?>
+<button type="button" id="capital-request-sidebar-btn" title="Demander une augmentation de capital" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+<i class="fa-solid fa-sack-dollar"></i>
+<span class="btn-label">Demande capital</span>
+</button>
 <button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
 <i class="fa-solid fa-box-open"></i>
 <span class="btn-label">Inventaire</span>
@@ -661,8 +665,41 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
             applyFilters();
         });
 
-  applyFilters();
-});
+        const capitalRequestBtn = document.getElementById("capital-request-sidebar-btn");
+        if (capitalRequestBtn) {
+            capitalRequestBtn.addEventListener("click", async function() {
+                capitalRequestBtn.disabled = true;
+                try {
+                    const response = await fetch("demande_capital.php", {
+                        method: "POST",
+                        headers: {
+                            "Accept": "application/json",
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    });
+
+                    let data = null;
+                    try {
+                        data = await response.json();
+                    } catch (_error) {
+                        data = null;
+                    }
+
+                    if (response.ok && data && data.success) {
+                        showToast(data.message || "Demande envoyee.", "succes");
+                    } else {
+                        showToast((data && data.message) ? data.message : "Echec de la demande.", "erreur");
+                    }
+                } catch (_error) {
+                    showToast("Erreur reseau pendant l'envoi de la demande.", "erreur");
+                } finally {
+                    capitalRequestBtn.disabled = false;
+                }
+            });
+        }
+
+        applyFilters();
+    });
 </script>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>

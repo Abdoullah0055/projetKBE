@@ -176,6 +176,12 @@ try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; }
 
 $query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
 $players = $pdo->query($query)->fetchAll();
+$capitalRequestsByPlayer = [];
+$capitalRequests = [];
+try {
+    $capitalRequestsByPlayer = $pdo->query("SELECT u.UserId, u.Alias, COUNT(d.DemandeId) AS RequestCount FROM Demandes d JOIN Users u ON u.UserId = d.UserId GROUP BY u.UserId, u.Alias ORDER BY RequestCount DESC, u.Alias ASC")->fetchAll();
+    $capitalRequests = $pdo->query("SELECT d.DemandeId, d.CreatedAt, u.UserId, u.Alias FROM Demandes d JOIN Users u ON u.UserId = d.UserId ORDER BY d.CreatedAt DESC, d.DemandeId DESC LIMIT 200")->fetchAll();
+} catch (Exception $e) {}
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 
 $title = "Administration - L'Arsenal";
@@ -327,6 +333,7 @@ include __DIR__ . '/templates/head.php';
                 <button type="button" class="admin-tab-btn active" onclick="switchTab(event, 'items')"><i class="fa-solid fa-box-open"></i> Catalogue Items</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'riddles')"><i class="fa-solid fa-scroll"></i> Quêtes & Énigmes</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'users')"><i class="fa-solid fa-users"></i> Registre Joueurs</button>
+                <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'requests')"><i class="fa-solid fa-coins"></i> Demandes Capital</button>
             </div>
 
             <div class="admin-content">
@@ -617,6 +624,64 @@ include __DIR__ . '/templates/head.php';
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tab-requests" class="admin-section details-glass-card">
+                    <h3><i class="fa-solid fa-sack-dollar"></i> Demandes d'augmentation de capital</h3>
+
+                    <h4 style="margin-top: 20px;"><i class="fa-solid fa-chart-simple"></i> Nombre de demandes par joueur</h4>
+                    <div style="overflow-x:auto;">
+                        <table class="glass-table">
+                            <thead>
+                                <tr>
+                                    <th>Joueur</th>
+                                    <th>ID</th>
+                                    <th>Demandes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($capitalRequestsByPlayer)): ?>
+                                    <tr><td colspan="3">Aucune demande pour le moment.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach ($capitalRequestsByPlayer as $requestRow): ?>
+                                        <tr>
+                                            <td><strong><?= htmlspecialchars($requestRow['alias']) ?></strong></td>
+                                            <td>#<?= (int) $requestRow['userid'] ?></td>
+                                            <td><?= (int) $requestRow['requestcount'] ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4 style="margin-top: 24px;"><i class="fa-solid fa-list-check"></i> Journal des demandes</h4>
+                    <div style="overflow-x:auto;">
+                        <table class="glass-table">
+                            <thead>
+                                <tr>
+                                    <th>Demande</th>
+                                    <th>Joueur</th>
+                                    <th>ID Joueur</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($capitalRequests)): ?>
+                                    <tr><td colspan="4">Aucune demande enregistree.</td></tr>
+                                <?php else: ?>
+                                    <?php foreach ($capitalRequests as $request): ?>
+                                        <tr>
+                                            <td>#<?= (int) $request['demandeid'] ?></td>
+                                            <td><strong><?= htmlspecialchars($request['alias']) ?></strong></td>
+                                            <td>#<?= (int) $request['userid'] ?></td>
+                                            <td><?= htmlspecialchars((string) $request['createdat']) ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
