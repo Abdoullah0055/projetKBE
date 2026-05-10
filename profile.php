@@ -177,46 +177,48 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
       </form>
     </section>
 
-<section class="profile-stats-section">
-<h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
-<div class="stats-chart-container">
-<canvas id="riddleStatsChart" width="300" height="200"></canvas>
-</div>
-<div class="stats-grid" style="margin-top:15px;">
-<div class="stat-card">
-<span class="stat-label">Facile</span>
-<span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Moyenne</span>
-<span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
-</div>
-<div class="stat-card">
-<span class="stat-label">Difficile</span>
-<span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
-</div>
-<div class="stat-card stat-total">
-<span class="stat-label">Total</span>
-<span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
-</div>
-<?php if ($user['isMage']): ?>
-<div class="stat-card stat-mage">
-<span class="stat-label">Statut</span>
-<span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
-</div>
-<?php endif; ?>
-</div>
-</section>
+<div class="stats-hp-row">
+    <section class="profile-stats-section">
+    <h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
+    <div class="stats-chart-container">
+    <canvas id="riddleStatsChart"></canvas>
+    </div>
+    <div class="stats-grid" style="margin-top:15px;">
+    <div class="stat-card">
+    <span class="stat-label">Facile</span>
+    <span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
+    </div>
+    <div class="stat-card">
+    <span class="stat-label">Moyenne</span>
+    <span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
+    </div>
+    <div class="stat-card">
+    <span class="stat-label">Difficile</span>
+    <span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
+    </div>
+    <div class="stat-card stat-total">
+    <span class="stat-label">Total</span>
+    <span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
+    </div>
+    <?php if ($user['isMage']): ?>
+    <div class="stat-card stat-mage">
+    <span class="stat-label">Statut</span>
+    <span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
+    </div>
+    <?php endif; ?>
+    </div>
+    </section>
 
-<section class="profile-card hp-card">
-<h2><i class="fa-solid fa-heart"></i> Points de Vie</h2>
-<div class="hp-display">
-<div class="hp-bar-container">
-<div class="hp-bar-fill" style="width: <?= min(100, round(($user['hp'] / max(1, $user['max_hp'])) * 100)) ?>%"></div>
-<span class="hp-text"><?= $user['hp'] ?> / <?= $user['max_hp'] ?> PV</span>
-</div>
-</div>
-</section>
+    <section class="profile-card hp-card">
+    <h2><i class="fa-solid fa-heart"></i> Points de Vie</h2>
+    <div class="hp-display">
+    <div class="hp-bar-container">
+    <div class="hp-bar-fill" style="width: <?= min(100, round(($user['hp'] / max(1, $user['max_hp'])) * 100)) ?>%"></div>
+    <span class="hp-text"><?= $user['hp'] ?> / <?= $user['max_hp'] ?> PV</span>
+    </div>
+    </div>
+    </section>
+    </div>
   </div>
 </main>
 
@@ -254,8 +256,9 @@ if (ctx) {
                 }
             ]
         },
-        options: {
-            responsive: true,
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
             plugins: {
                 legend: { labels: { color: '#ccc' } }
             },

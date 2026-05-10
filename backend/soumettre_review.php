@@ -137,12 +137,12 @@ try {
     $pdo->beginTransaction();
 
 $ownedStmt = $pdo->prepare(
-"SELECT inv.Quantity
-FROM Inventory
-WHERE UserId = :user_id
-AND ItemId = :item_id
-LIMIT 1
-FOR UPDATE"
+"SELECT Quantity
+        FROM Inventory
+        WHERE UserId = :user_id
+        AND ItemId = :item_id
+        LIMIT 1
+        FOR UPDATE"
 );
 $ownedStmt->execute([
 ':user_id' => $userId,
@@ -234,6 +234,8 @@ $insertStmt->execute([
     if ($pdo->inTransaction()) {
         $pdo->rollBack();
     }
+
+    error_log('[soumettre_review] Exception: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ':' . $e->getLine());
 
     review_response([
         'success' => false,

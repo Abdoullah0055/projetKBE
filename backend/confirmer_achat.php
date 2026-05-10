@@ -243,23 +243,6 @@ respond_json([
         'silver_to_bronze' => $convertSilverToBronze,
     ],
 ]);
-
-    $pdo->commit();
-
-    $_SESSION['user']['gold'] = (int)$userRow['gold'] - $totalGold;
-    $_SESSION['user']['silver'] = (int)$userRow['silver'] - $totalSilver;
-    $_SESSION['user']['bronze'] = (int)$userRow['bronze'] - $totalBronze;
-
-    respond_json([
-        'success' => true,
-        'message' => 'Achat confirme avec succes.',
-        'order_id' => $orderId,
-        'totals' => [
-            'gold' => $totalGold,
-            'silver' => $totalSilver,
-            'bronze' => $totalBronze,
-        ],
-    ]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

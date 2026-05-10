@@ -176,14 +176,6 @@ function verify_enigme_short_answer(int $riddleId, string $userAnswer): array
     return ['is_correct' => $isCorrect, 'chosen_text' => $userAnswer];
 }
 
-    $isCorrect  = $choiceIndex === (int) $data['correct_index'];
-    $chosenText = $data['choice_texts'][$choiceIndex] ?? '';
-
-    unset($_SESSION[$key]);
-
-    return ['is_correct' => $isCorrect, 'chosen_text' => $chosenText];
-}
-
 function resolve_enigme_request(string $currentPage): array
 {
     $source = (string) ($_GET['source'] ?? 'roadmap');

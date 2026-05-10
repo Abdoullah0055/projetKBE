@@ -849,5 +849,12 @@ font-size: 0.8rem;
 }
 
 .mb-responsive {
-  margin-bottom: var(--spacing-lg);
+margin-bottom: var(--spacing-lg);
+}
+
+[data-theme="light"] .filter-input,
+[data-theme="light"] .filter-select {
+background: rgba(255, 255, 255, 0.85);
+border: 1px solid rgba(0, 0, 0, 0.15);
+color: #333;
 }

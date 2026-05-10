@@ -1,5 +1,9 @@
 <?php
 
+if (ob_get_level() === 0) {
+    ob_start();
+}
+
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../includes/session.php';
 
@@ -84,8 +88,11 @@ handle_response($response, "../details.php?id=$itemId", $isAjaxRequest);
 function handle_response(array $data, string $redirectUrl, bool $isAjaxRequest): void
 {
     if ($isAjaxRequest) {
+        if (ob_get_length() > 0) {
+            ob_clean();
+        }
         header('Content-Type: application/json; charset=utf-8');
-        echo json_encode($data);
+        echo json_encode($data, JSON_UNESCAPED_UNICODE);
     } else {
         header("Location: $redirectUrl");
     }

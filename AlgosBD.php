@@ -533,6 +533,8 @@ function get_user_riddle_stats(int $user_id): array
         }
     }
 
+    $stats['solved_count'] = $stats['facile_solved'] + $stats['moyenne_solved'] + $stats['difficile_solved'];
+
     return $stats;
 }
 

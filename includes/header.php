@@ -138,5 +138,30 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
                 </button>
             <?php endif; ?>
         </div>
-    </div>
-</nav>
+ </div>
+ </nav>
+
+ <?php if ($user['isConnected']): ?>
+ <script>
+ (function() {
+   function refreshHeaderStats() {
+     fetch('backend/header_stats.php', { credentials: 'same-origin' })
+       .then(function(r) { return r.json(); })
+       .then(function(data) {
+         if (!data.success) return;
+         var pct = data.max_hp > 0 ? Math.round(data.hp / data.max_hp * 100) : 100;
+         var hpVal = data.hp + '/' + data.max_hp;
+         document.querySelectorAll('.user-hp-bar .hp-bar-fill').forEach(function(el) { el.style.width = pct + '%'; });
+         document.querySelectorAll('.user-hp-bar .hp-value').forEach(function(el) { el.textContent = hpVal; });
+         document.querySelectorAll('.user-wallet').forEach(function(el) {
+           el.querySelector('span[title="Or"]').textContent = data.gold + ' G';
+           el.querySelector('span[title="Argent"]').textContent = data.silver + ' S';
+           el.querySelector('span[title="Bronze"]').textContent = data.bronze + ' B';
+         });
+       })
+       .catch(function() {});
+   }
+   setInterval(refreshHeaderStats, 15000);
+ })();
+ </script>
+ <?php endif; ?>

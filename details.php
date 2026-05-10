@@ -308,7 +308,8 @@ $reviews = $reviewsStmt->fetchAll(PDO::FETCH_ASSOC);
 <script>
 document.querySelectorAll('.btn-delete-review').forEach(btn => {
     btn.addEventListener('click', async function() {
-        if (!confirm('Supprimer votre evaluation ?')) return;
+        const ok = await showCustomConfirm('Supprimer votre evaluation ?', 'Suppression');
+    if (!ok) return;
         const reviewId = this.dataset.reviewId;
         const formData = new FormData();
         formData.append('action', 'delete_review');

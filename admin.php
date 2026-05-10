@@ -126,9 +126,10 @@ elseif ($_POST['action'] === 'edit_item') {
           $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, WrongAnswer1, WrongAnswer2, WrongAnswer3, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, RiddleType, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
           $stmt->execute([$question, $answer, $wrongAnswer1, $wrongAnswer2, $wrongAnswer3, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze, $riddleType]);
           $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
-      } catch (Exception $e) {
-          $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
-      }
+ } catch (Exception $e) {
+    error_log($e->getMessage());
+    $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
+}
   }
 
     // 6. Activer / Désactiver Énigme
@@ -305,8 +306,13 @@ $capitalRequests = [];
 try {
     $capitalRequestsByPlayer = $pdo->query("SELECT u.UserId AS userid, u.Alias AS alias, COUNT(d.DemandeId) AS requestcount, SUM(CASE WHEN d.Status = 'Pending' THEN 1 ELSE 0 END) AS pendingcount, SUM(CASE WHEN d.Status = 'Accepted' THEN 1 ELSE 0 END) AS acceptedcount, SUM(CASE WHEN d.Status = 'Refused' THEN 1 ELSE 0 END) AS refusedcount FROM Demandes d JOIN Users u ON u.UserId = d.UserId GROUP BY u.UserId, u.Alias ORDER BY requestcount DESC, u.Alias ASC")->fetchAll();
     $capitalRequests = $pdo->query("SELECT d.DemandeId AS demandeid, d.CreatedAt AS createdat, d.ProcessedAt AS processedat, d.Status AS status, u.UserId AS userid, u.Alias AS alias FROM Demandes d JOIN Users u ON u.UserId = d.UserId ORDER BY d.CreatedAt DESC, d.DemandeId DESC LIMIT 200")->fetchAll();
-} catch (Exception $e) {}
+ } catch (Exception $e) {}
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+
+$reviews = [];
+try {
+    $reviews = $pdo->query("SELECT r.ReviewId, r.Rating, r.Comment, r.CreatedAt, u.Alias, i.Name AS ItemName FROM Reviews r JOIN Users u ON u.UserId = r.UserId JOIN Items i ON i.ItemId = r.ItemId ORDER BY r.CreatedAt DESC LIMIT 200")->fetchAll();
+} catch (Exception $e) {}
 
 $title = "Administration - L'Arsenal";
 $currentTheme = $_COOKIE['theme'] ?? 'light';
@@ -458,6 +464,7 @@ include __DIR__ . '/templates/head.php';
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'riddles')"><i class="fa-solid fa-scroll"></i> Quêtes & Énigmes</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'users')"><i class="fa-solid fa-users"></i> Registre Joueurs</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'requests')"><i class="fa-solid fa-coins"></i> Demandes Capital</button>
+<button type="button" class="admin-tab-btn" onclick="switchTab(event, 'reviews')"><i class="fa-solid fa-star"></i> Évaluations</button>
             </div>
 
             <div class="admin-content">
@@ -879,11 +886,59 @@ include __DIR__ . '/templates/head.php';
                                 <?php endif; ?>
                             </tbody>
                         </table>
-                    </div>
-                </div>
+ </div>
+ </div>
 
-            </div>
-        </div>
+ <div id="tab-reviews" class="admin-section details-glass-card">
+ <h3><i class="fa-solid fa-star"></i> Évaluations des joueurs</h3>
+ <div style="overflow-x:auto;">
+ <table class="glass-table">
+ <thead>
+ <tr>
+ <th>ID</th>
+ <th>Joueur</th>
+ <th>Objet</th>
+ <th>Note</th>
+ <th>Commentaire</th>
+ <th>Date</th>
+ <th>Action</th>
+ </tr>
+ </thead>
+ <tbody>
+ <?php if (empty($reviews)): ?>
+ <tr><td colspan="7">Aucune evaluation pour le moment.</td></tr>
+ <?php else: ?>
+ <?php foreach ($reviews as $rev): ?>
+ <tr>
+ <td>#<?= (int)$rev['ReviewId'] ?></td>
+ <td><strong><?= htmlspecialchars($rev['Alias']) ?></strong></td>
+ <td><?= htmlspecialchars($rev['ItemName']) ?></td>
+ <td>
+ <?php
+ $rating = (int)$rev['Rating'];
+ for ($i = 0; $i < $rating; $i++) echo '<i class="fa-solid fa-star" style="color:var(--gold);"></i>';
+ for ($i = $rating; $i < 5; $i++) echo '<i class="fa-regular fa-star" style="color:var(--text-silver); opacity:0.4;"></i>';
+ ?>
+ </td>
+ <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= htmlspecialchars($rev['Comment'] ?? '') ?>"><?= htmlspecialchars($rev['Comment'] ?? '-') ?></td>
+ <td><?= htmlspecialchars((string)$rev['CreatedAt']) ?></td>
+ <td>
+ <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-review-form">
+ <input type="hidden" name="action" value="delete_review">
+ <input type="hidden" name="review_id" value="<?= (int)$rev['ReviewId'] ?>">
+ <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer l'evaluation"><i class="fa-solid fa-trash"></i></button>
+ </form>
+ </td>
+ </tr>
+ <?php endforeach; ?>
+ <?php endif; ?>
+ </tbody>
+ </table>
+ </div>
+ </div>
+
+ </div>
+ </div>
     </main>
 </div>
 
@@ -971,11 +1026,18 @@ if (ok) form.submit();
 });
 });
 document.querySelectorAll('.confirm-delete-user-form').forEach(function(form) {
-form.addEventListener('submit', async function(e) {
-e.preventDefault();
-var ok = await showCustomConfirm('ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?', 'Suppression définitive');
-if (ok) form.submit();
+ form.addEventListener('submit', async function(e) {
+ e.preventDefault();
+ var ok = await showCustomConfirm('ATTENTION : Voulez-vous détruire ce compte et toutes ses données (Inventaire, Commandes) définitivement ?', 'Suppression définitive');
+ if (ok) form.submit();
+ });
 });
+document.querySelectorAll('.confirm-delete-review-form').forEach(function(form) {
+ form.addEventListener('submit', async function(e) {
+ e.preventDefault();
+ var ok = await showCustomConfirm('Voulez-vous vraiment supprimer cette évaluation ?', 'Suppression');
+ if (ok) form.submit();
+ });
 });
 
 setTimeout(() => {
@@ -1000,7 +1062,23 @@ group.style.opacity = isMC ? '1' : '0.4';
 });
 }
 riddleTypeSelect.addEventListener('change', toggleWrongAnswerFields);
-toggleWrongAnswerFields();
+    toggleWrongAnswerFields();
+}
+
+const difficultySelect = document.querySelector('select[name="difficulty"]');
+if (difficultySelect) {
+    function autoFillRewards() {
+        const d = difficultySelect.value;
+        const rg = document.querySelector('input[name="reward_gold"]');
+        const rs = document.querySelector('input[name="reward_silver"]');
+        const rb = document.querySelector('input[name="reward_bronze"]');
+        if (!rg || !rs || !rb) return;
+        if (d === 'Facile') { rg.value = 0; rs.value = 0; rb.value = 10; }
+        else if (d === 'Moyenne') { rg.value = 0; rs.value = 10; rb.value = 0; }
+        else if (d === 'Difficile') { rg.value = 10; rs.value = 0; rb.value = 0; }
+    }
+    difficultySelect.addEventListener('change', autoFillRewards);
+    autoFillRewards();
 }
 
 const invSelect = document.getElementById('inventory-player-select');
