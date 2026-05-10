@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -24,6 +25,19 @@ if ($userId <= 0) {
 
 try {
     $pdo = get_pdo();
+    $countStmt = $pdo->prepare("SELECT COUNT(*) FROM Demandes WHERE UserId = ?");
+    $countStmt->execute([$userId]);
+    $totalRequests = (int)$countStmt->fetchColumn();
+
+    if ($totalRequests >= 3) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Limite atteinte: 3 demandes maximum par joueur.'
+        ]);
+        exit();
+    }
+
     $stmt = $pdo->prepare("INSERT INTO Demandes (UserId) VALUES (?)");
     $stmt->execute([$userId]);
 
@@ -32,9 +46,16 @@ try {
         'message' => 'Demande d augmentation de capital envoyee a l administration.'
     ]);
 } catch (Throwable $e) {
+    $sqlState = '';
+    if ($e instanceof PDOException && isset($e->errorInfo[0])) {
+        $sqlState = (string) $e->errorInfo[0];
+    }
+
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'Impossible de soumettre la demande pour le moment.'
+        'message' => ($sqlState === '42S02')
+            ? 'La table Demandes est absente. Execute la migration SQL demandes_migration.sql.'
+            : 'Impossible de soumettre la demande pour le moment.'
     ]);
 }
