@@ -769,48 +769,48 @@ outline: none;
 }
 
 [data-theme="light"] .inventory-side-box {
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="light"] .inventory-side-box p {
-    color: #555;
+    color: #b8b8b8;
 }
 
 [data-theme="light"] .inventory-state {
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
 
 [data-theme="light"] .inventory-slot {
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .inventory-slot:hover {
     border-color: rgba(25, 133, 161, 0.65);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="light"] .slot-label {
-    color: #222;
+    color: #f0f0f0;
 }
 
 [data-theme="light"] .slot-type,
 [data-theme="light"] .slot-owned,
 [data-theme="light"] .slot-description-text {
-    color: #555;
+    color: #b8b8b8;
 }
 
 [data-theme="light"] .slot-stat-row {
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .slot-stat-row span {
-    color: #555;
+    color: #b8b8b8;
 }
 
 [data-theme="light"] .slot-stat-row strong {
-    color: #222;
+    color: #e8e8e8;
 }
 
 [data-theme="light"] .slot-qty-badge {
@@ -819,31 +819,61 @@ outline: none;
 }
 
 [data-theme="light"] .inventory-tooltip {
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.12);
-    color: #222;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
+    color: #e8e8e8;
 }
 
 [data-theme="light"] .tooltip-description {
-    color: #555;
+    color: #b8b8b8;
 }
 
 [data-theme="light"] .tooltip-meta span {
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    color: #333;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #c0c0c0;
 }
 
 [data-theme="light"] .pending-reviews-panel {
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
 }
 
+[data-theme="light"] .pending-reviews-header h3 {
+    color: var(--accent);
+}
+
+[data-theme="light"] .pending-reviews-header p {
+    color: #b8b8b8;
+}
+
 [data-theme="light"] .pending-review-card {
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .pending-review-item-meta h4 {
+    color: #e8e8e8;
+}
+
+[data-theme="light"] .pending-review-item-meta p {
+    color: #b8b8b8;
+}
+
+[data-theme="light"] .rating-step-btn {
+    color: #c0c0c0;
+    border-color: rgba(255, 255, 255, 0.18);
 }
 
 [data-theme="light"] .review-comment-input {
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    color: #333;
+    color: #e0e0e0;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="light"] .review-comment-input:focus {
+    border-color: var(--accent);
+}
+
+[data-theme="light"] .pending-review-message {
+    color: #d0d0d0;
 }

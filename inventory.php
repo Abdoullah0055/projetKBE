@@ -132,14 +132,22 @@ $title = "L'Arsenal - Inventory";
         z-index: 0;
     }
 
-    body::before {
-        content: "";
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: -1;
-        pointer-events: none;
-    }
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    pointer-events: none;
+}
+
+aside {
+    overflow-y: auto;
+}
+
+.sidebar-content {
+    overflow-y: auto;
+}
 </style>
 
 <link rel="stylesheet" href="assets/css/inventory.css">
