@@ -39,10 +39,10 @@ try {
     $pdo->beginTransaction();
 
     $userStmt = $pdo->prepare(
-        "SELECT UserId, Gold, Silver, Bronze
-         FROM Users
-         WHERE UserId = :userId
-         FOR UPDATE"
+    "SELECT UserId, Gold, Silver, Bronze, Role
+        FROM Users
+        WHERE UserId = :userId
+        FOR UPDATE"
     );
     $userStmt->execute([':userId' => $userId]);
     $userRow = $userStmt->fetch();
