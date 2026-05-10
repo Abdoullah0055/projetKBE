@@ -910,22 +910,22 @@ include __DIR__ . '/templates/head.php';
  <?php else: ?>
  <?php foreach ($reviews as $rev): ?>
  <tr>
- <td>#<?= (int)$rev['ReviewId'] ?></td>
- <td><strong><?= htmlspecialchars($rev['Alias']) ?></strong></td>
- <td><?= htmlspecialchars($rev['ItemName']) ?></td>
- <td>
- <?php
- $rating = (int)$rev['Rating'];
+<td>#<?= (int)$rev['reviewid'] ?></td>
+				<td><strong><?= htmlspecialchars($rev['alias']) ?></strong></td>
+				<td><?= htmlspecialchars($rev['itemname']) ?></td>
+				<td>
+				<?php
+				$rating = (int)$rev['rating'];
  for ($i = 0; $i < $rating; $i++) echo '<i class="fa-solid fa-star" style="color:var(--gold);"></i>';
  for ($i = $rating; $i < 5; $i++) echo '<i class="fa-regular fa-star" style="color:var(--text-silver); opacity:0.4;"></i>';
  ?>
  </td>
- <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= htmlspecialchars($rev['Comment'] ?? '') ?>"><?= htmlspecialchars($rev['Comment'] ?? '-') ?></td>
- <td><?= htmlspecialchars((string)$rev['CreatedAt']) ?></td>
+<td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= htmlspecialchars($rev['comment'] ?? '') ?>"><?= htmlspecialchars($rev['comment'] ?? '-') ?></td>
+					<td><?= htmlspecialchars((string)$rev['createdat']) ?></td>
  <td>
  <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-review-form">
  <input type="hidden" name="action" value="delete_review">
- <input type="hidden" name="review_id" value="<?= (int)$rev['ReviewId'] ?>">
+ <input type="hidden" name="review_id" value="<?= (int)$rev['reviewid'] ?>">
  <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer l'evaluation"><i class="fa-solid fa-trash"></i></button>
  </form>
  </td>

@@ -1,7 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../AlgosBD.php';
-require_once __DIR__ . '/../includes/session.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -25,12 +25,13 @@ try {
 
     echo json_encode([
         'success' => true,
-        'hp' => (int)$row['HP'],
-        'max_hp' => (int)$row['MaxHP'],
-        'gold' => (int)$row['Gold'],
-        'silver' => (int)$row['Silver'],
-        'bronze' => (int)$row['Bronze']
+    'hp' => (int)$row['hp'],
+    'max_hp' => (int)$row['maxhp'],
+    'gold' => (int)$row['gold'],
+    'silver' => (int)$row['silver'],
+    'bronze' => (int)$row['bronze']
     ]);
 } catch (Throwable $e) {
+    error_log('header_stats error: ' . $e->getMessage());
     echo json_encode(['success' => false]);
 }

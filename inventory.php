@@ -147,48 +147,29 @@ $title = "L'Arsenal - Inventory";
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <div class="wrapper">
-    <aside id="sidebar">
-        <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
-            <span id="arrow-icon">«</span>
-        </button>
+<aside id="sidebar">
+    <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
+        <span id="arrow-icon">«</span>
+    </button>
 
-        <div class="sidebar-content">
-            <div class="show-icon"><i class="fa-solid fa-box-open"></i></div>
+    <?php
+    $sidebarIcon = '<i class="fa-solid fa-box-open"></i>';
+    $sidebarTitle = 'Inventory';
+    $sidebarDesc = 'Consultez vos objets lies a votre compte.';
+    $showDoorBtn = false;
+    $sidebarExtraBottom = '<a href="index.php" class="sidebar-nav-btn" style="width:100%; margin-top:20px; display:block; text-align:center; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold; text-decoration:none;"><i class="fa-solid fa-store"></i> <span class="btn-label">Retour Boutique</span></a>';
+    include __DIR__ . '/includes/sidebar_filters.php';
+    ?>
+</aside>
 
-            <div class="hide-text inventory-side-box">
-                <h3>Inventory</h3>
-                <p>Consultez vos objets lies a votre compte.</p>
-            </div>
+<main>
+    <div class="catalog-banner">
+        <h2>
+            Inventory de <?= htmlspecialchars($user['alias']) ?>
+        </h2>
+    </div>
 
-            <div class="sidebar-bottom-actions">
-                <a href="index.php" class="sidebar-nav-btn">
-                    <i class="fa-solid fa-store"></i>
-                    <span class="btn-label">Retour Boutique</span>
-                </a>
-            </div>
-        </div>
-    </aside>
-
-    <main>
-<div class="catalog-banner">
-<h2>
-Inventory de <?= htmlspecialchars($user['alias']) ?>
-</h2>
-</div>
-
-<div class="inventory-filter-bar" style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; align-items:center;">
-<input type="text" id="inv-search-filter" class="filter-input" placeholder="Rechercher un item..." style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:8px; color:white; border-radius:4px;">
-<select id="inv-type-filter" class="filter-select" style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:8px; color:white; border-radius:4px;">
-<option value="all">Tous les types</option>
-<option value="weapon">Armes</option>
-<option value="armor">Armures</option>
-<option value="potion">Potions</option>
-<option value="magicspell">Sorts</option>
-</select>
-<button type="button" id="inv-reset-filters" style="background:transparent; border:1px solid var(--accent); color:var(--accent); padding:8px 14px; cursor:pointer; border-radius:4px; font-weight:bold;">Reinitialiser</button>
-</div>
-
-        <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
+    <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
             <?php $flashType = ($reviewFlash['type'] ?? '') === 'success' ? 'success-state' : 'error-state'; ?>
             <div class="inventory-state <?= $flashType ?>">
                 <span><?= htmlspecialchars((string) $reviewFlash['message']) ?></span>
@@ -229,13 +210,15 @@ $itemImagePath = getItemImagePathForItem($entry);
 $sellPrice = calculate_sell_price((int)$entry['item_id']);
 ?>
 
-                            <article class="inventory-slot"
-                                data-item-name="<?= htmlspecialchars($itemName) ?>"
-                                data-item-description="<?= htmlspecialchars($itemDescription) ?>"
-                                data-item-quantity="<?= (int) $entry['quantity'] ?>"
-                                data-item-type="<?= htmlspecialchars($itemType) ?>"
-                                data-item-id="<?= (int) $entry['item_id'] ?>"
-                                data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>">
+<article class="inventory-slot"
+    data-item-name="<?= htmlspecialchars($itemName) ?>"
+    data-item-description="<?= htmlspecialchars($itemDescription) ?>"
+    data-item-quantity="<?= (int) $entry['quantity'] ?>"
+    data-item-type="<?= htmlspecialchars($itemType) ?>"
+    data-item-id="<?= (int) $entry['item_id'] ?>"
+    data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>"
+    data-item-rarity="<?= htmlspecialchars(strtolower($entry['item_rarity'] ?? 'commun')) ?>"
+    data-item-rating="<?= (float) ($entry['rating'] ?? 0) ?>">
 
                                 <div class="slot-top-row">
                                     <div class="slot-thumb" aria-hidden="true">
@@ -657,37 +640,88 @@ $wouldWaste = ($healValue > $effectiveHeal && $currentHP < $maxHP);
   });
   });
 
-  var invSearchFilter = document.getElementById('inv-search-filter');
-  var invTypeFilter = document.getElementById('inv-type-filter');
-  var invResetBtn = document.getElementById('inv-reset-filters');
-  var invSlots = document.querySelectorAll('.inventory-slot');
+var invSearchFilter = document.getElementById('search-filter');
+var invTypeFilter = document.getElementById('type-filter');
+var invSortFilter = document.getElementById('sort-filter');
+var invRarityFilter = document.getElementById('rarity-filter');
+var invPriceFilter = document.getElementById('price-filter');
+var invResetBtn = document.getElementById('reset-filters');
+var invSlots = Array.from(document.querySelectorAll('.inventory-slot'));
 
-  function applyInventoryFilters() {
+var rarityOrder = {commun:1, rare:2, epique:3, legendaire:4, mythique:5};
+
+function applyInventoryFilters() {
     var searchVal = (invSearchFilter ? invSearchFilter.value : '').toLowerCase().trim();
     var typeVal = invTypeFilter ? invTypeFilter.value : 'all';
-    var visibleCount = 0;
+    var rarityVal = invRarityFilter ? invRarityFilter.value : 'all';
+    var priceVal = invPriceFilter ? parseFloat(invPriceFilter.value) : NaN;
+    var visibleSlots = [];
 
     invSlots.forEach(function(slot) {
-      var name = (slot.dataset.itemName || '').toLowerCase();
-      var type = (slot.dataset.itemType || '').toLowerCase();
-      var normalizedName = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      var normalizedSearch = searchVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        var name = (slot.dataset.itemName || '').toLowerCase();
+        var type = (slot.dataset.itemType || '').toLowerCase();
+        var rarity = (slot.dataset.itemRarity || '').toLowerCase();
+        var price = parseFloat(slot.dataset.itemPrice) || 0;
+        var normalizedName = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        var normalizedSearch = searchVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-      var matchesSearch = !searchVal || normalizedName.includes(normalizedSearch) || name.includes(searchVal);
-      var matchesType = typeVal === 'all' || type === typeVal;
+        var matchesSearch = !searchVal || normalizedName.includes(normalizedSearch) || name.includes(searchVal);
+        var matchesType = typeVal === 'all' || type === typeVal;
+        var matchesRarity = rarityVal === 'all' || rarity === rarityVal.replace('rarity-', '');
+        var matchesPrice = isNaN(priceVal) || price <= priceVal;
 
-      slot.style.display = (matchesSearch && matchesType) ? '' : 'none';
-      if (matchesSearch && matchesType) visibleCount++;
+        var visible = matchesSearch && matchesType && matchesRarity && matchesPrice;
+        slot.style.display = visible ? '' : 'none';
+        if (visible) visibleSlots.push(slot);
     });
-  }
 
-  if (invSearchFilter) invSearchFilter.addEventListener('input', applyInventoryFilters);
-  if (invTypeFilter) invTypeFilter.addEventListener('change', applyInventoryFilters);
-  if (invResetBtn) invResetBtn.addEventListener('click', function() {
+    var sortVal = invSortFilter ? invSortFilter.value : 'name-asc';
+    visibleSlots.sort(function(a, b) {
+        var va, vb;
+        switch (sortVal) {
+            case 'name-asc': return (a.dataset.itemName || '').localeCompare(b.dataset.itemName || '');
+            case 'name-desc': return (b.dataset.itemName || '').localeCompare(a.dataset.itemName || '');
+            case 'price-asc': return (parseFloat(a.dataset.itemPrice)||0) - (parseFloat(b.dataset.itemPrice)||0);
+            case 'price-desc': return (parseFloat(b.dataset.itemPrice)||0) - (parseFloat(a.dataset.itemPrice)||0);
+            case 'rating-desc': return (parseFloat(b.dataset.itemRating)||0) - (parseFloat(a.dataset.itemRating)||0);
+            case 'rating-asc': return (parseFloat(a.dataset.itemRating)||0) - (parseFloat(b.dataset.itemRating)||0);
+            case 'rarity-asc':
+                va = rarityOrder[(a.dataset.itemRarity||'').toLowerCase()] || 0;
+                vb = rarityOrder[(b.dataset.itemRarity||'').toLowerCase()] || 0;
+                return va - vb;
+            case 'rarity-desc':
+                va = rarityOrder[(a.dataset.itemRarity||'').toLowerCase()] || 0;
+                vb = rarityOrder[(b.dataset.itemRarity||'').toLowerCase()] || 0;
+                return vb - va;
+            default: return 0;
+        }
+    });
+
+    var container = invSlots.length > 0 ? invSlots[0].parentNode : null;
+    if (container) {
+        var allSlots = Array.from(container.children);
+        allSlots.forEach(function(child) {
+            if (child.classList && child.classList.contains('inventory-slot')) {
+                container.removeChild(child);
+            }
+        });
+        visibleSlots.forEach(function(slot) { container.appendChild(slot); });
+    }
+}
+
+if (invSearchFilter) invSearchFilter.addEventListener('input', applyInventoryFilters);
+if (invTypeFilter) invTypeFilter.addEventListener('change', applyInventoryFilters);
+if (invSortFilter) invSortFilter.addEventListener('change', applyInventoryFilters);
+if (invRarityFilter) invRarityFilter.addEventListener('change', applyInventoryFilters);
+if (invPriceFilter) invPriceFilter.addEventListener('input', applyInventoryFilters);
+if (invResetBtn) invResetBtn.addEventListener('click', function() {
     if (invSearchFilter) invSearchFilter.value = '';
     if (invTypeFilter) invTypeFilter.value = 'all';
+    if (invSortFilter) invSortFilter.value = 'name-asc';
+    if (invRarityFilter) invRarityFilter.value = 'all';
+    if (invPriceFilter) invPriceFilter.value = '';
     applyInventoryFilters();
-  });
+});
 </script>
 
 <script src="assets/js/inventory.js"></script>

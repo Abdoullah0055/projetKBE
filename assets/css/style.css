@@ -671,16 +671,14 @@ aside.collapsed .show-icon {
 }
 
 [data-theme="light"] aside {
-background: rgba(245, 245, 240, 0.85) !important;
-backdrop-filter: blur(12px);
--webkit-backdrop-filter: blur(12px);
-border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 [data-theme="light"] .filter-group select {
-background: rgba(255, 255, 255, 0.85);
-border: 1px solid rgba(0, 0, 0, 0.15);
-color: #333;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    color: #333;
 }
 
 [data-theme="light"] .filter-group label {
@@ -689,6 +687,16 @@ color: var(--accent);
 
 [data-theme="light"] .user-hp-bar .hp-value,
 [data-theme="light"] .user-wallet span {
-color: #333;
+    color: #333;
+}
+
+[data-theme="light"] select option {
+    background-color: #fff;
+    color: #333;
+}
+
+[data-theme="dark"] select option {
+    background-color: #1a1b2e;
+    color: #e0e0e0;
 }
 
