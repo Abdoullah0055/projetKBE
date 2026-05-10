@@ -82,11 +82,25 @@ try {
     $cartItemsStmt->execute([':cartId' => $cartId]);
     $cartItems = $cartItemsStmt->fetchAll();
 
-    if (empty($cartItems)) {
-        fail_checkout($pdo, 'Votre panier est vide.', 'empty_cart');
-    }
+if (empty($cartItems)) {
+    fail_checkout($pdo, 'Votre panier est vide.', 'empty_cart');
+}
 
-    $totalGold = 0;
+$userRole = $userRow['role'] ?? 'Player';
+$isMage = ($userRole === 'Mage');
+
+if (!$isMage) {
+    $spellTypeStmt = $pdo->prepare(
+        "SELECT 1 FROM CartItems ci JOIN Items i ON i.ItemId = ci.ItemId JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId WHERE ci.CartId = :cartId AND t.Name = 'MagicSpell' LIMIT 1"
+    );
+    $spellTypeStmt->execute([':cartId' => $cartId]);
+
+    if ($spellTypeStmt->fetchColumn()) {
+        fail_checkout($pdo, 'Seuls les mages peuvent acheter des sorts.', 'spell_restricted');
+    }
+}
+
+$totalGold = 0;
     $totalSilver = 0;
     $totalBronze = 0;
 
