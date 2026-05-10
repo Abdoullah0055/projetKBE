@@ -55,8 +55,59 @@ if (!isset($_SESSION['user']['id'])) {
 }
 
 $userId = (int)$_SESSION['user']['id'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'delete_review') {
+    $reviewId = (int)($_POST['review_id'] ?? 0);
+
+    if ($reviewId <= 0) {
+        review_response([
+            'success' => false,
+            'message' => 'Identifiant de review invalide.',
+        ], '../inventory.php', $isAjax, 422);
+    }
+
+    $pdo = get_pdo();
+
+    try {
+        $checkStmt = $pdo->prepare("SELECT ReviewId, ItemId FROM Reviews WHERE ReviewId = :rid AND UserId = :uid");
+        $checkStmt->execute([':rid' => $reviewId, ':uid' => $userId]);
+        $reviewRow = $checkStmt->fetch();
+
+        if (!$reviewRow) {
+            review_response([
+                'success' => false,
+                'message' => 'Review introuvable ou vous n\'etes pas l\'auteur.',
+            ], '../inventory.php', $isAjax, 403);
+        }
+
+        $deletedItemId = (int)$reviewRow['itemid'];
+
+        $pdo->prepare("DELETE FROM Reviews WHERE ReviewId = :rid AND UserId = :uid")->execute([':rid' => $reviewId, ':uid' => $userId]);
+
+        review_response([
+            'success' => true,
+            'message' => 'Votre evaluation a ete supprimee.',
+            'deleted_item_id' => $deletedItemId,
+        ], '../inventory.php', $isAjax);
+    } catch (Throwable $e) {
+        review_response([
+            'success' => false,
+            'message' => 'Erreur lors de la suppression.',
+        ], '../inventory.php', $isAjax, 500);
+    }
+}
+
 $itemId = (int)($_POST['item_id'] ?? 0);
 $ratingRaw = str_replace(',', '.', trim((string)($_POST['rating'] ?? '')));
+
+$comment = trim((string)($_POST['comment'] ?? ''));
+if (mb_strlen($comment) > 500) {
+    review_response([
+        'success' => false,
+        'message' => 'Le commentaire ne doit pas depasser 500 caracteres.',
+    ], '../inventory.php', $isAjax, 422);
+}
+$commentValue = ($comment !== '') ? $comment : null;
 
 if ($itemId <= 0 || $ratingRaw === '' || !is_numeric($ratingRaw)) {
     review_response([
@@ -144,15 +195,16 @@ review_response([
         ], '../inventory.php', $isAjax, 409);
     }
 
-    $insertStmt = $pdo->prepare(
-        "INSERT INTO Reviews (UserId, ItemId, Rating, Comment)
-         VALUES (:user_id, :item_id, :rating, NULL)"
-    );
-    $insertStmt->execute([
-        ':user_id' => $userId,
-        ':item_id' => $itemId,
-        ':rating' => $normalizedRating,
-    ]);
+$insertStmt = $pdo->prepare(
+    "INSERT INTO Reviews (UserId, ItemId, Rating, Comment)
+    VALUES (:user_id, :item_id, :rating, :comment)"
+);
+$insertStmt->execute([
+    ':user_id' => $userId,
+    ':item_id' => $itemId,
+    ':rating' => $normalizedRating,
+    ':comment' => $commentValue,
+]);
 
     $aggregateStmt = $pdo->prepare(
         "SELECT

@@ -14,10 +14,10 @@ $loadError = '';
 
 try {
     $stmt = $pdo->prepare(
-        "SELECT UserId, Alias, FullName, Email, AvatarUrl, Role, Gold, Silver, Bronze
-         FROM Users
-         WHERE UserId = ?
-         LIMIT 1"
+        "SELECT UserId, Alias, FullName, Email, AvatarUrl, Role, Gold, Silver, Bronze, CurrentHP, MaxHP
+        FROM Users
+        WHERE UserId = ?
+        LIMIT 1"
     );
     $stmt->execute([$userId]);
     $dbUser = $stmt->fetch();
@@ -44,6 +44,8 @@ $_SESSION['user']['alias'] = $dbUser['alias'];
         'gold' => $_SESSION['user']['gold'] ?? 0,
         'silver' => $_SESSION['user']['silver'] ?? 0,
         'bronze' => $_SESSION['user']['bronze'] ?? 0,
+        'currenthp' => $_SESSION['user']['hp'] ?? 100,
+        'maxhp' => $_SESSION['user']['max_hp'] ?? 100,
     ];
     $loadError = "Impossible de charger toutes les donnees profil actuellement.";
 }
@@ -51,6 +53,8 @@ $_SESSION['user']['alias'] = $dbUser['alias'];
 $user['id'] = $userId;
 $user['alias'] = $dbUser['alias'];
 $user['isMage'] = (($dbUser['role'] ?? 'Player') === 'Mage');
+$user['hp'] = (int)($dbUser['currenthp'] ?? 100);
+$user['max_hp'] = (int)($dbUser['maxhp'] ?? 100);
 $user['balance'] = [
     'gold' => (int)($dbUser['gold'] ?? 0),
     'silver' => (int)($dbUser['silver'] ?? 0),
@@ -173,36 +177,95 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
       </form>
     </section>
 
-    <section class="profile-stats-section">
-      <h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-label">Facile</span>
-          <span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Moyenne</span>
-          <span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
-        </div>
-        <div class="stat-card">
-          <span class="stat-label">Difficile</span>
-          <span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
-        </div>
-        <div class="stat-card stat-total">
-          <span class="stat-label">Total</span>
-          <span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
-        </div>
-        <?php if ($user['isMage']): ?>
-        <div class="stat-card stat-mage">
-          <span class="stat-label">Statut</span>
-          <span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
-        </div>
-        <?php endif; ?>
-      </div>
-    </section>
+<section class="profile-stats-section">
+<h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
+<div class="stats-chart-container">
+<canvas id="riddleStatsChart" width="300" height="200"></canvas>
+</div>
+<div class="stats-grid" style="margin-top:15px;">
+<div class="stat-card">
+<span class="stat-label">Facile</span>
+<span class="stat-value"><?= $riddleStats['facile_solved'] ?>/<?= $riddleStats['facile_total'] ?></span>
+</div>
+<div class="stat-card">
+<span class="stat-label">Moyenne</span>
+<span class="stat-value"><?= $riddleStats['moyenne_solved'] ?>/<?= $riddleStats['moyenne_total'] ?></span>
+</div>
+<div class="stat-card">
+<span class="stat-label">Difficile</span>
+<span class="stat-value"><?= $riddleStats['difficile_solved'] ?>/<?= $riddleStats['difficile_total'] ?></span>
+</div>
+<div class="stat-card stat-total">
+<span class="stat-label">Total</span>
+<span class="stat-value"><?= $riddleStats['solved_count'] ?>/<?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></span>
+</div>
+<?php if ($user['isMage']): ?>
+<div class="stat-card stat-mage">
+<span class="stat-label">Statut</span>
+<span class="stat-value"><i class="fa-solid fa-hat-wizard"></i> Mage</span>
+</div>
+<?php endif; ?>
+</div>
+</section>
+
+<section class="profile-card hp-card">
+<h2><i class="fa-solid fa-heart"></i> Points de Vie</h2>
+<div class="hp-display">
+<div class="hp-bar-container">
+<div class="hp-bar-fill" style="width: <?= min(100, round(($user['hp'] / max(1, $user['max_hp'])) * 100)) ?>%"></div>
+<span class="hp-text"><?= $user['hp'] ?> / <?= $user['max_hp'] ?> PV</span>
+</div>
+</div>
+</section>
   </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="assets/js/profile.js"></script>
+<script>
+const ctx = document.getElementById('riddleStatsChart');
+if (ctx) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Facile', 'Moyenne', 'Difficile'],
+            datasets: [
+                {
+                    label: 'Resolues',
+                    data: [
+                        <?= (int)$riddleStats['facile_solved'] ?>,
+                        <?= (int)$riddleStats['moyenne_solved'] ?>,
+                        <?= (int)$riddleStats['difficile_solved'] ?>
+                    ],
+                    backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                    borderColor: 'rgba(46, 204, 113, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Total',
+                    data: [
+                        <?= (int)$riddleStats['facile_total'] ?>,
+                        <?= (int)$riddleStats['moyenne_total'] ?>,
+                        <?= (int)$riddleStats['difficile_total'] ?>
+                    ],
+                    backgroundColor: 'rgba(52, 152, 219, 0.4)',
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#ccc' } }
+            },
+            scales: {
+                x: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                y: { ticks: { color: '#ccc', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
+            }
+        }
+    });
+}
+</script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>

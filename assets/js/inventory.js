@@ -1,11 +1,21 @@
 document.addEventListener('DOMContentLoaded', function () {
-document.querySelectorAll('.btn-use-item').forEach(function (btn) {
-btn.addEventListener('click', async function () {
-var itemId = this.dataset.itemId;
-var itemName = this.dataset.itemName;
+  document.querySelectorAll('.btn-use-item').forEach(function (btn) {
+    btn.addEventListener('click', async function () {
+      var itemId = this.dataset.itemId;
+      var itemName = this.dataset.itemName;
+      var wouldWaste = this.dataset.wouldWaste === '1';
+      var healValue = parseInt(this.dataset.healValue) || 3;
 
-var confirmed = await showCustomConfirm('Utiliser ' + itemName + ' pour regagner des PV ?', 'Utiliser un objet');
-if (!confirmed) return;
+      if (wouldWaste) {
+        var wasteConfirmed = await showCustomConfirm(
+          'Cet objet va partiellement gaspiller son effet (PV presque au max). Le soin de ' + healValue + ' PV sera partiellement perdu. Continuer ?',
+          'Gaspillage potentiel'
+        );
+        if (!wasteConfirmed) return;
+      } else {
+        var confirmed = await showCustomConfirm('Utiliser ' + itemName + ' pour regagner des PV ?', 'Utiliser un objet');
+        if (!confirmed) return;
+      }
 
 btn.disabled = true;
 

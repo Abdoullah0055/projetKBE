@@ -40,6 +40,25 @@ $properties = getItemProperties($pdo, (int) $item['id'], $item['type']);
 $title = "Details - " . $item['nom'];
 $itemRatingText = formatRatingValue((float) $item['rating']);
 
+$distributionStmt = $pdo->prepare("
+    SELECT ROUND(Rating) AS star_level, COUNT(*) AS count
+    FROM Reviews
+    WHERE ItemId = ?
+    GROUP BY ROUND(Rating)
+    ORDER BY ROUND(Rating) DESC
+");
+$distributionStmt->execute([$itemId]);
+$distRows = $distributionStmt->fetchAll(PDO::FETCH_ASSOC);
+$starDist = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
+$totalReviewsForDist = 0;
+foreach ($distRows as $dr) {
+    $level = (int)$dr['star_level'];
+    if ($level >= 1 && $level <= 5) {
+        $starDist[$level] = (int)$dr['count'];
+        $totalReviewsForDist += (int)$dr['count'];
+    }
+}
+
 $detailAlert = null;
 if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
     $candidate = $_SESSION['alerte'];
@@ -153,14 +172,27 @@ $rightImages = [
                     <span class="stat-value details-rating-stars-wrap"><?= renderRatingStars((float) $item['rating'], 'details-rating-stars') ?></span>
                     <span class="stat-sub"><?= $itemRatingText ?>/5 • <?= (int) $item['nb_avis'] ?> avis</span>
                 </div>
-                <div class="stat-box">
-                    <span class="stat-label">Stock</span>
-                    <span class="stat-value <?= ((int) $item['stock'] === 0) ? 'text-danger' : 'text-success' ?>">
-                        <?= (int) $item['stock'] ?>
-                    </span>
-                    <span class="stat-sub">unites</span>
-                </div>
-            </div>
+      <div class="stat-box">
+      <span class="stat-label">Stock</span>
+      <span class="stat-value <?= ((int) $item['stock'] === 0) ? 'text-danger' : 'text-success' ?>">
+      <?= (int) $item['stock'] ?>
+      </span>
+      <span class="stat-sub">unites</span>
+      </div>
+      </div>
+      <?php if ($totalReviewsForDist > 0): ?>
+      <div class="star-distribution">
+      <?php for ($s = 5; $s >= 1; $s--):
+      $pct = $totalReviewsForDist > 0 ? round(($starDist[$s] / $totalReviewsForDist) * 100) : 0;
+      ?>
+      <div class="dist-row">
+      <span class="dist-label"><?= $s ?> <i class="fa-solid fa-star"></i></span>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width: <?= $pct ?>%"></div></div>
+      <span class="dist-pct"><?= $pct ?>%</span>
+      </div>
+      <?php endfor; ?>
+      </div>
+      <?php endif; ?>
         </div>
 
         <div class="info-column">
@@ -231,9 +263,76 @@ $rightImages = [
   </button>
   <?php endif; ?>
 
-  <a href="index.php" class="back-link">Retour au catalogue</a>
-  </div>
+<a href="index.php" class="back-link">Retour au catalogue</a>
+</div>
+</div>
+
+<?php
+$reviewsStmt = $pdo->prepare("
+    SELECT r.ReviewId, r.UserId, r.Rating, r.Comment, r.CreatedAt, u.Alias
+    FROM Reviews r
+    JOIN Users u ON u.UserId = r.UserId
+    WHERE r.ItemId = ?
+    ORDER BY r.CreatedAt DESC
+");
+$reviewsStmt->execute([$itemId]);
+$reviews = $reviewsStmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<div class="reviews-section" style="margin-top: 30px; max-width: 900px; margin-left: auto; margin-right: auto; padding: 0 20px;">
+    <h3 style="color: var(--accent);"><i class="fa-solid fa-comments"></i> Evaluations (<?= count($reviews) ?>)</h3>
+
+    <?php if (empty($reviews)): ?>
+    <p style="color: var(--text-silver);">Aucune evaluation pour le moment.</p>
+    <?php else: ?>
+    <?php foreach ($reviews as $rev): ?>
+    <div class="review-card" data-review-id="<?= (int)$rev['reviewid'] ?>" style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 12px 16px; margin-bottom: 10px;">
+        <div class="review-header" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <strong><?= htmlspecialchars($rev['alias']) ?></strong>
+            <?= renderRatingStars((float)$rev['rating']) ?>
+            <span class="rating-value-inline"><?= formatRatingValue((float)$rev['rating']) ?>/5</span>
+            <?php if ($user['isConnected'] && (int)$rev['userid'] === $user['id']): ?>
+            <button type="button" class="btn-delete-review" data-review-id="<?= (int)$rev['reviewid'] ?>" title="Supprimer mon evaluation" style="background: transparent; border: 1px solid #e74c3c; color: #e74c3c; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 0.75rem; margin-left: auto;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+            <?php endif; ?>
         </div>
+        <?php if (!empty($rev['comment'])): ?>
+        <p class="review-comment" style="margin-top: 8px; color: var(--text-light); font-size: 0.9rem;"><?= nl2br(htmlspecialchars($rev['comment'])) ?></p>
+        <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+    <?php endif; ?>
+</div>
+
+<script>
+document.querySelectorAll('.btn-delete-review').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        if (!confirm('Supprimer votre evaluation ?')) return;
+        const reviewId = this.dataset.reviewId;
+        const formData = new FormData();
+        formData.append('action', 'delete_review');
+        formData.append('review_id', reviewId);
+        try {
+            const resp = await fetch('backend/soumettre_review.php', {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                const card = btn.closest('.review-card');
+                if (card) card.remove();
+                if (typeof showToast === 'function') showToast(data.message, 'succes');
+            } else {
+                if (typeof showToast === 'function') showToast(data.message || 'Erreur lors de la suppression.', 'erreur');
+            }
+        } catch (e) {
+            if (typeof showToast === 'function') showToast('Erreur reseau.', 'erreur');
+        }
+    });
+});
+</script>
     </main>
 </div>
 

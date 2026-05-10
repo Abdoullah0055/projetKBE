@@ -1,6 +1,12 @@
 -- 1. Ajout des colonnes nécessaires
 ALTER TABLE Users ADD COLUMN FundsGivenCount INT DEFAULT 0;
-ALTER TABLE Riddles ADD COLUMN RiddleType VARCHAR(50) DEFAULT 'Text';
+ALTER TABLE Riddles ADD COLUMN RiddleType VARCHAR(50) DEFAULT 'MultipleChoice';
+
+-- 1b. Update existing rows that had the old default 'Text'
+UPDATE Riddles SET RiddleType = 'MultipleChoice' WHERE RiddleType = 'Text' OR RiddleType IS NULL;
+
+-- 1c. Add Comment column to Reviews if not exists
+ALTER TABLE Reviews ADD COLUMN Comment TEXT DEFAULT NULL;
 
 -- 2. Table pour la réinitialisation de mot de passe
 CREATE TABLE IF NOT EXISTS PasswordResets (

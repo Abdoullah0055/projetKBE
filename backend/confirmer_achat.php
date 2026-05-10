@@ -122,9 +122,36 @@ $quantity = (int)$item['quantity'];
         $totalBronze += (int)$item['pricebronze'] * $quantity;
     }
 
-    if ((int)$userRow['gold'] < $totalGold || (int)$userRow['silver'] < $totalSilver || (int)$userRow['bronze'] < $totalBronze) {
-        fail_checkout($pdo, 'Solde insuffisant pour finaliser l\'achat.', 'balance_insufficient');
-    }
+$userGold = (int)$userRow['gold'];
+$userSilver = (int)$userRow['silver'];
+$userBronze = (int)$userRow['bronze'];
+
+$totalInBronze = $totalGold * 100 + $totalSilver * 10 + $totalBronze;
+$userInBronze = $userGold * 100 + $userSilver * 10 + $userBronze;
+
+if ($userInBronze < $totalInBronze) {
+    fail_checkout($pdo, 'Solde insuffisant pour finaliser l\'achat.', 'balance_insufficient');
+}
+
+$remainingBronze = $totalBronze;
+$debitBronze = min($remainingBronze, $userBronze);
+$remainingBronze -= $debitBronze;
+
+$convertSilverToBronze = 0;
+if ($remainingBronze > 0) {
+    $convertSilverToBronze = (int)ceil($remainingBronze / 10);
+}
+
+$remainingSilver = $totalSilver + $convertSilverToBronze;
+$debitSilver = min($remainingSilver, $userSilver);
+$remainingSilver -= $debitSilver;
+
+$convertGoldToSilver = 0;
+if ($remainingSilver > 0) {
+    $convertGoldToSilver = (int)ceil($remainingSilver / 10);
+}
+
+$debitGold = $totalGold + $convertGoldToSilver;
 
     $orderStmt = $pdo->prepare(
         "INSERT INTO Orders (UserId, TotalGold, TotalSilver, TotalBronze)
@@ -184,19 +211,38 @@ $quantity = (int)$item['quantity'];
     $clearCartStmt = $pdo->prepare("DELETE FROM CartItems WHERE CartId = :cartId");
     $clearCartStmt->execute([':cartId' => $cartId]);
 
-    $debitStmt = $pdo->prepare(
-        "UPDATE Users
-         SET Gold = Gold - :gold,
-             Silver = Silver - :silver,
-             Bronze = Bronze - :bronze
-         WHERE UserId = :userId"
-    );
-    $debitStmt->execute([
-        ':gold' => $totalGold,
-        ':silver' => $totalSilver,
-        ':bronze' => $totalBronze,
-        ':userId' => $userId,
-    ]);
+$debitStmt = $pdo->prepare(
+    "UPDATE Users
+    SET Gold = Gold - :gold, Silver = Silver - :silver, Bronze = Bronze - :bronze
+    WHERE UserId = :userId"
+);
+$debitStmt->execute([
+    ':gold' => $debitGold,
+    ':silver' => $debitSilver,
+    ':bronze' => $debitBronze,
+    ':userId' => $userId,
+]);
+
+$pdo->commit();
+
+$_SESSION['user']['gold'] = $userGold - $debitGold;
+$_SESSION['user']['silver'] = $userSilver - $debitSilver;
+$_SESSION['user']['bronze'] = $userBronze - $debitBronze;
+
+respond_json([
+    'success' => true,
+    'message' => 'Achat confirme avec succes.',
+    'order_id' => $orderId,
+    'totals' => [
+        'gold' => $totalGold,
+        'silver' => $totalSilver,
+        'bronze' => $totalBronze,
+    ],
+    'conversion' => [
+        'gold_to_silver' => $convertGoldToSilver,
+        'silver_to_bronze' => $convertSilverToBronze,
+    ],
+]);
 
     $pdo->commit();
 

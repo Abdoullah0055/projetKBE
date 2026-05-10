@@ -14,13 +14,19 @@ $message_alerte = null;
 // --- ACTIONS BACKEND ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
-    // 1. Ajouter Item
-    if ($_POST['action'] === 'add_item') {
-        $name = trim($_POST['name']); $desc = trim($_POST['description']);
-        $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
-        $stock = (int)$_POST['stock']; $typeId = (int)$_POST['type_id'];
+// 1. Ajouter Item
+if ($_POST['action'] === 'add_item') {
+    $name = trim($_POST['name']); $desc = trim($_POST['description']);
+    $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
+    $stock = (int)$_POST['stock']; $typeId = (int)$_POST['type_id'];
 
-        try {
+    $totalGoldEquiv = $gold + ($silver / 10) + ($bronze / 100);
+    if ($totalGoldEquiv < 1 || $totalGoldEquiv > 100) {
+        $message_alerte = ["type" => "erreur", "texte" => "Le prix total doit etre entre 1 et 100 pieces d'or equivalent."];
+    }
+
+    if (empty($message_alerte)) {
+    try {
             $pdo->beginTransaction();
             $stmt = $pdo->prepare("INSERT INTO Items (Name, Description, PriceGold, PriceSilver, PriceBronze, Stock, ItemTypeId, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
             $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $typeId]);
@@ -45,21 +51,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            $message_alerte = ["type" => "erreur", "texte" => "Erreur : Ce nom existe peut-être déjà."];
-        }
+        $message_alerte = ["type" => "erreur", "texte" => "Erreur : Ce nom existe peut-être déjà."];
     }
+    }
+}
 
-    // 2. Modifier Item
-    elseif ($_POST['action'] === 'edit_item') {
-        $itemId = (int)$_POST['item_id'];
-        $name = trim($_POST['name']); $desc = trim($_POST['description']);
-        $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
-        $stock = (int)$_POST['stock'];
-        
-        $stmt = $pdo->prepare("UPDATE Items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
-        $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
-        $message_alerte = ["type" => "succes", "texte" => "L'artefact a été modifié avec succès."];
+// 2. Modifier Item
+elseif ($_POST['action'] === 'edit_item') {
+    $itemId = (int)$_POST['item_id'];
+    $name = trim($_POST['name']); $desc = trim($_POST['description']);
+    $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
+    $stock = (int)$_POST['stock'];
+
+    $totalGoldEquiv = $gold + ($silver / 10) + ($bronze / 100);
+    if ($totalGoldEquiv < 1 || $totalGoldEquiv > 100) {
+        $message_alerte = ["type" => "erreur", "texte" => "Le prix total doit etre entre 1 et 100 pieces d'or equivalent."];
+    } else {
+    $stmt = $pdo->prepare("UPDATE Items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
+    $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
+    $message_alerte = ["type" => "succes", "texte" => "L'artefact a été modifié avec succès."];
     }
+}
 
     // 3. Activer / Désactiver Item
     elseif ($_POST['action'] === 'toggle_item') {
@@ -83,28 +95,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
     // --- GESTION DES ÉNIGMES (QUÊTES) ---
 
-    // 5. Ajouter Énigme
-elseif ($_POST['action'] === 'add_riddle') {
-    $question = trim($_POST['question']);
-    $answer = trim($_POST['answer']);
-    $wrongAnswer1 = trim($_POST['wrong_answer1']);
-    $wrongAnswer2 = trim($_POST['wrong_answer2']);
-    $wrongAnswer3 = trim($_POST['wrong_answer3']);
-    $hint = trim($_POST['hint']) !== '' ? trim($_POST['hint']) : null;
-    $difficulty = $_POST['difficulty'];
-    $categoryId = (int)$_POST['category_id'];
-    $rewardGold = (int)$_POST['reward_gold'];
-    $rewardSilver = (int)$_POST['reward_silver'];
-    $rewardBronze = (int)$_POST['reward_bronze'];
+  // 5. Ajouter Énigme
+  elseif ($_POST['action'] === 'add_riddle') {
+      $question = trim($_POST['question']);
+      $answer = trim($_POST['answer']);
+      $riddleType = $_POST['riddle_type'] ?? 'MultipleChoice';
 
-    try {
-        $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, WrongAnswer1, WrongAnswer2, WrongAnswer3, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
-        $stmt->execute([$question, $answer, $wrongAnswer1, $wrongAnswer2, $wrongAnswer3, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze]);
-        $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
-    } catch (Exception $e) {
-        $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
-    }
-}
+      if ($riddleType === 'TrueFalse') {
+          $wrongAnswer1 = (mb_strtolower(trim($answer), 'UTF-8') === 'vrai') ? 'Faux' : 'Vrai';
+          $wrongAnswer2 = '';
+          $wrongAnswer3 = '';
+      } elseif ($riddleType === 'ShortAnswer') {
+          $wrongAnswer1 = '';
+          $wrongAnswer2 = '';
+          $wrongAnswer3 = '';
+      } else {
+          $wrongAnswer1 = trim($_POST['wrong_answer1']);
+          $wrongAnswer2 = trim($_POST['wrong_answer2']);
+          $wrongAnswer3 = trim($_POST['wrong_answer3']);
+      }
+
+      $hint = trim($_POST['hint']) !== '' ? trim($_POST['hint']) : null;
+      $difficulty = $_POST['difficulty'];
+      $categoryId = (int)$_POST['category_id'];
+      $rewardGold = (int)$_POST['reward_gold'];
+      $rewardSilver = (int)$_POST['reward_silver'];
+      $rewardBronze = (int)$_POST['reward_bronze'];
+
+      try {
+          $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, WrongAnswer1, WrongAnswer2, WrongAnswer3, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, RiddleType, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
+          $stmt->execute([$question, $answer, $wrongAnswer1, $wrongAnswer2, $wrongAnswer3, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze, $riddleType]);
+          $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
+      } catch (Exception $e) {
+          $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
+      }
+  }
 
     // 6. Activer / Désactiver Énigme
     elseif ($_POST['action'] === 'toggle_riddle') {
@@ -128,13 +153,34 @@ elseif ($_POST['action'] === 'add_riddle') {
 
     // --- GESTION DES JOUEURS ---
 
-    // 8. Ajouter Fonds au Joueur
-    elseif ($_POST['action'] === 'add_funds') {
-        $targetUserId = (int)$_POST['user_id'];
-        $addGold = (int)$_POST['add_gold']; $addSilver = (int)$_POST['add_silver']; $addBronze = (int)$_POST['add_bronze'];
-        $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
-        $message_alerte = ["type" => "succes", "texte" => "Les fonds du joueur ont été mis à jour."];
+// 8. Ajouter Fonds au Joueur
+elseif ($_POST['action'] === 'add_funds') {
+    $targetUserId = (int)$_POST['user_id'];
+    $addGold = (int)$_POST['add_gold']; $addSilver = (int)$_POST['add_silver']; $addBronze = (int)$_POST['add_bronze'];
+
+    try {
+        $pdo->beginTransaction();
+
+        $fundsStmt = $pdo->prepare("SELECT FundsGivenCount FROM Users WHERE UserId = ? FOR UPDATE");
+        $fundsStmt->execute([$targetUserId]);
+        $fundsRow = $fundsStmt->fetch();
+
+        if (!$fundsRow) {
+            $pdo->rollBack();
+            $message_alerte = ["type" => "erreur", "texte" => "Joueur introuvable."];
+        } elseif ((int)$fundsRow['fundsgivencount'] >= 3) {
+            $pdo->rollBack();
+            $message_alerte = ["type" => "erreur", "texte" => "Ce joueur a deja recu 3 augmentations de capital. Limite atteinte."];
+        } else {
+            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+            $pdo->commit();
+            $message_alerte = ["type" => "succes", "texte" => "Les fonds du joueur ont ete mis a jour. (Augmentation " . ((int)$fundsRow['fundsgivencount'] + 1) . "/3)"];
+        }
+    } catch (Exception $e) {
+        if ($pdo->inTransaction()) { $pdo->rollBack(); }
+        $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de fonds."];
     }
+}
 
     // 9. Bannir / Débannir Joueur
     elseif ($_POST['action'] === 'toggle_ban') {
@@ -147,16 +193,27 @@ elseif ($_POST['action'] === 'add_riddle') {
         }
     }
 
-    // 10. Supprimer un Joueur
-    elseif ($_POST['action'] === 'delete_user') {
-        $targetUserId = (int)$_POST['user_id'];
-        try {
-            $pdo->prepare("CALL sp_DeleteUserAccount(?)")->execute([$targetUserId]);
-            $message_alerte = ["type" => "succes", "texte" => "Le joueur a été supprimé des archives."];
-        } catch(Exception $e) {
-            $message_alerte = ["type" => "erreur", "texte" => "Erreur inattendue lors de la suppression. " . $e->getMessage()];
-        }
+// 10. Supprimer un Joueur
+elseif ($_POST['action'] === 'delete_user') {
+    $targetUserId = (int)$_POST['user_id'];
+    try {
+        $pdo->prepare("CALL sp_DeleteUserAccount(?)")->execute([$targetUserId]);
+        $message_alerte = ["type" => "succes", "texte" => "Le joueur a été supprimé des archives."];
+    } catch(Exception $e) {
+        $message_alerte = ["type" => "erreur", "texte" => "Erreur inattendue lors de la suppression. " . $e->getMessage()];
     }
+}
+
+// 11. Supprimer une evaluation
+elseif ($_POST['action'] === 'delete_review') {
+    $reviewId = (int)$_POST['review_id'];
+    try {
+        $pdo->prepare("DELETE FROM Reviews WHERE ReviewId = ?")->execute([$reviewId]);
+        $message_alerte = ["type" => "succes", "texte" => "L'evaluation a ete supprimee."];
+    } catch (Exception $e) {
+        $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de la suppression de l'evaluation."];
+    }
+}
     elseif ($_POST['action'] === 'accept_request') {
         $requestId = (int)($_POST['request_id'] ?? 0);
         try {
@@ -232,10 +289,16 @@ try {
     $riddles = $pdo->query("SELECT r.*, c.Name AS CategoryName FROM Riddles r JOIN RiddleCategories c ON r.RiddleCategoryId = c.RiddleCategoryId ORDER BY r.RiddleId DESC")->fetchAll();
 } catch (Exception $e) {}
 
+$hasRiddleTypeCol = false;
+try {
+    $pdo->query("SELECT RiddleType FROM Riddles LIMIT 1");
+    $hasRiddleTypeCol = true;
+} catch (Exception $e) {}
+
 $hasBannedCol = false;
 try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
 
-$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
+$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze, u.FundsGivenCount" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
 $players = $pdo->query($query)->fetchAll();
 $capitalRequestsByPlayer = [];
 $capitalRequests = [];
@@ -500,23 +563,31 @@ include __DIR__ . '/templates/head.php';
                             <label>L'énigme / La question</label>
                             <textarea name="question" class="admin-input" rows="2" required></textarea>
                         </div>
-                        <div class="admin-form-grid">
-    <div class="admin-form-group">
-        <label>Réponse attendue</label>
-        <input type="text" name="answer" class="admin-input" required>
-    </div>
-    <div class="admin-form-group">
-        <label>Mauvaise réponse 1</label>
-        <input type="text" name="wrong_answer1" class="admin-input" required>
-    </div>
-    <div class="admin-form-group">
-        <label>Mauvaise réponse 2</label>
-        <input type="text" name="wrong_answer2" class="admin-input" required>
-    </div>
-    <div class="admin-form-group">
-        <label>Mauvaise réponse 3</label>
-        <input type="text" name="wrong_answer3" class="admin-input" required>
-    </div>
+        <div class="admin-form-grid">
+            <div class="admin-form-group">
+                <label>Réponse attendue</label>
+                <input type="text" name="answer" class="admin-input" required>
+            </div>
+            <div class="admin-form-group">
+                <label>Type d'énigme</label>
+                <select name="riddle_type" id="riddle_type_select" class="admin-input" required>
+                    <option value="MultipleChoice">Choix multiples</option>
+                    <option value="TrueFalse">Vrai / Faux</option>
+                    <option value="ShortAnswer">Phrase courte</option>
+                </select>
+            </div>
+            <div class="admin-form-group wrong-answer-field">
+                <label>Mauvaise réponse 1</label>
+                <input type="text" name="wrong_answer1" class="admin-input" required>
+            </div>
+            <div class="admin-form-group wrong-answer-field">
+                <label>Mauvaise réponse 2</label>
+                <input type="text" name="wrong_answer2" class="admin-input" required>
+            </div>
+            <div class="admin-form-group wrong-answer-field">
+                <label>Mauvaise réponse 3</label>
+                <input type="text" name="wrong_answer3" class="admin-input" required>
+            </div>
     <div class="admin-form-group">
         <label>Indice (Optionnel)</label>
         <input type="text" name="hint" class="admin-input">
@@ -563,24 +634,38 @@ include __DIR__ . '/templates/head.php';
                     <div style="overflow-x:auto;">
                         <table class="glass-table">
                             <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Énigme</th>
-                                    <th>Infos</th>
-                                    <th>Récompense</th>
-                                    <th>Statut</th>
-                                    <th>Actions</th>
-                                </tr>
+                <tr>
+                    <th>ID</th>
+                    <th>Énigme</th>
+                    <th>Type</th>
+                    <th>Infos</th>
+                    <th>Récompense</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
                             </thead>
                             <tbody>
                                 <?php foreach ($riddles as $r): ?>
                                 <tr>
 <td>#<?= $r['riddleid'] ?></td>
-        <td style="max-width: 250px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($r['questiontext']) ?>">
-        <strong><?= htmlspecialchars($r['questiontext']) ?></strong><br>
-        <small style="color:#2ECC71;">Rép : <?= htmlspecialchars($r['answertext']) ?></small><br>
-    <small style="color:#E67E22;">Faux : <?= htmlspecialchars($r['wronganswer1']) ?> / <?= htmlspecialchars($r['wronganswer2']) ?> / <?= htmlspecialchars($r['wronganswer3']) ?></small>
-        </td>
+                <td style="max-width: 250px; overflow:hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($r['questiontext']) ?>">
+                    <strong><?= htmlspecialchars($r['questiontext']) ?></strong><br>
+                    <small style="color:#2ECC71;">Rép : <?= htmlspecialchars($r['answertext']) ?></small><br>
+                    <?php if (($r['riddletype'] ?? 'MultipleChoice') === 'MultipleChoice'): ?>
+                    <small style="color:#E67E22;">Faux : <?= htmlspecialchars($r['wronganswer1']) ?> / <?= htmlspecialchars($r['wronganswer2']) ?> / <?= htmlspecialchars($r['wronganswer3']) ?></small>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?php
+                    $rt = $r['riddletype'] ?? 'MultipleChoice';
+                    $rtLabel = match($rt) {
+                        'TrueFalse' => 'Vrai/Faux',
+                        'ShortAnswer' => 'Phrase courte',
+                        default => 'Choix multiples',
+                    };
+                    ?>
+                    <span style="color: <?= $rt === 'TrueFalse' ? '#3498db' : ($rt === 'ShortAnswer' ? '#9b59b6' : '#2ECC71') ?>; font-weight:bold;"><?= $rtLabel ?></span>
+                </td>
         <td><?= htmlspecialchars($r['categoryname']) ?><br><small><?= $r['difficulty'] ?></small></td>
         <td><?= $r['rewardgold'] ?> / <?= $r['rewardsilver'] ?> / <?= $r['rewardbronze'] ?></td>
         <td><?= $r['isactive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
@@ -644,12 +729,13 @@ include __DIR__ . '/templates/head.php';
                         <table class="glass-table">
                             <thead>
                                 <tr>
-                <th>ID</th>
-                <th>Alias</th>
-                <th>Capital</th>
-                <th>Magie</th>
-                <th>Statut</th>
-                <th>Actions</th>
+<th>ID</th>
+<th>Alias</th>
+<th>Capital</th>
+<th>Capital Donnes</th>
+<th>Magie</th>
+<th>Statut</th>
+<th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -658,6 +744,7 @@ include __DIR__ . '/templates/head.php';
 <td>#<?= $p['userid'] ?></td>
                 <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
                 <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
+<td><?= (int)($p['fundsgivencount'] ?? 0) ?>/3</td>
                 <td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
         <td>
         <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
@@ -685,12 +772,26 @@ include __DIR__ . '/templates/head.php';
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+</tbody>
+</table>
+</div>
 
-                <div id="tab-requests" class="admin-section details-glass-card">
+<hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
+
+<h3><i class="fa-solid fa-box-open"></i> Inventaire d'un Joueur</h3>
+<div class="admin-form-group" style="margin-bottom:15px;">
+    <label>Selectionner un joueur pour voir son inventaire</label>
+    <select id="inventory-player-select" class="admin-input">
+        <option value="" disabled selected>-- Choisir un joueur --</option>
+        <?php foreach ($players as $p): ?>
+        <option value="<?= (int)$p['userid'] ?>"><?= htmlspecialchars($p['alias']) ?></option>
+        <?php endforeach; ?>
+    </select>
+</div>
+<div id="admin-inventory-result" style="overflow-x:auto;"></div>
+</div>
+
+<div id="tab-requests" class="admin-section details-glass-card">
                     <h3><i class="fa-solid fa-sack-dollar"></i> Demandes d'augmentation de capital</h3>
 
                     <h4 style="margin-top: 20px;"><i class="fa-solid fa-chart-simple"></i> Nombre de demandes par joueur</h4>
@@ -877,13 +978,59 @@ if (ok) form.submit();
 });
 });
 
-    setTimeout(() => {
-        const alertBox = document.querySelector('.alert-box');
-        if (alertBox) {
-            alertBox.style.opacity = '0';
-            setTimeout(() => alertBox.remove(), 500);
-        }
-    }, 4000);
+setTimeout(() => {
+const alertBox = document.querySelector('.alert-box');
+if (alertBox) {
+alertBox.style.opacity = '0';
+setTimeout(() => alertBox.remove(), 500);
+}
+}, 4000);
+
+const riddleTypeSelect = document.getElementById('riddle_type_select');
+if (riddleTypeSelect) {
+function toggleWrongAnswerFields() {
+const isMC = riddleTypeSelect.value === 'MultipleChoice';
+document.querySelectorAll('.wrong-answer-field').forEach(function(group) {
+const input = group.querySelector('input');
+if (input) {
+input.required = isMC;
+input.disabled = !isMC;
+}
+group.style.opacity = isMC ? '1' : '0.4';
+});
+}
+riddleTypeSelect.addEventListener('change', toggleWrongAnswerFields);
+toggleWrongAnswerFields();
+}
+
+const invSelect = document.getElementById('inventory-player-select');
+const invResult = document.getElementById('admin-inventory-result');
+
+if (invSelect && invResult) {
+invSelect.addEventListener('change', async function() {
+const userId = this.value;
+if (!userId) {
+invResult.innerHTML = '';
+return;
+}
+try {
+const resp = await fetch('backend/admin_get_inventory.php?user_id=' + encodeURIComponent(userId));
+const data = await resp.json();
+if (data.success && data.items && data.items.length > 0) {
+let html = '<table class="glass-table"><thead><tr><th>Item</th><th>Type</th><th>Quantite</th><th>Prix (G/S/B)</th></tr></thead><tbody>';
+data.items.forEach(function(item) {
+html += '<tr><td>' + (item.name || 'Inconnu') + '</td><td>' + (item.type || '-') + '</td><td>' + (item.quantity || 0) + '</td><td>' + (item.gold || 0) + '/' + (item.silver || 0) + '/' + (item.bronze || 0) + '</td></tr>';
+});
+html += '</tbody></table>';
+invResult.innerHTML = html;
+} else {
+invResult.innerHTML = '<p style="color:var(--text-silver);">Aucun item dans l\'inventaire de ce joueur.</p>';
+}
+} catch (e) {
+invResult.innerHTML = '<p style="color:#e74c3c;">Erreur lors du chargement.</p>';
+}
+});
+}
 </script>
 
 <?php 

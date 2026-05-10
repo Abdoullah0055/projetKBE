@@ -735,7 +735,35 @@ aside.collapsed .sidebar-nav-btn .btn-label {
 }
 
 .btn-sell-item:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pending-review-comment {
+    margin-top: 10px;
+}
+
+.pending-review-comment label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+}
+
+.review-comment-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 8px;
+    color: white;
+    font-size: 0.9rem;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.review-comment-input:focus {
+    border-color: var(--accent);
+    outline: none;
 }
 }

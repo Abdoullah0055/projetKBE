@@ -474,16 +474,47 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
                         <input type="text" id="search-filter" class="filter-input" placeholder="Nom de l'objet...">
                     </div>
 
-                    <div class="filter-group" style="margin-top:15px;">
-                        <label>Catégorie</label>
-                        <select id="type-filter" class="filter-select">
-                            <option value="all">Tous les items</option>
-                            <option value="weapon">Armes</option>
-                            <option value="armor">Armures</option>
-                            <option value="potion">Potions</option>
-                            <option value="magicspell">Sorts</option>
-                        </select>
-                    </div>
+      <div class="filter-group" style="margin-top:15px;">
+        <label>Catégorie</label>
+        <select id="type-filter" class="filter-select">
+          <option value="all">Tous les items</option>
+          <option value="weapon">Armes</option>
+          <option value="armor">Armures</option>
+          <option value="potion">Potions</option>
+          <option value="magicspell">Sorts</option>
+        </select>
+      </div>
+
+      <div class="filter-group" style="margin-top:15px;">
+        <label>Trier par</label>
+        <select id="sort-filter" class="filter-select">
+          <option value="name-asc">Nom (A-Z)</option>
+          <option value="name-desc">Nom (Z-A)</option>
+          <option value="price-asc">Prix (croissant)</option>
+          <option value="price-desc">Prix (decroissant)</option>
+          <option value="rating-desc">Note (meilleure)</option>
+          <option value="rating-asc">Note (moins bonne)</option>
+          <option value="rarity-asc">Rarrete (Commun -> Mythique)</option>
+          <option value="rarity-desc">Rarrete (Mythique -> Commun)</option>
+        </select>
+      </div>
+
+      <div class="filter-group" style="margin-top:15px;">
+        <label>Rarrete</label>
+        <select id="rarity-filter" class="filter-select">
+          <option value="all">Toutes</option>
+          <option value="rarity-commun">Commun</option>
+          <option value="rarity-rare">Rare</option>
+          <option value="rarity-epique">Epique</option>
+          <option value="rarity-legendaire">Legendaire</option>
+          <option value="rarity-mythique">Mythique</option>
+        </select>
+      </div>
+
+      <div class="filter-group" style="margin-top:15px;">
+        <label>Prix max (or)</label>
+        <input type="number" id="price-filter" class="filter-input" placeholder="Ex: 50" min="0" step="1">
+      </div>
 
                     <button
                         type="button"
@@ -526,18 +557,23 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
   </div>
 
         <div class="product-list" id="product-list">
-            <?php foreach ($items as $item):
-                $normType = normalizeItemType($item['type']);
-                $rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
-                $rarityClass = getRarityClass($rarityLabel);
-                $itemImagePath = getItemImagePath((string)$item['nom']);
-            ?>
-                <div
-                    class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
-                    data-type="<?= htmlspecialchars($normType) ?>"
-                    data-name="<?= htmlspecialchars(mb_strtolower($item['nom'], 'UTF-8')) ?>"
-                    data-rarity="<?= htmlspecialchars($rarityClass) ?>"
-                    onclick="window.location.href='details.php?id=<?= (int)$item['id'] ?>'">
+<?php foreach ($items as $item):
+$normType = normalizeItemType($item['type']);
+$rarityLabel = formatRarityLabel((string)($item['rarete'] ?? 'Commun'));
+$rarityClass = getRarityClass($rarityLabel);
+$itemImagePath = getItemImagePath((string)$item['nom']);
+$rarityOrderMap = ['commun'=>1, 'rare'=>2, 'epique'=>3, 'legendaire'=>4, 'mythique'=>5];
+$rarityOrder = $rarityOrderMap[strtolower($rarityLabel)] ?? 1;
+?>
+<div
+class="item-row <?= ($item['stock'] == 0) ? 'item-out-of-stock' : '' ?> <?= htmlspecialchars($rarityClass) ?>"
+data-type="<?= htmlspecialchars($normType) ?>"
+data-name="<?= htmlspecialchars(mb_strtolower($item['nom'], 'UTF-8')) ?>"
+data-rarity="<?= htmlspecialchars($rarityClass) ?>"
+data-price="<?= (float)$item['prix'] ?>"
+data-rating="<?= (float)$item['rating'] ?>"
+data-rarity-order="<?= $rarityOrder ?>"
+onclick="window.location.href='details.php?id=<?= (int)$item['id'] ?>'">
 
                     <div class="item-card-head">
                         <span class="item-rarity-pill <?= htmlspecialchars($rarityClass) ?>">
@@ -620,50 +656,98 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const typeFilter = document.getElementById("type-filter");
-        const searchFilter = document.getElementById("search-filter");
-        const resetBtn = document.getElementById("reset-filters");
-        const items = document.querySelectorAll(".item-row");
-        const noResults = document.getElementById("no-results-message");
-        const pagination = document.getElementById("catalog-pagination");
+document.addEventListener("DOMContentLoaded", function() {
+  const typeFilter = document.getElementById("type-filter");
+  const searchFilter = document.getElementById("search-filter");
+  const sortFilter = document.getElementById("sort-filter");
+  const rarityFilter = document.getElementById("rarity-filter");
+  const priceFilter = document.getElementById("price-filter");
+  const resetBtn = document.getElementById("reset-filters");
+  const items = document.querySelectorAll(".item-row");
+  const noResults = document.getElementById("no-results-message");
+  const pagination = document.getElementById("catalog-pagination");
+  const productList = document.getElementById("product-list");
 
-        // --- GESTION RESPONSIVE DU SIDEBAR ---
-        const sidebar = document.getElementById('sidebar');
-        const productList = document.getElementById('product-list');
+  const sidebar = document.getElementById('sidebar');
 
-        function applyFilters() {
-            const selectedType = typeFilter.value;
-            const searchValue = searchFilter.value.toLowerCase().trim();
-            let count = 0;
+  function applyFilters() {
+    const selectedType = typeFilter.value;
+    const searchValue = searchFilter.value.toLowerCase().trim();
+    const selectedRarity = rarityFilter.value;
+    const maxPrice = priceFilter.value !== '' ? parseFloat(priceFilter.value) : null;
+    let count = 0;
 
-            items.forEach(item => {
-                const matchesType = (selectedType === "all" || item.dataset.type === selectedType);
-                const matchesSearch = (searchValue === "" || item.dataset.name.includes(searchValue));
+    items.forEach(item => {
+      const matchesType = (selectedType === "all" || item.dataset.type === selectedType);
+      const matchesSearch = (searchValue === "" || item.dataset.name.includes(searchValue));
+      const matchesRarity = (selectedRarity === "all" || item.dataset.rarity === selectedRarity);
+      const matchesPrice = (maxPrice === null || parseFloat(item.dataset.price) <= maxPrice);
 
-                if (matchesType && matchesSearch) {
-                    item.style.display = "";
-                    count++;
-                } else {
-                    item.style.display = "none";
-                }
-            });
+      if (matchesType && matchesSearch && matchesRarity && matchesPrice) {
+        item.style.display = "";
+        count++;
+      } else {
+        item.style.display = "none";
+      }
+    });
 
-            noResults.style.display = (count === 0) ? "block" : "none";
+    noResults.style.display = (count === 0) ? "block" : "none";
 
-            if (pagination) {
-                pagination.style.display = (count === 0) ? "none" : "flex";
-            }
-        }
+    if (pagination) {
+      pagination.style.display = (count === 0) ? "none" : "flex";
+    }
 
-        typeFilter.addEventListener("change", applyFilters);
-        searchFilter.addEventListener("input", applyFilters);
+    sortItems();
+  }
 
-        resetBtn.addEventListener("click", () => {
-            typeFilter.value = "all";
-            searchFilter.value = "";
-            applyFilters();
-        });
+  function sortItems() {
+    const sortValue = sortFilter.value;
+    const parts = sortValue.split('-');
+    const sortKey = parts[0];
+    const sortDir = parts[1];
+    const itemsArray = Array.from(items);
+
+    itemsArray.sort((a, b) => {
+      let valA, valB;
+      switch (sortKey) {
+        case 'name':
+          valA = a.dataset.name || '';
+          valB = b.dataset.name || '';
+          return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'price':
+          valA = parseFloat(a.dataset.price) || 0;
+          valB = parseFloat(b.dataset.price) || 0;
+          return sortDir === 'asc' ? valA - valB : valB - valA;
+        case 'rating':
+          valA = parseFloat(a.dataset.rating) || 0;
+          valB = parseFloat(b.dataset.rating) || 0;
+          return sortDir === 'asc' ? valA - valB : valB - valA;
+        case 'rarity':
+          valA = parseInt(a.dataset.rarityOrder) || 1;
+          valB = parseInt(b.dataset.rarityOrder) || 1;
+          return sortDir === 'asc' ? valA - valB : valB - valA;
+        default:
+          return 0;
+      }
+    });
+
+    itemsArray.forEach(item => productList.appendChild(item));
+  }
+
+  typeFilter.addEventListener("change", applyFilters);
+  searchFilter.addEventListener("input", applyFilters);
+  sortFilter.addEventListener("change", applyFilters);
+  rarityFilter.addEventListener("change", applyFilters);
+  priceFilter.addEventListener("input", applyFilters);
+
+  resetBtn.addEventListener("click", () => {
+    typeFilter.value = "all";
+    searchFilter.value = "";
+    sortFilter.value = "name-asc";
+    rarityFilter.value = "all";
+    priceFilter.value = "";
+    applyFilters();
+  });
 
         const capitalRequestBtn = document.getElementById("capital-request-sidebar-btn");
         if (capitalRequestBtn) {

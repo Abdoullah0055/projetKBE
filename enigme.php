@@ -12,17 +12,23 @@ $flashDialogues = consume_enigmes_flash_dialogues();
 if ($flashDialogues !== []) {
     $mainDialogues = $flashDialogues;
 } else {
+    $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
+    $typeDialogue = match($riddleType) {
+        'TrueFalse' => 'Deux choix s\'offriront a toi : Vrai ou Faux. Choisis avec conviction.',
+        'ShortAnswer' => 'Tu devras ecrire ta reponse. Sois precis, jeune vagabond.',
+        default => 'Quatre choix de reponses te seront presentes. Une seule est la bonne. Choisis avec sagesse. Dans le message suivant se trouvera l\'enigme a resoudre.',
+    };
     $mainDialogues = [
         [
             'text' => 'Te voila dans le portail du savoir. Le but du jeu est de repondre correctement a une question qui te sera posee.',
             'frame' => 'assets/img/Magicien/mage1.png',
         ],
         [
-            'text' => 'Les reponses peuvent se trouver directement sur le site, dans les descriptions d’objets, ou concerner des evenements historiques de notre monde.',
+            'text' => 'Les reponses peuvent se trouver directement sur le site, dans les descriptions d\'objets, ou concerner des evenements historiques de notre monde.',
             'frame' => 'assets/img/Magicien/mage2.png',
         ],
         [
-            'text' => 'Quatre choix de reponses te seront presentes. Une seule est la bonne. Choisis avec sagesse. Dans le message suivant se trouvera l’enigme a resoudre.',
+            'text' => $typeDialogue,
             'frame' => 'assets/img/Magicien/mage3.png',
         ],
         [

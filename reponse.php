@@ -50,24 +50,48 @@ if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $choiceIndex = filter_input(INPUT_POST, 'choice_index', FILTER_VALIDATE_INT);
+    $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
 
-    if ($choiceIndex === false || $choiceIndex === null || $choiceIndex < 0 || $choiceIndex > 3) {
-        set_enigmes_flash_dialogues([
-            [
-                'text' => 'Choisis une reponse parmi les quatre propositions.',
-                'frame' => 'assets/img/Magicien/furieux.png',
-            ],
-            [
-                'text' => 'Allez, je te renvoie.',
-                'frame' => 'assets/img/Magicien/mage8.png',
-            ],
-        ]);
-        header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
-        exit;
+    if ($riddleType === 'ShortAnswer') {
+        $userAnswer = trim((string)($_POST['short_answer'] ?? ''));
+
+        if ($userAnswer === '') {
+            set_enigmes_flash_dialogues([
+                [
+                    'text' => 'Tu dois ecrire une reponse !',
+                    'frame' => 'assets/img/Magicien/furieux.png',
+                ],
+                [
+                    'text' => 'Allez, je te renvoie.',
+                    'frame' => 'assets/img/Magicien/mage8.png',
+                ],
+            ]);
+            header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
+            exit;
+        }
+
+        $result = verify_enigme_short_answer((int)$context['riddle']['id'], $userAnswer);
+    } else {
+        $choiceIndex = filter_input(INPUT_POST, 'choice_index', FILTER_VALIDATE_INT);
+        $maxChoices = ($riddleType === 'TrueFalse') ? 1 : 3;
+
+        if ($choiceIndex === false || $choiceIndex === null || $choiceIndex < 0 || $choiceIndex > $maxChoices) {
+            set_enigmes_flash_dialogues([
+                [
+                    'text' => 'Choisis une reponse parmi les propositions.',
+                    'frame' => 'assets/img/Magicien/furieux.png',
+                ],
+                [
+                    'text' => 'Allez, je te renvoie.',
+                    'frame' => 'assets/img/Magicien/mage8.png',
+                ],
+            ]);
+            header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
+            exit;
+        }
+
+        $result = verify_enigme_choice((int) $context['riddle']['id'], $choiceIndex);
     }
-
-    $result = verify_enigme_choice((int) $context['riddle']['id'], $choiceIndex);
 
     if (!$result['is_correct']) {
         record_riddle_attempt($_SESSION['user']['id'], (int)$context['riddle']['id'], $result['chosen_text'] ?? '', false);
@@ -225,13 +249,35 @@ $abandonUrl = build_enigmes_page_url('reponse.php', array_merge($context['query'
         </div>
 
         <div class="enigmes-orb" id="enigmesRiddleArea">
+<?php
+$riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
+?>
+
+<?php if ($riddleType === 'ShortAnswer'): ?>
             <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
-                <div class="enigmes-choices" id="enigmesChoices">
-                <?php foreach ($context['choices'] as $i => $choice): ?>
-                    <button type="submit" name="choice_index" value="<?= $i ?>" class="enigmes-choice-btn"><?= htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') ?></button>
-                <?php endforeach; ?>
+                <div class="enigmes-short-answer">
+                    <input type="text" name="short_answer" class="enigmes-short-input" placeholder="Votre reponse..." autocomplete="off" required>
+                    <button type="submit" class="enigmes-choice-btn">Valider</button>
                 </div>
             </form>
+
+<?php elseif ($riddleType === 'TrueFalse'): ?>
+            <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
+                <div class="enigmes-choices enigmes-choices-tf" id="enigmesChoices">
+                    <button type="submit" name="choice_index" value="0" class="enigmes-choice-btn enigmes-tf-btn">Vrai</button>
+                    <button type="submit" name="choice_index" value="1" class="enigmes-choice-btn enigmes-tf-btn">Faux</button>
+                </div>
+            </form>
+
+<?php else: ?>
+            <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
+                <div class="enigmes-choices" id="enigmesChoices">
+                    <?php foreach ($context['choices'] as $i => $choice): ?>
+                    <button type="submit" name="choice_index" value="<?= $i ?>" class="enigmes-choice-btn"><?= htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') ?></button>
+                    <?php endforeach; ?>
+                </div>
+            </form>
+<?php endif; ?>
         </div>
     </section>
 </main>

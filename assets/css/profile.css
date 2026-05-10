@@ -432,3 +432,46 @@
 .stat-mage .stat-value {
   color: #9b59b6;
 }
+
+.stats-chart-container {
+  max-width: 400px;
+  margin: 0 auto;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.hp-card {
+  text-align: center;
+}
+
+.hp-bar-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  height: 28px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  margin: 15px auto 0;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #e74c3c, #2ecc71);
+  border-radius: 14px;
+  transition: width 0.5s ease;
+}
+
+.hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.85rem;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}

@@ -84,10 +84,32 @@ function consume_enigme_result(): ?array
 
 function generate_and_store_choices(array $riddle): array
 {
+    $riddleType = $riddle['riddle_type'] ?? 'MultipleChoice';
     $answerText = get_riddle_answer_text((int) $riddle['id']);
 
     if ($answerText === null) {
         return [];
+    }
+
+    if ($riddleType === 'ShortAnswer') {
+        $_SESSION['enigme_choices_' . $riddle['id']] = [
+            'riddle_type' => 'ShortAnswer',
+            'correct_text' => $answerText,
+        ];
+        return [];
+    }
+
+    if ($riddleType === 'TrueFalse') {
+        $correctIsTrue = (mb_strtolower(trim($answerText), 'UTF-8') === 'vrai');
+        $choices = $correctIsTrue ? ['Vrai', 'Faux'] : ['Faux', 'Vrai'];
+        $correctIndex = $correctIsTrue ? 0 : 1;
+
+        $_SESSION['enigme_choices_' . $riddle['id']] = [
+            'correct_index' => $correctIndex,
+            'choice_texts' => $choices,
+            'riddle_type' => 'TrueFalse',
+        ];
+        return $choices;
     }
 
     $choices = [
@@ -111,10 +133,11 @@ function generate_and_store_choices(array $riddle): array
 
     $_SESSION['enigme_choices_' . $riddle['id']] = [
         'correct_index' => $correctIndex,
-        'choice_texts'  => $shuffled,
+        'choice_texts' => $shuffled,
+        'riddle_type' => 'MultipleChoice',
     ];
 
-    return $shuffled;
+return $shuffled;
 }
 
 function verify_enigme_choice(int $riddleId, int $choiceIndex): array
@@ -125,6 +148,33 @@ function verify_enigme_choice(int $riddleId, int $choiceIndex): array
     if (!is_array($data) || !isset($data['correct_index'], $data['choice_texts'])) {
         return ['is_correct' => false, 'chosen_text' => ''];
     }
+
+    $isCorrect = $choiceIndex === (int) $data['correct_index'];
+    $chosenText = $data['choice_texts'][$choiceIndex] ?? '';
+
+    unset($_SESSION[$key]);
+
+    return ['is_correct' => $isCorrect, 'chosen_text' => $chosenText];
+}
+
+function verify_enigme_short_answer(int $riddleId, string $userAnswer): array
+{
+    $key = 'enigme_choices_' . $riddleId;
+    $data = $_SESSION[$key] ?? null;
+
+    if (!is_array($data) || ($data['riddle_type'] ?? '') !== 'ShortAnswer') {
+        return ['is_correct' => false, 'chosen_text' => $userAnswer];
+    }
+
+    $correctText = trim((string)($data['correct_text'] ?? ''));
+    $normalizedUser = mb_strtolower(trim($userAnswer), 'UTF-8');
+    $normalizedCorrect = mb_strtolower($correctText, 'UTF-8');
+
+    $isCorrect = ($normalizedUser === $normalizedCorrect);
+    unset($_SESSION[$key]);
+
+    return ['is_correct' => $isCorrect, 'chosen_text' => $userAnswer];
+}
 
     $isCorrect  = $choiceIndex === (int) $data['correct_index'];
     $chosenText = $data['choice_texts'][$choiceIndex] ?? '';
