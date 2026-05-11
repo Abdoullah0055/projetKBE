@@ -69,6 +69,33 @@ try {
     $inventoryError = "Impossible de charger votre inventaire pour le moment.";
 }
 
+$recommendedItemId = null;
+$recommendReason = '';
+if ($inventoryError === '') {
+    $currentHP = (int)($user['hp'] ?? 100);
+    $maxHP = (int)($user['max_hp'] ?? 100);
+    $missingHP = max(0, $maxHP - $currentHP);
+
+    if ($missingHP > 0) {
+        $healingItems = get_user_healing_items((int)$user['id']);
+        $bestScore = -PHP_INT_MAX;
+        foreach ($healingItems as $hi) {
+            $healVal = (int)($hi['HEALVALUE'] ?? 0);
+            if ($healVal <= 0) continue;
+            $score = ($healVal <= $missingHP) ? $healVal : -$healVal;
+            if ($score > $bestScore) {
+                $bestScore = $score;
+                $recommendedItemId = (int)$hi['ITEMID'];
+                if ($healVal <= $missingHP) {
+                    $recommendReason = "Soin optimal : {$healVal} PV pour {$missingHP} PV manquants";
+                } else {
+                    $recommendReason = "Moindre gaspillage : {$healVal} PV (surcap de " . ($healVal - $missingHP) . " PV)";
+                }
+            }
+        }
+    }
+}
+
 if ($inventoryError === '') {
     try {
         $reviewStmt = $pdo->prepare(
@@ -283,8 +310,8 @@ $title = "L'Arsenal - Inventory";
                                         $effectiveHeal = min($healValue, max(0, $maxHP - $currentHP));
                                         $wouldWaste = ($healValue > $effectiveHeal && $currentHP < $maxHP);
                                     ?>
-                                        <button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-heal-value="<?= $healValue ?>" data-would-waste="<?= $wouldWaste ? '1' : '0' ?>">
-                                            <i class="fa-solid fa-hand-sparkles"></i> Utiliser
+<button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-heal-value="<?= $healValue ?>" data-would-waste="<?= $wouldWaste ? '1' : '0' ?>"<?php if ((int)$entry['item_id'] === $recommendedItemId): ?> data-is-recommended="1"<?php endif; ?>>
+<i class="fa-solid fa-hand-sparkles"></i> Utiliser<?php if ((int)$entry['item_id'] === $recommendedItemId): ?> <span class="recommended-badge" data-tooltip="<?= htmlspecialchars($recommendReason, ENT_QUOTES, 'UTF-8') ?>"><i class="fa-solid fa-star"></i> Recommande</span><?php endif; ?>
                                         </button>
                                     <?php endif; ?>
                                     <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>" data-original-gold="<?= $sellPrice['original_gold'] ?>" data-original-silver="<?= $sellPrice['original_silver'] ?>" data-original-bronze="<?= $sellPrice['original_bronze'] ?>" data-multiplier="<?= $sellPrice['multiplier'] ?>">
@@ -744,6 +771,6 @@ $title = "L'Arsenal - Inventory";
     });
 </script>
 
-<script src="assets/js/inventory.js"></script>
+<script src="assets/js/inventory.js?v=<?= filemtime(__DIR__ . '/assets/js/inventory.js') ?>"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>

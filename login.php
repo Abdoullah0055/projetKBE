@@ -134,12 +134,17 @@ if ($foundUser && $storedHash !== '' && password_verify($password, $storedHash))
 $_SESSION['user']['hp'] = (int) first_available($foundUser, ['CurrentHP', 'currenthp'], 100);
                 $_SESSION['user']['max_hp'] = (int) first_available($foundUser, ['MaxHP', 'maxhp'], 100);
 
-                if (!array_key_exists('CurrentHP', $foundUser) && !array_key_exists('currenthp', $foundUser)) {
+            if (!array_key_exists('CurrentHP', $foundUser) && !array_key_exists('currenthp', $foundUser)) {
                 $hpData = get_user_hp($_SESSION['user']['id']);
                 $_SESSION['user']['hp'] = $hpData['current'];
                 $_SESSION['user']['max_hp'] = $hpData['max'];
             }
-                    header("Location: index.php");
+
+            require_once __DIR__ . '/includes/enigmes_progression.php';
+            ensure_enigmes_progression();
+
+            session_regenerate_id(true);
+            header("Location: index.php");
                     exit();
                 }
             }

@@ -8,22 +8,29 @@ require_once __DIR__ . '/AlgosBD.php';
 
 $context = resolve_enigme_request('reponse.php');
 
-function build_reward_label(array $riddle): string
+function get_difficulty_reward(string $difficulty): array
 {
-    $gold = (int) ($riddle['reward_gold'] ?? 0);
-    $silver = (int) ($riddle['reward_silver'] ?? 0);
-    $bronze = (int) ($riddle['reward_bronze'] ?? 0);
+    return match($difficulty) {
+        'Difficile' => ['gold' => 10, 'silver' => 0, 'bronze' => 0],
+        'Moyenne' => ['gold' => 0, 'silver' => 10, 'bronze' => 0],
+        default => ['gold' => 0, 'silver' => 0, 'bronze' => 10],
+    };
+}
 
-    if ($gold > 0) {
-        return $gold . ' piece' . ($gold > 1 ? 's' : '') . ' d\'or';
+function build_reward_label(string $difficulty): string
+{
+    $reward = get_difficulty_reward($difficulty);
+
+    if ($reward['gold'] > 0) {
+        return $reward['gold'] . ' piece' . ($reward['gold'] > 1 ? 's' : '') . ' d\'or';
     }
 
-    if ($silver > 0) {
-        return $silver . ' piece' . ($silver > 1 ? 's' : '') . ' d\'argent';
+    if ($reward['silver'] > 0) {
+        return $reward['silver'] . ' piece' . ($reward['silver'] > 1 ? 's' : '') . ' d\'argent';
     }
 
-    if ($bronze > 0) {
-        return $bronze . ' piece' . ($bronze > 1 ? 's' : '') . ' de bronze';
+    if ($reward['bronze'] > 0) {
+        return $reward['bronze'] . ' piece' . ($reward['bronze'] > 1 ? 's' : '') . ' de bronze';
     }
 
     return '0 recompense';
@@ -132,10 +139,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         record_riddle_attempt($_SESSION['user']['id'], $riddleId, $chosenText, true);
         increment_riddle_stats($_SESSION['user']['id'], true, $isMagic);
 
-        $gold = (int)($context['riddle']['reward_gold'] ?? 0);
-        $silver = (int)($context['riddle']['reward_silver'] ?? 0);
-        $bronze = (int)($context['riddle']['reward_bronze'] ?? 0);
-        credit_user_currency($_SESSION['user']['id'], $gold, $silver, $bronze);
+            $difficulty = $context['riddle']['difficulty'] ?? 'Facile';
+            $reward = get_difficulty_reward($difficulty);
+            $gold = $reward['gold'];
+            $silver = $reward['silver'];
+            $bronze = $reward['bronze'];
+            credit_user_currency($_SESSION['user']['id'], $gold, $silver, $bronze);
         $_SESSION['user']['gold'] += $gold;
         $_SESSION['user']['silver'] += $silver;
         $_SESSION['user']['bronze'] += $bronze;
@@ -146,7 +155,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($context['source'] === 'roadmap' && $context['roadmap_node_id'] !== null) {
-            mark_enigme_completed($context['roadmap_node_id']);
+            mark_enigme_completed((int)$_SESSION['user']['id'], $context['roadmap_node_id']);
         }
 
         $streakBonus = credit_streak_bonus($_SESSION['user']['id']);
@@ -161,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'source' => $context['source'],
             'roadmap_node_id' => $context['roadmap_node_id'],
             'query' => $context['query'],
-            'reward_label' => build_reward_label($context['riddle']),
+                    'reward_label' => build_reward_label($context['riddle']['difficulty'] ?? 'Facile'),
             'hp_loss' => 0,
             'current_hp' => $hp_data['current'],
             'max_hp' => $hp_data['max'],

@@ -650,3 +650,46 @@ function sell_inventory_item(int $user_id, int $item_id): array
         return ['success' => false, 'message' => 'Erreur lors de la vente'];
     }
 }
+
+function get_completed_roadmap_enigmes(int $userId): array
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("SELECT EnigmeId FROM UserRoadmapProgress WHERE UserId = ? ORDER BY EnigmeId");
+    $stmt->execute([$userId]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    return array_map('intval', array_column($rows, 'enigmeid'));
+}
+
+function mark_roadmap_enigme_completed(int $userId, int $enigmeId): void
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare("INSERT IGNORE INTO UserRoadmapProgress (UserId, EnigmeId) VALUES (?, ?)");
+    $stmt->execute([$userId, $enigmeId]);
+}
+
+function get_user_healing_items(int $userId): array
+{
+    $pdo = get_pdo();
+    $stmt = $pdo->prepare(
+        "SELECT inv.ItemId, inv.Quantity, i.Name, t.Name AS TypeName,
+                CASE
+                    WHEN t.Name = 'Potion' THEN LEAST(IFNULL(pp.EffectValue, 3), 5)
+                    WHEN t.Name = 'MagicSpell' THEN GREATEST(FLOOR(IFNULL(msp.SpellDamage, 6) / 2), 3)
+                    ELSE 0
+                END AS HealValue
+         FROM Inventory inv
+         JOIN Items i ON i.ItemId = inv.ItemId
+         JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
+         LEFT JOIN PotionProperties pp ON pp.ItemId = inv.ItemId
+         LEFT JOIN MagicSpellProperties msp ON msp.ItemId = inv.ItemId
+         WHERE inv.UserId = ? AND inv.Quantity > 0 AND t.Name IN ('Potion', 'MagicSpell')
+         ORDER BY HealValue ASC"
+    );
+    $stmt->execute([$userId]);
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $normalized = [];
+    foreach ($rows as $row) {
+        $normalized[] = array_change_key_case($row, CASE_UPPER);
+    }
+    return $normalized;
+}

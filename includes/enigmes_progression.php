@@ -1,10 +1,9 @@
 <?php
 
 require_once __DIR__ . '/session.php';
+require_once __DIR__ . '/../AlgosBD.php';
 
 const ENIGMES_SESSION_KEY = 'enigmes_progression';
-const ENIGMES_MOCK_UNLOCKED_ID = 4;
-const ENIGMES_MOCK_APPLY_ONCE = true;
 
 function get_enigmes_catalogue(): array
 {
@@ -102,33 +101,34 @@ function get_enigmes_catalogue(): array
 
 function ensure_enigmes_progression(): void
 {
-    $catalogue = get_enigmes_catalogue();
+    $userId = $_SESSION['user']['id'] ?? null;
 
-    if (!isset($_SESSION[ENIGMES_SESSION_KEY]) || !is_array($_SESSION[ENIGMES_SESSION_KEY])) {
+    if ($userId === null) {
+        if (!isset($_SESSION[ENIGMES_SESSION_KEY]) || !is_array($_SESSION[ENIGMES_SESSION_KEY])) {
+            $_SESSION[ENIGMES_SESSION_KEY] = ['completed' => []];
+        }
+        return;
+    }
+
+    $loadFromDb = !isset($_SESSION[ENIGMES_SESSION_KEY]['completed_from_db'])
+        || $_SESSION[ENIGMES_SESSION_KEY]['completed_from_db'] !== true;
+
+    if ($loadFromDb) {
+        try {
+            $completed = get_completed_roadmap_enigmes((int)$userId);
+        } catch (Throwable $e) {
+            $completed = $_SESSION[ENIGMES_SESSION_KEY]['completed'] ?? [];
+        }
+
+        $validIds = array_map('intval', array_keys(get_enigmes_catalogue()));
+        $completed = array_values(array_intersect($validIds, array_map('intval', $completed)));
+        sort($completed);
+
         $_SESSION[ENIGMES_SESSION_KEY] = [
-            'completed' => [],
+            'completed' => $completed,
+            'completed_from_db' => true,
         ];
     }
-
-    if (ENIGMES_MOCK_APPLY_ONCE && empty($_SESSION[ENIGMES_SESSION_KEY]['mock_applied'])) {
-        $mockUnlockedId = max(1, min(ENIGMES_MOCK_UNLOCKED_ID, count($catalogue)));
-        $mockCompleted = $mockUnlockedId > 1 ? range(1, $mockUnlockedId - 1) : [];
-
-        $_SESSION[ENIGMES_SESSION_KEY]['completed'] = $mockCompleted;
-        $_SESSION[ENIGMES_SESSION_KEY]['mock_applied'] = true;
-    }
-
-    $completed = $_SESSION[ENIGMES_SESSION_KEY]['completed'] ?? [];
-
-    if (!is_array($completed)) {
-        $completed = [];
-    }
-
-    $validIds = array_map('intval', array_keys($catalogue));
-    $completed = array_values(array_intersect($validIds, array_map('intval', $completed)));
-    sort($completed);
-
-    $_SESSION[ENIGMES_SESSION_KEY]['completed'] = array_values(array_unique($completed));
 }
 
 function get_roadmap_node_by_id(int $enigmeId): ?array
@@ -187,21 +187,25 @@ function is_enigme_accessible(int $enigmeId): bool
     return ($states[$enigmeId] ?? null) === 'unlocked';
 }
 
-function mark_enigme_completed(int $enigmeId): void
+function mark_enigme_completed(int $userId, int $enigmeId): void
 {
     if (get_roadmap_node_by_id($enigmeId) === null) {
         return;
     }
 
+    try {
+        mark_roadmap_enigme_completed($userId, $enigmeId);
+    } catch (Throwable $e) {
+    }
+
     ensure_enigmes_progression();
 
-    if (!is_enigme_completed($enigmeId)) {
+    if (!in_array($enigmeId, $_SESSION[ENIGMES_SESSION_KEY]['completed'], true)) {
         $_SESSION[ENIGMES_SESSION_KEY]['completed'][] = $enigmeId;
         sort($_SESSION[ENIGMES_SESSION_KEY]['completed']);
     }
 }
 
-/** @deprecated Utilisee uniquement pour la validation par texte libre. Le systeme QCM utilise verify_enigme_choice() a la place. */
 function normalize_enigme_answer(string $answer): string
 {
     $answer = trim($answer);
@@ -217,5 +221,3 @@ function normalize_enigme_answer(string $answer): string
 
     return trim($answer);
 }
-
-

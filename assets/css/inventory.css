@@ -696,15 +696,60 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     width: min(320px, calc(100vw - 20px));
   }
 
-  .slot-actions {
+.recommended-badge {
+    font-size: 0.7em;
+    background: rgba(46, 204, 113, 0.25);
+    color: #2ecc71;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 6px;
+    cursor: help;
+    position: relative;
+    white-space: nowrap;
+    border: 1px solid rgba(46, 204, 113, 0.45);
+}
+
+.recommended-badge:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(12, 14, 17, 0.96);
+    color: #e8e8e8;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.85em;
+    white-space: nowrap;
+    z-index: 100;
+    border: 1px solid rgba(46, 204, 113, 0.35);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    pointer-events: none;
+}
+
+[data-theme="light"] .recommended-badge {
+    background: rgba(46, 204, 113, 0.18);
+    color: #2ecc71;
+    border-color: rgba(46, 204, 113, 0.4);
+}
+
+[data-theme="light"] .recommended-badge:hover::after {
+    background: rgba(30, 32, 35, 0.97);
+}
+
+.btn-use-item:disabled .recommended-badge {
+    opacity: 0.4;
+}
+
+.slot-actions {
     display: flex;
     gap: 8px;
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid rgba(255, 255, 255, 0.06);
-  }
+}
 
-  .btn-use-item {
+.btn-use-item {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -717,21 +762,21 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-weight: 600;
     cursor: pointer;
     transition:
-      background 0.2s,
-      border-color 0.2s;
-  }
+        background 0.2s,
+        border-color 0.2s;
+}
 
-  .btn-use-item:hover {
+.btn-use-item:hover {
     background: rgba(46, 204, 113, 0.3);
     border-color: rgba(46, 204, 113, 0.7);
-  }
+}
 
-  .btn-use-item:disabled {
+.btn-use-item:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-  }
+}
 
-  .btn-sell-item {
+.btn-sell-item {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -744,19 +789,19 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-weight: 600;
     cursor: pointer;
     transition:
-      background 0.2s,
-      border-color 0.2s;
-  }
+        background 0.2s,
+        border-color 0.2s;
+}
 
-  .btn-sell-item:hover {
+.btn-sell-item:hover {
     background: rgba(241, 196, 15, 0.3);
     border-color: rgba(241, 196, 15, 0.7);
-  }
+}
 
-  .btn-sell-item:disabled {
+.btn-sell-item:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-  }
+}
 
   .pending-review-comment {
     margin-top: 10px;

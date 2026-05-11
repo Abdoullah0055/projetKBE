@@ -133,25 +133,11 @@ if ($userInBronze < $totalInBronze) {
     fail_checkout($pdo, 'Solde insuffisant pour finaliser l\'achat.', 'balance_insufficient');
 }
 
-$remainingBronze = $totalBronze;
-$debitBronze = min($remainingBronze, $userBronze);
-$remainingBronze -= $debitBronze;
-
-$convertSilverToBronze = 0;
-if ($remainingBronze > 0) {
-    $convertSilverToBronze = (int)ceil($remainingBronze / 10);
-}
-
-$remainingSilver = $totalSilver + $convertSilverToBronze;
-$debitSilver = min($remainingSilver, $userSilver);
-$remainingSilver -= $debitSilver;
-
-$convertGoldToSilver = 0;
-if ($remainingSilver > 0) {
-    $convertGoldToSilver = (int)ceil($remainingSilver / 10);
-}
-
-$debitGold = $totalGold + $convertGoldToSilver;
+$remainInBronze = $userInBronze - $totalInBronze;
+$newGold = intdiv($remainInBronze, 100);
+$remainInBronze = $remainInBronze % 100;
+$newSilver = intdiv($remainInBronze, 10);
+$newBronze = $remainInBronze % 10;
 
     $orderStmt = $pdo->prepare(
         "INSERT INTO Orders (UserId, TotalGold, TotalSilver, TotalBronze)
@@ -213,21 +199,21 @@ $debitGold = $totalGold + $convertGoldToSilver;
 
 $debitStmt = $pdo->prepare(
     "UPDATE Users
-    SET Gold = Gold - :gold, Silver = Silver - :silver, Bronze = Bronze - :bronze
+    SET Gold = :gold, Silver = :silver, Bronze = :bronze
     WHERE UserId = :userId"
 );
 $debitStmt->execute([
-    ':gold' => $debitGold,
-    ':silver' => $debitSilver,
-    ':bronze' => $debitBronze,
+    ':gold' => $newGold,
+    ':silver' => $newSilver,
+    ':bronze' => $newBronze,
     ':userId' => $userId,
 ]);
 
 $pdo->commit();
 
-$_SESSION['user']['gold'] = $userGold - $debitGold;
-$_SESSION['user']['silver'] = $userSilver - $debitSilver;
-$_SESSION['user']['bronze'] = $userBronze - $debitBronze;
+$_SESSION['user']['gold'] = $newGold;
+$_SESSION['user']['silver'] = $newSilver;
+$_SESSION['user']['bronze'] = $newBronze;
 
 respond_json([
     'success' => true,
@@ -238,9 +224,15 @@ respond_json([
         'silver' => $totalSilver,
         'bronze' => $totalBronze,
     ],
-    'conversion' => [
-        'gold_to_silver' => $convertGoldToSilver,
-        'silver_to_bronze' => $convertSilverToBronze,
+    'old_balance' => [
+        'gold' => $userGold,
+        'silver' => $userSilver,
+        'bronze' => $userBronze,
+    ],
+    'new_balance' => [
+        'gold' => $newGold,
+        'silver' => $newSilver,
+        'bronze' => $newBronze,
     ],
 ]);
 } catch (Throwable $e) {

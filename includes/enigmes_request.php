@@ -167,8 +167,8 @@ function verify_enigme_short_answer(int $riddleId, string $userAnswer): array
     }
 
     $correctText = trim((string)($data['correct_text'] ?? ''));
-    $normalizedUser = mb_strtolower(trim($userAnswer), 'UTF-8');
-    $normalizedCorrect = mb_strtolower($correctText, 'UTF-8');
+    $normalizedUser = normalize_enigme_answer($userAnswer);
+    $normalizedCorrect = normalize_enigme_answer($correctText);
 
     $isCorrect = ($normalizedUser === $normalizedCorrect);
     unset($_SESSION[$key]);

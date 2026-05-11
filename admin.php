@@ -154,34 +154,51 @@ elseif ($_POST['action'] === 'edit_item') {
 
     // --- GESTION DES JOUEURS ---
 
-// 8. Ajouter Fonds au Joueur
-elseif ($_POST['action'] === 'add_funds') {
-    $targetUserId = (int)$_POST['user_id'];
-    $addGold = (int)$_POST['add_gold']; $addSilver = (int)$_POST['add_silver']; $addBronze = (int)$_POST['add_bronze'];
+    // 8. Ajouter Fonds au Joueur
+    elseif ($_POST['action'] === 'add_funds') {
+        $targetUserId = (int)$_POST['user_id'];
 
-    try {
-        $pdo->beginTransaction();
+        try {
+            $pdo->beginTransaction();
 
-        $fundsStmt = $pdo->prepare("SELECT FundsGivenCount FROM Users WHERE UserId = ? FOR UPDATE");
-        $fundsStmt->execute([$targetUserId]);
-        $fundsRow = $fundsStmt->fetch();
+            $fundsStmt = $pdo->prepare("SELECT FundsGivenCount FROM Users WHERE UserId = ? FOR UPDATE");
+            $fundsStmt->execute([$targetUserId]);
+            $fundsRow = $fundsStmt->fetch();
 
-        if (!$fundsRow) {
-            $pdo->rollBack();
-            $message_alerte = ["type" => "erreur", "texte" => "Joueur introuvable."];
-        } elseif ((int)$fundsRow['fundsgivencount'] >= 3) {
-            $pdo->rollBack();
-            $message_alerte = ["type" => "erreur", "texte" => "Ce joueur a deja recu 3 augmentations de capital. Limite atteinte."];
-        } else {
-            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
-            $pdo->commit();
-            $message_alerte = ["type" => "succes", "texte" => "Les fonds du joueur ont ete mis a jour. (Augmentation " . ((int)$fundsRow['fundsgivencount'] + 1) . "/3)"];
+            if (!$fundsRow) {
+                $pdo->rollBack();
+                $message_alerte = ["type" => "erreur", "texte" => "Joueur introuvable."];
+            } else {
+                $directCount = (int)$fundsRow['fundsgivencount'];
+                $acceptedStmt = $pdo->prepare("SELECT COUNT(*) FROM Demandes WHERE UserId = ? AND Status = 'Accepted'");
+                $acceptedStmt->execute([$targetUserId]);
+                $demandeAcceptedCount = (int)$acceptedStmt->fetchColumn();
+                $totalIncreases = $directCount + $demandeAcceptedCount;
+
+                if ($totalIncreases >= 3) {
+                    $pdo->rollBack();
+                    $message_alerte = ["type" => "erreur", "texte" => "Ce joueur a deja atteint le maximum de 3 augmentations de capital (directes + demandes)."];
+                } else {
+                    $addGold = 0; $addSilver = 0; $addBronze = 0;
+                    $palierLabel = '';
+                    if ($totalIncreases === 0) {
+                        $addGold = 10; $palierLabel = '10 pieces d or (1ere augmentation)';
+                    } elseif ($totalIncreases === 1) {
+                        $addSilver = 10; $palierLabel = '10 pieces d argent (2eme augmentation)';
+                    } else {
+                        $addBronze = 10; $palierLabel = '10 pieces de bronze (3eme augmentation)';
+                    }
+
+                    $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+                    $pdo->commit();
+                    $message_alerte = ["type" => "succes", "texte" => "Capital augmente : {$palierLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
+                }
+            }
+        } catch (Exception $e) {
+            if ($pdo->inTransaction()) { $pdo->rollBack(); }
+            $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de fonds."];
         }
-    } catch (Exception $e) {
-        if ($pdo->inTransaction()) { $pdo->rollBack(); }
-        $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de fonds."];
     }
-}
 
     // 9. Bannir / Débannir Joueur
     elseif ($_POST['action'] === 'toggle_ban') {
@@ -231,32 +248,39 @@ elseif ($_POST['action'] === 'delete_review') {
             }
 
             $targetUserId = (int)$requestRow['userid'];
+
             $acceptedCountStmt = $pdo->prepare("SELECT COUNT(*) FROM Demandes WHERE UserId = ? AND Status = 'Accepted'");
             $acceptedCountStmt->execute([$targetUserId]);
             $acceptedCount = (int)$acceptedCountStmt->fetchColumn();
 
+            $fundsStmt = $pdo->prepare("SELECT FundsGivenCount FROM Users WHERE UserId = ? FOR UPDATE");
+            $fundsStmt->execute([$targetUserId]);
+            $fundsRow = $fundsStmt->fetch();
+            $directCount = (int)$fundsRow['fundsgivencount'];
+            $totalIncreases = $directCount + $acceptedCount;
+
             $addGold = 0; $addSilver = 0; $addBronze = 0;
             $rewardLabel = '';
 
-            if ($acceptedCount >= 3) {
-                throw new RuntimeException("Ce joueur a deja atteint le maximum de 3 demandes acceptees.");
+            if ($totalIncreases >= 3) {
+                throw new RuntimeException("Ce joueur a deja atteint le maximum de 3 augmentations de capital (directes + demandes).");
             }
 
-            if ($acceptedCount === 0) {
-                $addGold = 10; $rewardLabel = '10 pieces d or';
-            } elseif ($acceptedCount === 1) {
-                $addSilver = 10; $rewardLabel = '10 pieces d argent';
+            if ($totalIncreases === 0) {
+                $addGold = 10; $rewardLabel = '10 pieces d or (1ere augmentation)';
+            } elseif ($totalIncreases === 1) {
+                $addSilver = 10; $rewardLabel = '10 pieces d argent (2eme augmentation)';
             } else {
-                $addBronze = 10; $rewardLabel = '10 pieces de bronze';
+                $addBronze = 10; $rewardLabel = '10 pieces de bronze (3eme augmentation)';
             }
 
-            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")
+            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")
                 ->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
             $pdo->prepare("UPDATE Demandes SET Status = 'Accepted', ProcessedAt = NOW() WHERE DemandeId = ?")
                 ->execute([$requestId]);
 
             $pdo->commit();
-            $message_alerte = ["type" => "succes", "texte" => "Demande acceptee. Capital ajoute: " . $rewardLabel . "."];
+            $message_alerte = ["type" => "succes", "texte" => "Demande acceptee. Capital ajoute: {$rewardLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
         } catch (Exception $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -307,6 +331,10 @@ try {
     $capitalRequestsByPlayer = $pdo->query("SELECT u.UserId AS userid, u.Alias AS alias, COUNT(d.DemandeId) AS requestcount, SUM(CASE WHEN d.Status = 'Pending' THEN 1 ELSE 0 END) AS pendingcount, SUM(CASE WHEN d.Status = 'Accepted' THEN 1 ELSE 0 END) AS acceptedcount, SUM(CASE WHEN d.Status = 'Refused' THEN 1 ELSE 0 END) AS refusedcount FROM Demandes d JOIN Users u ON u.UserId = d.UserId GROUP BY u.UserId, u.Alias ORDER BY requestcount DESC, u.Alias ASC")->fetchAll();
     $capitalRequests = $pdo->query("SELECT d.DemandeId AS demandeid, d.CreatedAt AS createdat, d.ProcessedAt AS processedat, d.Status AS status, u.UserId AS userid, u.Alias AS alias FROM Demandes d JOIN Users u ON u.UserId = d.UserId ORDER BY d.CreatedAt DESC, d.DemandeId DESC LIMIT 200")->fetchAll();
  } catch (Exception $e) {}
+$capitalRequestsByPlayer_lookup = [];
+foreach ($capitalRequestsByPlayer as $crbp) {
+    $capitalRequestsByPlayer_lookup[(int)$crbp['userid']] = (int)$crbp['acceptedcount'];
+}
 $jsonFlags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 
 $reviews = [];
@@ -698,36 +726,41 @@ include __DIR__ . '/templates/head.php';
                     </div>
                 </div>
 
-                <div id="tab-users" class="admin-section details-glass-card">
-                    <h3><i class="fa-solid fa-coins"></i> Renflouer un Joueur</h3>
-                    
-                    <form method="POST" action="admin.php">
-                        <input type="hidden" name="action" value="add_funds">
-                        <div class="admin-form-grid">
-                            <div class="admin-form-group">
-                                <label>Sélectionner le joueur</label>
-                                <select name="user_id" class="admin-input" required>
-                                    <option value="" disabled selected>-- Choisir un joueur --</option>
-                                    <?php foreach ($players as $p): ?>
-                                        <option value="<?= $p['userid'] ?>"><?= htmlspecialchars($p['alias']) ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Or (+)</label>
-                                <input type="number" min="0" name="add_gold" class="admin-input" value="0">
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Argent (+)</label>
-                                <input type="number" min="0" name="add_silver" class="admin-input" value="0">
-                            </div>
-                            <div class="admin-form-group">
-                                <label>Bronze (+)</label>
-                                <input type="number" min="0" name="add_bronze" class="admin-input" value="0">
-                            </div>
-                        </div>
-                        <button type="submit" class="sidebar-inventory-btn" style="width:auto; padding: 10px 20px;">Transférer les fonds</button>
-                    </form>
+    <div id="tab-users" class="admin-section details-glass-card">
+    <h3><i class="fa-solid fa-coins"></i> Renflouer un Joueur</h3>
+    <p style="color:var(--text-silver); font-size:0.85rem; margin-bottom:12px;">Les augmentations de capital suivent un palier fixe : 1ere = 10 or, 2eme = 10 argent, 3eme = 10 bronze. Le total combine (direct + demandes) est plafonne a 3.</p>
+
+    <form method="POST" action="admin.php">
+    <input type="hidden" name="action" value="add_funds">
+    <div class="admin-form-grid">
+    <div class="admin-form-group">
+    <label>Selectionner le joueur</label>
+    <select name="user_id" id="add-funds-user-select" class="admin-input" required>
+    <option value="" disabled selected>-- Choisir un joueur --</option>
+    <?php foreach ($players as $p): ?>
+    <option value="<?= $p['userid'] ?>" data-direct="<?= (int)($p['fundsgivencount'] ?? 0) ?>" data-accepted="<?= (int)($capitalRequestsByPlayer_lookup[$p['userid']] ?? 0) ?>"><?= htmlspecialchars($p['alias']) ?></option>
+    <?php endforeach; ?>
+    </select>
+    </div>
+    <div class="admin-form-group">
+    <label>Prochaine augmentation</label>
+    <input type="text" id="add-funds-palier" class="admin-input" value="--" readonly tabindex="-1" style="opacity:0.7; cursor:default;">
+    </div>
+    <div class="admin-form-group">
+    <label>Or (GP)</label>
+    <input type="number" name="add_gold" id="add-funds-gold" class="admin-input" value="0" readonly tabindex="-1" style="opacity:0.7; cursor:default;">
+    </div>
+    <div class="admin-form-group">
+    <label>Argent (SP)</label>
+    <input type="number" name="add_silver" id="add-funds-silver" class="admin-input" value="0" readonly tabindex="-1" style="opacity:0.7; cursor:default;">
+    </div>
+    <div class="admin-form-group">
+    <label>Bronze (BP)</label>
+    <input type="number" name="add_bronze" id="add-funds-bronze" class="admin-input" value="0" readonly tabindex="-1" style="opacity:0.7; cursor:default;">
+    </div>
+    </div>
+    <button type="submit" class="sidebar-inventory-btn" style="width:auto; padding: 10px 20px;">Transférer les fonds</button>
+    </form>
 
                     <hr style="border-color: rgba(255,255,255,0.1); margin: 30px 0;">
 
@@ -739,7 +772,7 @@ include __DIR__ . '/templates/head.php';
 <th>ID</th>
 <th>Alias</th>
 <th>Capital</th>
-<th>Capital Donnes</th>
+    <th>Capital Total</th>
 <th>Magie</th>
 <th>Statut</th>
 <th>Actions</th>
@@ -751,7 +784,7 @@ include __DIR__ . '/templates/head.php';
 <td>#<?= $p['userid'] ?></td>
                 <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
                 <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
-<td><?= (int)($p['fundsgivencount'] ?? 0) ?>/3</td>
+    <td><?= (int)($p['fundsgivencount'] ?? 0) + (int)($capitalRequestsByPlayer_lookup[$p['userid']] ?? 0) ?>/3</td>
                 <td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
         <td>
         <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
@@ -1107,8 +1140,51 @@ invResult.innerHTML = '<p style="color:var(--text-silver);">Aucun item dans l\'i
 } catch (e) {
 invResult.innerHTML = '<p style="color:#e74c3c;">Erreur lors du chargement.</p>';
 }
-});
-}
+        });
+    }
+
+    const addFundsSelect = document.getElementById('add-funds-user-select');
+    const addFundsPalier = document.getElementById('add-funds-palier');
+    const addFundsGold = document.getElementById('add-funds-gold');
+    const addFundsSilver = document.getElementById('add-funds-silver');
+    const addFundsBronze = document.getElementById('add-funds-bronze');
+
+    if (addFundsSelect) {
+        addFundsSelect.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            if (!opt || !opt.value) {
+                if (addFundsPalier) addFundsPalier.value = '--';
+                if (addFundsGold) addFundsGold.value = 0;
+                if (addFundsSilver) addFundsSilver.value = 0;
+                if (addFundsBronze) addFundsBronze.value = 0;
+                return;
+            }
+            const directCount = parseInt(opt.dataset.direct || '0');
+            const acceptedCount = parseInt(opt.dataset.accepted || '0');
+            const total = directCount + acceptedCount;
+            if (total >= 3) {
+                if (addFundsPalier) addFundsPalier.value = 'Max atteint (3/3)';
+                if (addFundsGold) addFundsGold.value = 0;
+                if (addFundsSilver) addFundsSilver.value = 0;
+                if (addFundsBronze) addFundsBronze.value = 0;
+            } else if (total === 0) {
+                if (addFundsPalier) addFundsPalier.value = '1ere : 10 or';
+                if (addFundsGold) addFundsGold.value = 10;
+                if (addFundsSilver) addFundsSilver.value = 0;
+                if (addFundsBronze) addFundsBronze.value = 0;
+            } else if (total === 1) {
+                if (addFundsPalier) addFundsPalier.value = '2eme : 10 argent';
+                if (addFundsGold) addFundsGold.value = 0;
+                if (addFundsSilver) addFundsSilver.value = 10;
+                if (addFundsBronze) addFundsBronze.value = 0;
+            } else {
+                if (addFundsPalier) addFundsPalier.value = '3eme : 10 bronze';
+                if (addFundsGold) addFundsGold.value = 0;
+                if (addFundsSilver) addFundsSilver.value = 0;
+                if (addFundsBronze) addFundsBronze.value = 10;
+            }
+        });
+    }
 </script>
 
 <?php 

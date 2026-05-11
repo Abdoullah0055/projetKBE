@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS UserRoadmapProgress (
+    UserId INT NOT NULL,
+    EnigmeId INT NOT NULL,
+    CompletedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (UserId, EnigmeId),
+    CONSTRAINT FK_UserRoadmapProgress_Users
+        FOREIGN KEY (UserId) REFERENCES Users(UserId)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

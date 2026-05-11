@@ -1,21 +1,75 @@
-document.addEventListener('DOMContentLoaded', function () {
-  document.querySelectorAll('.btn-use-item').forEach(function (btn) {
-    btn.addEventListener('click', async function () {
-      var itemId = this.dataset.itemId;
-      var itemName = this.dataset.itemName;
-      var wouldWaste = this.dataset.wouldWaste === '1';
-      var healValue = parseInt(this.dataset.healValue) || 3;
+function updateRecommendations(newHp, maxHp) {
+var missingHP = Math.max(0, maxHp - newHp);
+var allBtns = document.querySelectorAll('.btn-use-item');
+console.log('[reco] updateRecommendations called, newHp=' + newHp + ', maxHp=' + maxHp + ', missingHP=' + missingHP + ', btns=' + allBtns.length);
 
-      if (wouldWaste) {
-        var wasteConfirmed = await showCustomConfirm(
-          'Cet objet va partiellement gaspiller son effet (PV presque au max). Le soin de ' + healValue + ' PV sera partiellement perdu. Continuer ?',
-          'Gaspillage potentiel'
-        );
-        if (!wasteConfirmed) return;
-      } else {
-        var confirmed = await showCustomConfirm('Utiliser ' + itemName + ' pour regagner des PV ?', 'Utiliser un objet');
-        if (!confirmed) return;
-      }
+allBtns.forEach(function (b) {
+var oldBadge = b.querySelector('.recommended-badge');
+if (oldBadge) {
+console.log('[reco] removing old badge from item ' + b.dataset.itemId);
+oldBadge.remove();
+}
+b.removeAttribute('data-is-recommended');
+b.dataset.wouldWaste = '0';
+});
+
+var bestBtn = null;
+var bestScore = -Infinity;
+var bestReason = '';
+
+if (missingHP > 0) {
+allBtns.forEach(function (b) {
+var hv = parseInt(b.dataset.healValue) || 3;
+var effectiveHeal = Math.min(hv, missingHP);
+var waste = hv > effectiveHeal;
+b.dataset.wouldWaste = waste ? '1' : '0';
+
+var score = waste ? -hv : hv;
+console.log('[reco] item ' + b.dataset.itemId + ' heal=' + hv + ' waste=' + waste + ' score=' + score);
+if (score > bestScore) {
+bestScore = score;
+bestBtn = b;
+if (!waste) {
+bestReason = 'Soin optimal : ' + hv + ' PV pour ' + missingHP + ' PV manquants';
+} else {
+bestReason = 'Moindre gaspillage : ' + hv + ' PV (surcap de ' + (hv - missingHP) + ' PV)';
+}
+}
+});
+}
+
+if (bestBtn && missingHP > 0) {
+bestBtn.dataset.isRecommended = '1';
+var badge = document.createElement('span');
+badge.className = 'recommended-badge';
+badge.dataset.tooltip = bestReason;
+badge.innerHTML = '<i class="fa-solid fa-star"></i> Recommande';
+bestBtn.appendChild(document.createTextNode(' '));
+bestBtn.appendChild(badge);
+console.log('[reco] new badge on item ' + bestBtn.dataset.itemId + ': ' + bestReason);
+} else {
+console.log('[reco] no recommendation (missingHP=' + missingHP + ', bestBtn=' + !!bestBtn + ')');
+}
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+document.querySelectorAll('.btn-use-item').forEach(function (btn) {
+btn.addEventListener('click', async function () {
+var itemId = this.dataset.itemId;
+var itemName = this.dataset.itemName;
+var wouldWaste = this.dataset.wouldWaste === '1';
+var healValue = parseInt(this.dataset.healValue) || 3;
+
+if (wouldWaste) {
+var wasteConfirmed = await showCustomConfirm(
+'Cet objet va partiellement gaspiller son effet (PV presque au max). Le soin de ' + healValue + ' PV sera partiellement perdu. Continuer ?',
+'Gaspillage potentiel'
+);
+if (!wasteConfirmed) return;
+} else {
+var confirmed = await showCustomConfirm('Utiliser ' + itemName + ' pour regagner des PV ?', 'Utiliser un objet');
+if (!confirmed) return;
+}
 
 btn.disabled = true;
 
@@ -54,6 +108,8 @@ var currentQty = parseInt(qtyBadge.textContent.replace('x', '')) - 1;
 qtyBadge.textContent = 'x' + currentQty;
 }
 }
+
+updateRecommendations(data.new_hp, data.max_hp);
 } else {
 showToast(data.message, 'erreur');
 }
