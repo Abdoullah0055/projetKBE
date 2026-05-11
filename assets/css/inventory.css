@@ -1,3 +1,18 @@
+/* --- SIDEBAR HEIGHT FIX (override style.css) --- */
+.wrapper,
+main {
+  min-height: 0;
+}
+
+aside#sidebar {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+aside#sidebar .sidebar-content {
+  overflow-y: auto !important;
+}
+
 .inventory-side-box {
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -672,24 +687,24 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-size: 2.2rem;
   }
 
-.inventory-layout.has-review-panel .pending-reviews-panel {
+  .inventory-layout.has-review-panel .pending-reviews-panel {
     position: sticky;
     top: 20px;
-}
+  }
 
-.inventory-tooltip {
+  .inventory-tooltip {
     width: min(320px, calc(100vw - 20px));
-}
+  }
 
-.slot-actions {
+  .slot-actions {
     display: flex;
     gap: 8px;
     margin-top: 10px;
     padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.06);
-}
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
 
-.btn-use-item {
+  .btn-use-item {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -701,56 +716,60 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
-}
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
 
-.btn-use-item:hover {
+  .btn-use-item:hover {
     background: rgba(46, 204, 113, 0.3);
     border-color: rgba(46, 204, 113, 0.7);
-}
+  }
 
-.btn-use-item:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btn-sell-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(241, 196, 15, 0.45);
-  background: rgba(241, 196, 15, 0.18);
-  color: var(--gold);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.btn-sell-item:hover {
-  background: rgba(241, 196, 15, 0.3);
-  border-color: rgba(241, 196, 15, 0.7);
-}
-
-.btn-sell-item:disabled {
+  .btn-use-item:disabled {
     opacity: 0.4;
     cursor: not-allowed;
-}
+  }
 
-.pending-review-comment {
+  .btn-sell-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid rgba(241, 196, 15, 0.45);
+    background: rgba(241, 196, 15, 0.18);
+    color: var(--gold);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background 0.2s,
+      border-color 0.2s;
+  }
+
+  .btn-sell-item:hover {
+    background: rgba(241, 196, 15, 0.3);
+    border-color: rgba(241, 196, 15, 0.7);
+  }
+
+  .btn-sell-item:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .pending-review-comment {
     margin-top: 10px;
-}
+  }
 
-.pending-review-comment label {
+  .pending-review-comment label {
     display: block;
     font-size: 0.85rem;
     color: var(--accent);
     margin-bottom: 4px;
-}
+  }
 
-.review-comment-input {
+  .review-comment-input {
     width: 100%;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -760,120 +779,120 @@ aside.collapsed .sidebar-nav-btn .btn-label {
     font-size: 0.9rem;
     resize: vertical;
     font-family: inherit;
-}
+  }
 
-.review-comment-input:focus {
-border-color: var(--accent);
-outline: none;
-}
+  .review-comment-input:focus {
+    border-color: var(--accent);
+    outline: none;
+  }
 }
 
 [data-theme="light"] .inventory-side-box {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="light"] .inventory-side-box p {
-    color: #b8b8b8;
+  color: #b8b8b8;
 }
 
 [data-theme="light"] .inventory-state {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 [data-theme="light"] .inventory-slot {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .inventory-slot:hover {
-    border-color: rgba(25, 133, 161, 0.65);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  border-color: rgba(25, 133, 161, 0.65);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
 }
 
 [data-theme="light"] .slot-label {
-    color: #f0f0f0;
+  color: #f0f0f0;
 }
 
 [data-theme="light"] .slot-type,
 [data-theme="light"] .slot-owned,
 [data-theme="light"] .slot-description-text {
-    color: #b8b8b8;
+  color: #b8b8b8;
 }
 
 [data-theme="light"] .slot-stat-row {
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 [data-theme="light"] .slot-stat-row span {
-    color: #b8b8b8;
+  color: #b8b8b8;
 }
 
 [data-theme="light"] .slot-stat-row strong {
-    color: #e8e8e8;
+  color: #e8e8e8;
 }
 
 [data-theme="light"] .slot-qty-badge {
-    border: 1px solid rgba(25, 133, 161, 0.5);
-    color: var(--accent);
+  border: 1px solid rgba(25, 133, 161, 0.5);
+  color: var(--accent);
 }
 
 [data-theme="light"] .inventory-tooltip {
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
-    color: #e8e8e8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
+  color: #e8e8e8;
 }
 
 [data-theme="light"] .tooltip-description {
-    color: #b8b8b8;
+  color: #b8b8b8;
 }
 
 [data-theme="light"] .tooltip-meta span {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #c0c0c0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #c0c0c0;
 }
 
 [data-theme="light"] .pending-reviews-panel {
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 [data-theme="light"] .pending-reviews-header h3 {
-    color: var(--accent);
+  color: var(--accent);
 }
 
 [data-theme="light"] .pending-reviews-header p {
-    color: #b8b8b8;
+  color: #b8b8b8;
 }
 
 [data-theme="light"] .pending-review-card {
-    border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 [data-theme="light"] .pending-review-item-meta h4 {
-    color: #e8e8e8;
+  color: #e8e8e8;
 }
 
 [data-theme="light"] .pending-review-item-meta p {
-    color: #b8b8b8;
+  color: #b8b8b8;
 }
 
 [data-theme="light"] .rating-step-btn {
-    color: #c0c0c0;
-    border-color: rgba(255, 255, 255, 0.18);
+  color: #c0c0c0;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 [data-theme="light"] .review-comment-input {
-    color: #e0e0e0;
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e0e0e0;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 [data-theme="light"] .review-comment-input:focus {
-    border-color: var(--accent);
+  border-color: var(--accent);
 }
 
 [data-theme="light"] .pending-review-message {
-    color: #d0d0d0;
+  color: #d0d0d0;
 }

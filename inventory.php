@@ -70,9 +70,9 @@ try {
 }
 
 if ($inventoryError === '') {
-try {
-$reviewStmt = $pdo->prepare(
-"SELECT
+    try {
+        $reviewStmt = $pdo->prepare(
+            "SELECT
 purchased.ItemId AS item_id,
 purchased.QuantityOwned AS quantity_owned,
 i.Name AS item_name,
@@ -101,18 +101,18 @@ ON all_reviews.ItemId = purchased.ItemId
 WHERE user_review.ReviewId IS NULL
 GROUP BY purchased.ItemId, purchased.QuantityOwned, i.Name, i.ImageUrl, t.Name
 ORDER BY i.Name ASC"
-);
+        );
 
-$reviewStmt->execute([
-':user_id_for_review' => $user['id'],
-':user_id_for_inventory' => $user['id'],
-':user_id_for_orders' => $user['id'],
-]);
+        $reviewStmt->execute([
+            ':user_id_for_review' => $user['id'],
+            ':user_id_for_inventory' => $user['id'],
+            ':user_id_for_orders' => $user['id'],
+        ]);
 
-$pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-$pendingReviewItems = [];
-}
+        $pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        $pendingReviewItems = [];
+    }
 }
 
 $title = "L'Arsenal - Inventory";
@@ -132,22 +132,14 @@ $title = "L'Arsenal - Inventory";
         z-index: 0;
     }
 
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: -1;
-    pointer-events: none;
-}
-
-aside {
-    overflow-y: auto;
-}
-
-.sidebar-content {
-    overflow-y: auto;
-}
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: -1;
+        pointer-events: none;
+    }
 </style>
 
 <link rel="stylesheet" href="assets/css/inventory.css">
@@ -155,29 +147,29 @@ aside {
 <?php include __DIR__ . '/includes/header.php'; ?>
 
 <div class="wrapper">
-<aside id="sidebar">
-    <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
-        <span id="arrow-icon">«</span>
-    </button>
+    <aside id="sidebar">
+        <button id="toggle-btn" type="button" aria-expanded="true" aria-label="Réduire la sidebar">
+            <span id="arrow-icon">«</span>
+        </button>
 
-    <?php
-    $sidebarIcon = '<i class="fa-solid fa-box-open"></i>';
-    $sidebarTitle = 'Inventory';
-    $sidebarDesc = 'Consultez vos objets lies a votre compte.';
-    $showDoorBtn = false;
-    $sidebarExtraBottom = '<a href="index.php" class="sidebar-nav-btn" style="width:100%; margin-top:20px; display:block; text-align:center; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold; text-decoration:none;"><i class="fa-solid fa-store"></i> <span class="btn-label">Retour Boutique</span></a>';
-    include __DIR__ . '/includes/sidebar_filters.php';
-    ?>
-</aside>
+        <?php
+        $sidebarIcon = '<i class="fa-solid fa-box-open"></i>';
+        $sidebarTitle = 'Inventory';
+        $sidebarDesc = 'Consultez vos objets lies a votre compte.';
+        $showDoorBtn = false;
+        $sidebarExtraBottom = '<a href="index.php" class="sidebar-nav-btn" style="width:100%; margin-top:20px; display:block; text-align:center; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold; text-decoration:none;"><i class="fa-solid fa-store"></i> <span class="btn-label">Retour Boutique</span></a>';
+        include __DIR__ . '/includes/sidebar_filters.php';
+        ?>
+    </aside>
 
-<main>
-    <div class="catalog-banner">
-        <h2>
-            Inventory de <?= htmlspecialchars($user['alias']) ?>
-        </h2>
-    </div>
+    <main>
+        <div class="catalog-banner">
+            <h2>
+                Inventory de <?= htmlspecialchars($user['alias']) ?>
+            </h2>
+        </div>
 
-    <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
+        <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
             <?php $flashType = ($reviewFlash['type'] ?? '') === 'success' ? 'success-state' : 'error-state'; ?>
             <div class="inventory-state <?= $flashType ?>">
                 <span><?= htmlspecialchars((string) $reviewFlash['message']) ?></span>
@@ -202,31 +194,31 @@ aside {
                 <?php else: ?>
                     <div class="inventory-grid" id="inventory-list">
                         <?php foreach ($inventoryItems as $entry): ?>
-<?php
-$itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
-$itemDescription = trim((string) ($entry['item_description'] ?? ''));
-if ($itemDescription === '') {
-$itemDescription = "Aucune description disponible.";
-}
-$itemType = $entry['item_type'] ?? 'Inconnu';
-$ratingValue = (float) ($entry['rating'] ?? 0);
-$reviewCount = (int) ($entry['review_count'] ?? 0);
-$isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
-$statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
-$statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
-$itemImagePath = getItemImagePathForItem($entry);
-$sellPrice = calculate_sell_price((int)$entry['item_id']);
-?>
+                            <?php
+                            $itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
+                            $itemDescription = trim((string) ($entry['item_description'] ?? ''));
+                            if ($itemDescription === '') {
+                                $itemDescription = "Aucune description disponible.";
+                            }
+                            $itemType = $entry['item_type'] ?? 'Inconnu';
+                            $ratingValue = (float) ($entry['rating'] ?? 0);
+                            $reviewCount = (int) ($entry['review_count'] ?? 0);
+                            $isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
+                            $statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
+                            $statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
+                            $itemImagePath = getItemImagePathForItem($entry);
+                            $sellPrice = calculate_sell_price((int)$entry['item_id']);
+                            ?>
 
-<article class="inventory-slot"
-    data-item-name="<?= htmlspecialchars($itemName) ?>"
-    data-item-description="<?= htmlspecialchars($itemDescription) ?>"
-    data-item-quantity="<?= (int) $entry['quantity'] ?>"
-    data-item-type="<?= htmlspecialchars($itemType) ?>"
-    data-item-id="<?= (int) $entry['item_id'] ?>"
-    data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>"
-    data-item-rarity="<?= htmlspecialchars(strtolower($entry['item_rarity'] ?? 'commun')) ?>"
-    data-item-rating="<?= (float) ($entry['rating'] ?? 0) ?>">
+                            <article class="inventory-slot"
+                                data-item-name="<?= htmlspecialchars($itemName) ?>"
+                                data-item-description="<?= htmlspecialchars($itemDescription) ?>"
+                                data-item-quantity="<?= (int) $entry['quantity'] ?>"
+                                data-item-type="<?= htmlspecialchars($itemType) ?>"
+                                data-item-id="<?= (int) $entry['item_id'] ?>"
+                                data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>"
+                                data-item-rarity="<?= htmlspecialchars(strtolower($entry['item_rarity'] ?? 'commun')) ?>"
+                                data-item-rating="<?= (float) ($entry['rating'] ?? 0) ?>">
 
                                 <div class="slot-top-row">
                                     <div class="slot-thumb" aria-hidden="true">
@@ -271,35 +263,35 @@ $sellPrice = calculate_sell_price((int)$entry['item_id']);
                                         <span>Statut</span>
                                         <strong class="slot-status <?= $statusClass ?>"><?= $statusLabel ?></strong>
                                     </div>
-		</div>
-        <div class="slot-actions">
-<?php if (strtolower($entry['item_type']) === 'potion' || strtolower($entry['item_type']) === 'magicspell'):
-$healValue = 3;
-if (strtolower($entry['item_type']) === 'potion') {
-    $propHealStmt = $pdo->prepare("SELECT EffectValue FROM PotionProperties WHERE ItemId = ?");
-    $propHealStmt->execute([(int)$entry['item_id']]);
-    $propHealRow = $propHealStmt->fetch();
-    if ($propHealRow) $healValue = min((int)$propHealRow['effectvalue'], 5);
-} elseif (strtolower($entry['item_type']) === 'magicspell') {
-    $propHealStmt = $pdo->prepare("SELECT SpellDamage FROM MagicSpellProperties WHERE ItemId = ?");
-    $propHealStmt->execute([(int)$entry['item_id']]);
-    $propHealRow = $propHealStmt->fetch();
-    if ($propHealRow) $healValue = max((int)floor((int)$propHealRow['spelldamage'] / 2), 3);
-}
-$currentHP = (int)($_SESSION['user']['hp'] ?? 100);
-$maxHP = (int)($_SESSION['user']['max_hp'] ?? 100);
-$effectiveHeal = min($healValue, max(0, $maxHP - $currentHP));
-$wouldWaste = ($healValue > $effectiveHeal && $currentHP < $maxHP);
-?>
-<button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-heal-value="<?= $healValue ?>" data-would-waste="<?= $wouldWaste ? '1' : '0' ?>">
-<i class="fa-solid fa-hand-sparkles"></i> Utiliser
-</button>
-<?php endif; ?>
-        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>" data-original-gold="<?= $sellPrice['original_gold'] ?>" data-original-silver="<?= $sellPrice['original_silver'] ?>" data-original-bronze="<?= $sellPrice['original_bronze'] ?>" data-multiplier="<?= $sellPrice['multiplier'] ?>">
-        <i class="fa-solid fa-coins"></i> Vendre
-        </button>
-        </div>
-	</article>
+                                </div>
+                                <div class="slot-actions">
+                                    <?php if (strtolower($entry['item_type']) === 'potion' || strtolower($entry['item_type']) === 'magicspell'):
+                                        $healValue = 3;
+                                        if (strtolower($entry['item_type']) === 'potion') {
+                                            $propHealStmt = $pdo->prepare("SELECT EffectValue FROM PotionProperties WHERE ItemId = ?");
+                                            $propHealStmt->execute([(int)$entry['item_id']]);
+                                            $propHealRow = $propHealStmt->fetch();
+                                            if ($propHealRow) $healValue = min((int)$propHealRow['effectvalue'], 5);
+                                        } elseif (strtolower($entry['item_type']) === 'magicspell') {
+                                            $propHealStmt = $pdo->prepare("SELECT SpellDamage FROM MagicSpellProperties WHERE ItemId = ?");
+                                            $propHealStmt->execute([(int)$entry['item_id']]);
+                                            $propHealRow = $propHealStmt->fetch();
+                                            if ($propHealRow) $healValue = max((int)floor((int)$propHealRow['spelldamage'] / 2), 3);
+                                        }
+                                        $currentHP = (int)($_SESSION['user']['hp'] ?? 100);
+                                        $maxHP = (int)($_SESSION['user']['max_hp'] ?? 100);
+                                        $effectiveHeal = min($healValue, max(0, $maxHP - $currentHP));
+                                        $wouldWaste = ($healValue > $effectiveHeal && $currentHP < $maxHP);
+                                    ?>
+                                        <button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-heal-value="<?= $healValue ?>" data-would-waste="<?= $wouldWaste ? '1' : '0' ?>">
+                                            <i class="fa-solid fa-hand-sparkles"></i> Utiliser
+                                        </button>
+                                    <?php endif; ?>
+                                    <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>" data-original-gold="<?= $sellPrice['original_gold'] ?>" data-original-silver="<?= $sellPrice['original_silver'] ?>" data-original-bronze="<?= $sellPrice['original_bronze'] ?>" data-multiplier="<?= $sellPrice['multiplier'] ?>">
+                                        <i class="fa-solid fa-coins"></i> Vendre
+                                    </button>
+                                </div>
+                            </article>
                         <?php endforeach; ?>
                     </div>
 
@@ -385,17 +377,17 @@ $wouldWaste = ($healValue > $effectiveHeal && $currentHP < $maxHP);
                                         <?php endfor; ?>
                                     </div>
 
-<div class="rating-picker-preview" id="<?= $ratingPreviewId ?>">
-    <?= renderRatingStars(5.0) ?>
-    <span class="rating-value-inline">5.0/5</span>
-    </div>
+                                    <div class="rating-picker-preview" id="<?= $ratingPreviewId ?>">
+                                        <?= renderRatingStars(5.0) ?>
+                                        <span class="rating-value-inline">5.0/5</span>
+                                    </div>
 
-    <div class="pending-review-comment">
-        <label for="comment-<?= $reviewItemId ?>">Commentaire (optionnel)</label>
-        <textarea name="comment" id="comment-<?= $reviewItemId ?>" class="review-comment-input" maxlength="500" rows="2" placeholder="Partagez votre avis..."></textarea>
-    </div>
+                                    <div class="pending-review-comment">
+                                        <label for="comment-<?= $reviewItemId ?>">Commentaire (optionnel)</label>
+                                        <textarea name="comment" id="comment-<?= $reviewItemId ?>" class="review-comment-input" maxlength="500" rows="2" placeholder="Partagez votre avis..."></textarea>
+                                    </div>
 
-    <button type="submit" class="btn-submit-rating">Envoyer ma note</button>
+                                    <button type="submit" class="btn-submit-rating">Envoyer ma note</button>
                                 </form>
 
                                 <p class="pending-review-message" aria-live="polite"></p>
@@ -645,91 +637,111 @@ $wouldWaste = ($healValue > $effectiveHeal && $currentHP < $maxHP);
                     submitButton.textContent = 'Envoyer ma note';
                 }
             });
-  });
-  });
-
-var invSearchFilter = document.getElementById('search-filter');
-var invTypeFilter = document.getElementById('type-filter');
-var invSortFilter = document.getElementById('sort-filter');
-var invRarityFilter = document.getElementById('rarity-filter');
-var invPriceFilter = document.getElementById('price-filter');
-var invResetBtn = document.getElementById('reset-filters');
-var invSlots = Array.from(document.querySelectorAll('.inventory-slot'));
-
-var rarityOrder = {commun:1, rare:2, epique:3, legendaire:4, mythique:5};
-
-function applyInventoryFilters() {
-    var searchVal = (invSearchFilter ? invSearchFilter.value : '').toLowerCase().trim();
-    var typeVal = invTypeFilter ? invTypeFilter.value : 'all';
-    var rarityVal = invRarityFilter ? invRarityFilter.value : 'all';
-    var priceVal = invPriceFilter ? parseFloat(invPriceFilter.value) : NaN;
-    var visibleSlots = [];
-
-    invSlots.forEach(function(slot) {
-        var name = (slot.dataset.itemName || '').toLowerCase();
-        var type = (slot.dataset.itemType || '').toLowerCase();
-        var rarity = (slot.dataset.itemRarity || '').toLowerCase();
-        var price = parseFloat(slot.dataset.itemPrice) || 0;
-        var normalizedName = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        var normalizedSearch = searchVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-        var matchesSearch = !searchVal || normalizedName.includes(normalizedSearch) || name.includes(searchVal);
-        var matchesType = typeVal === 'all' || type === typeVal;
-        var matchesRarity = rarityVal === 'all' || rarity === rarityVal.replace('rarity-', '');
-        var matchesPrice = isNaN(priceVal) || price <= priceVal;
-
-        var visible = matchesSearch && matchesType && matchesRarity && matchesPrice;
-        slot.style.display = visible ? '' : 'none';
-        if (visible) visibleSlots.push(slot);
+        });
     });
 
-    var sortVal = invSortFilter ? invSortFilter.value : 'name-asc';
-    visibleSlots.sort(function(a, b) {
-        var va, vb;
-        switch (sortVal) {
-            case 'name-asc': return (a.dataset.itemName || '').localeCompare(b.dataset.itemName || '');
-            case 'name-desc': return (b.dataset.itemName || '').localeCompare(a.dataset.itemName || '');
-            case 'price-asc': return (parseFloat(a.dataset.itemPrice)||0) - (parseFloat(b.dataset.itemPrice)||0);
-            case 'price-desc': return (parseFloat(b.dataset.itemPrice)||0) - (parseFloat(a.dataset.itemPrice)||0);
-            case 'rating-desc': return (parseFloat(b.dataset.itemRating)||0) - (parseFloat(a.dataset.itemRating)||0);
-            case 'rating-asc': return (parseFloat(a.dataset.itemRating)||0) - (parseFloat(b.dataset.itemRating)||0);
-            case 'rarity-asc':
-                va = rarityOrder[(a.dataset.itemRarity||'').toLowerCase()] || 0;
-                vb = rarityOrder[(b.dataset.itemRarity||'').toLowerCase()] || 0;
-                return va - vb;
-            case 'rarity-desc':
-                va = rarityOrder[(a.dataset.itemRarity||'').toLowerCase()] || 0;
-                vb = rarityOrder[(b.dataset.itemRarity||'').toLowerCase()] || 0;
-                return vb - va;
-            default: return 0;
-        }
-    });
+    var invSearchFilter = document.getElementById('search-filter');
+    var invTypeFilter = document.getElementById('type-filter');
+    var invSortFilter = document.getElementById('sort-filter');
+    var invRarityFilter = document.getElementById('rarity-filter');
+    var invPriceFilter = document.getElementById('price-filter');
+    var invResetBtn = document.getElementById('reset-filters');
+    var invSlots = Array.from(document.querySelectorAll('.inventory-slot'));
 
-    var container = invSlots.length > 0 ? invSlots[0].parentNode : null;
-    if (container) {
-        var allSlots = Array.from(container.children);
-        allSlots.forEach(function(child) {
-            if (child.classList && child.classList.contains('inventory-slot')) {
-                container.removeChild(child);
+    var rarityOrder = {
+        commun: 1,
+        rare: 2,
+        epique: 3,
+        legendaire: 4,
+        mythique: 5
+    };
+
+    function applyInventoryFilters() {
+        var searchVal = (invSearchFilter ? invSearchFilter.value : '').toLowerCase().trim();
+        var typeVal = invTypeFilter ? invTypeFilter.value : 'all';
+        var rarityVal = invRarityFilter ? invRarityFilter.value : 'all';
+        var priceVal = invPriceFilter ? parseFloat(invPriceFilter.value) : NaN;
+        var visibleSlots = [];
+
+        invSlots.forEach(function(slot) {
+            var name = (slot.dataset.itemName || '').toLowerCase();
+            var type = (slot.dataset.itemType || '').toLowerCase();
+            var rarity = (slot.dataset.itemRarity || '').toLowerCase();
+            var price = parseFloat(slot.dataset.itemPrice) || 0;
+            var normalizedName = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            var normalizedSearch = searchVal.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+            var matchesSearch = !searchVal || normalizedName.includes(normalizedSearch) || name.includes(searchVal);
+            var matchesType = typeVal === 'all' || type === typeVal;
+            var matchesRarity = rarityVal === 'all' || rarity === rarityVal.replace('rarity-', '');
+            var matchesPrice = isNaN(priceVal) || price <= priceVal;
+
+            var visible = matchesSearch && matchesType && matchesRarity && matchesPrice;
+            slot.style.display = visible ? '' : 'none';
+            if (visible) visibleSlots.push(slot);
+        });
+
+        var sortVal = invSortFilter ? invSortFilter.value : 'name-asc';
+        visibleSlots.sort(function(a, b) {
+            var va, vb;
+            switch (sortVal) {
+                case 'name-asc':
+                    return (a.dataset.itemName || '').localeCompare(b.dataset.itemName || '');
+                case 'name-desc':
+                    return (b.dataset.itemName || '').localeCompare(a.dataset.itemName || '');
+                case 'price-asc':
+                    return (parseFloat(a.dataset.itemPrice) || 0) - (parseFloat(b.dataset.itemPrice) || 0);
+                case 'price-desc':
+                    return (parseFloat(b.dataset.itemPrice) || 0) - (parseFloat(a.dataset.itemPrice) || 0);
+                case 'rating-desc':
+                    return (parseFloat(b.dataset.itemRating) || 0) - (parseFloat(a.dataset.itemRating) || 0);
+                case 'rating-asc':
+                    return (parseFloat(a.dataset.itemRating) || 0) - (parseFloat(b.dataset.itemRating) || 0);
+                case 'rarity-asc':
+                    va = rarityOrder[(a.dataset.itemRarity || '').toLowerCase()] || 0;
+                    vb = rarityOrder[(b.dataset.itemRarity || '').toLowerCase()] || 0;
+                    return va - vb;
+                case 'rarity-desc':
+                    va = rarityOrder[(a.dataset.itemRarity || '').toLowerCase()] || 0;
+                    vb = rarityOrder[(b.dataset.itemRarity || '').toLowerCase()] || 0;
+                    return vb - va;
+                default:
+                    return 0;
             }
         });
-        visibleSlots.forEach(function(slot) { container.appendChild(slot); });
-    }
-}
 
-if (invSearchFilter) invSearchFilter.addEventListener('input', applyInventoryFilters);
-if (invTypeFilter) invTypeFilter.addEventListener('change', applyInventoryFilters);
-if (invSortFilter) invSortFilter.addEventListener('change', applyInventoryFilters);
-if (invRarityFilter) invRarityFilter.addEventListener('change', applyInventoryFilters);
-if (invPriceFilter) invPriceFilter.addEventListener('input', applyInventoryFilters);
-if (invResetBtn) invResetBtn.addEventListener('click', function() {
-    if (invSearchFilter) invSearchFilter.value = '';
-    if (invTypeFilter) invTypeFilter.value = 'all';
-    if (invSortFilter) invSortFilter.value = 'name-asc';
-    if (invRarityFilter) invRarityFilter.value = 'all';
-    if (invPriceFilter) invPriceFilter.value = '';
-    applyInventoryFilters();
-});
+        var container = invSlots.length > 0 ? invSlots[0].parentNode : null;
+        if (container) {
+            var hiddenSlots = [];
+            var allSlots = Array.from(container.children);
+            allSlots.forEach(function(child) {
+                if (child.classList && child.classList.contains('inventory-slot')) {
+                    container.removeChild(child);
+                    if (child.style.display === 'none') hiddenSlots.push(child);
+                }
+            });
+            visibleSlots.forEach(function(slot) {
+                container.appendChild(slot);
+            });
+            hiddenSlots.forEach(function(slot) {
+                container.appendChild(slot);
+            });
+        }
+    }
+
+    if (invSearchFilter) invSearchFilter.addEventListener('input', applyInventoryFilters);
+    if (invTypeFilter) invTypeFilter.addEventListener('change', applyInventoryFilters);
+    if (invSortFilter) invSortFilter.addEventListener('change', applyInventoryFilters);
+    if (invRarityFilter) invRarityFilter.addEventListener('change', applyInventoryFilters);
+    if (invPriceFilter) invPriceFilter.addEventListener('input', applyInventoryFilters);
+    if (invResetBtn) invResetBtn.addEventListener('click', function() {
+        if (invSearchFilter) invSearchFilter.value = '';
+        if (invTypeFilter) invTypeFilter.value = 'all';
+        if (invSortFilter) invSortFilter.value = 'name-asc';
+        if (invRarityFilter) invRarityFilter.value = 'all';
+        if (invPriceFilter) invPriceFilter.value = '';
+        applyInventoryFilters();
+    });
 </script>
 
 <script src="assets/js/inventory.js"></script>
