@@ -5,6 +5,7 @@ require_once __DIR__ . '/includes/session.php';
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/includes/mailer_utils.php';
 require_once __DIR__ . '/includes/email_verification_utils.php';
+require_once __DIR__ . '/includes/rate_limiter.php';
 
 $pdo = get_pdo();
 
@@ -97,6 +98,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     } else {
+        if (!rate_limiter_check('login', 5, 60)) {
+            $retryAfter = rate_limiter_retry_after();
+            $error = "Trop de tentatives. Reessayez dans {$retryAfter} secondes.";
+        } else {
         try {
             $stmt = $pdo->prepare("CALL sp_GetUserByAlias(?)");
             $stmt->execute([$alias]);
@@ -106,6 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $storedHash = (string) first_available($foundUser, ['Password', 'password'], '');
 
 if ($foundUser && $storedHash !== '' && password_verify($password, $storedHash)) {
+            rate_limiter_reset('login');
             $userId = (int) first_available($foundUser, ['UserId', 'userid'], 0);
             $userEmail = (string) first_available($foundUser, ['Email', 'email'], '');
             $isBanned = (int) first_available($foundUser, ['IsBanned', 'isbanned'], 0);
@@ -154,6 +160,7 @@ $_SESSION['user']['hp'] = (int) first_available($foundUser, ['CurrentHP', 'curre
             }
         } catch (PDOException $e) {
             $error = "Erreur systeme : " . $e->getMessage();
+        }
         }
     }
 }

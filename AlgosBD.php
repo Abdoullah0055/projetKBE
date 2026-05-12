@@ -1,14 +1,17 @@
 <?php
+
+require_once __DIR__ . '/includes/env_loader.php';
+
 function get_pdo()
 {
     static $pdo = null;
 
     if ($pdo === null) {
-        $host = '158.69.48.109';
-        $db = 'dbdarquest15';
-        $user = 'equipe15';
-        $pass = '7klm98u8';
-        $charset = 'utf8mb4';
+        $host = env('DB_HOST', '158.69.48.109');
+        $db = env('DB_NAME', 'dbdarquest15');
+        $user = env('DB_USER', 'equipe15');
+        $pass = env('DB_PASS', '7klm98u8');
+        $charset = env('DB_CHARSET', 'utf8mb4');
 
         $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 

@@ -2,13 +2,32 @@
 
 require_once __DIR__ . '/session.php';
 
+define('CSRF_POOL_SIZE', 10);
+define('CSRF_TTL', 1800);
+
 function csrf_token(): string
 {
-    if (empty($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    if (!isset($_SESSION['csrf_tokens']) || !is_array($_SESSION['csrf_tokens'])) {
+        $_SESSION['csrf_tokens'] = [];
     }
 
-    return $_SESSION['csrf_token'];
+    $now = time();
+
+    $_SESSION['csrf_tokens'] = array_filter(
+        $_SESSION['csrf_tokens'],
+        function (array $meta) use ($now): bool {
+            return ($now - ($meta['ts'] ?? 0)) < CSRF_TTL;
+        }
+    );
+
+    while (count($_SESSION['csrf_tokens']) >= CSRF_POOL_SIZE) {
+        array_shift($_SESSION['csrf_tokens']);
+    }
+
+    $token = bin2hex(random_bytes(32));
+    $_SESSION['csrf_tokens'][$token] = ['ts' => $now];
+
+    return $token;
 }
 
 function csrf_field(): string
@@ -24,17 +43,20 @@ function csrf_validate(): bool
         return false;
     }
 
-    if (!isset($_SESSION['csrf_token']) || !is_string($_SESSION['csrf_token'])) {
+    if (!isset($_SESSION['csrf_tokens'][$token])) {
         return false;
     }
 
-    $valid = hash_equals($_SESSION['csrf_token'], $token);
+    $now = time();
+    $meta = $_SESSION['csrf_tokens'][$token];
 
-    if ($valid) {
-        unset($_SESSION['csrf_token']);
+    unset($_SESSION['csrf_tokens'][$token]);
+
+    if (($now - ($meta['ts'] ?? 0)) > CSRF_TTL) {
+        return false;
     }
 
-    return $valid;
+    return true;
 }
 
 function csrf_meta_tag(): string

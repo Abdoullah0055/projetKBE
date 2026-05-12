@@ -20,6 +20,12 @@ function upsert_email_verification(PDO $pdo, string $email, string $token): void
     $stmt->execute([$email, $token, $expiresAt]);
 }
 
+function invalidate_email_verification(PDO $pdo, string $email): void
+{
+    $stmt = $pdo->prepare("DELETE FROM EmailVerifications WHERE Email = ?");
+    $stmt->execute([$email]);
+}
+
 function is_email_verified(PDO $pdo, string $email): bool
 {
     $stmt = $pdo->prepare("SELECT VerifiedAt FROM EmailVerifications WHERE Email = ? LIMIT 1");

@@ -346,6 +346,7 @@ $rightImages = [
             const formData = new FormData();
             formData.append('item_id', itemId);
             formData.append('new_qty', newQty);
+            formData.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
 
             try {
                 const response = await fetch('backend/modifier_quantite.php', {
@@ -478,6 +479,7 @@ async function deleteItemFromCart(itemId, button) {
         const row = button.closest('.cart-row');
         const formData = new FormData();
         formData.append('item_id', itemId);
+        formData.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
 
         try {
             const response = await fetch('backend/supprimer_item_panier.php', {
@@ -517,11 +519,14 @@ async function deleteItemFromCart(itemId, button) {
         confirmBtn.innerText = 'Traitement...';
 
         try {
+            const purchaseBody = new FormData();
+            purchaseBody.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
             const response = await fetch('backend/confirmer_achat.php', {
                 method: 'POST',
                 headers: {
                     'Accept': 'application/json'
-                }
+                },
+                body: purchaseBody
             });
             const data = await response.json();
 

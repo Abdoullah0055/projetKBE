@@ -75,6 +75,7 @@ btn.disabled = true;
 
 var formData = new FormData();
 formData.append('item_id', itemId);
+formData.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
 
 fetch('backend/use_item.php', {
 method: 'POST',
@@ -149,6 +150,7 @@ btn.disabled = true;
 
 var formData = new FormData();
 formData.append('item_id', itemId);
+formData.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
 
 fetch('backend/vendre_item.php', {
 method: 'POST',

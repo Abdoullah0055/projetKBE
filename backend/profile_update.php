@@ -106,6 +106,10 @@ if ($wantsPasswordUpdate) {
 try {
     $pdo->beginTransaction();
 
+    $oldEmailStmt = $pdo->prepare("SELECT Email FROM Users WHERE UserId = ?");
+    $oldEmailStmt->execute([$userId]);
+    $oldEmail = (string)$oldEmailStmt->fetchColumn();
+
     $aliasStmt = $pdo->prepare(
         "SELECT UserId
          FROM Users
@@ -201,7 +205,34 @@ try {
     $pdo->commit();
 
     $_SESSION['user']['alias'] = $alias;
-    profile_set_flash('success', "Profil mis a jour avec succes.");
+
+    if ($email !== null && $email !== $oldEmail) {
+        require_once __DIR__ . '/../includes/email_verification_utils.php';
+        require_once __DIR__ . '/../includes/email_utils.php';
+        require_once __DIR__ . '/../includes/mailer_utils.php';
+
+        invalidate_email_verification($pdo, $oldEmail);
+
+        $token = generate_email_verification_token();
+        upsert_email_verification($pdo, $email, $token);
+
+        $verifyLink = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http")
+            . "://" . $_SERVER['HTTP_HOST']
+            . dirname($_SERVER['PHP_SELF'])
+            . "/verify_email.php?token=" . urlencode($token);
+
+        $subject = "Verification de votre nouveau courriel Darquest";
+        $body = "<p>Vous avez modifie votre courriel sur L'Arsenal de Sombre-Donjon.</p>"
+            . "<p>Cliquez pour verifier votre nouveau courriel :</p>"
+            . "<p><a href=\"{$verifyLink}\">Verifier mon courriel</a></p>"
+            . "<p>Ce lien expire dans 24 heures.</p>";
+
+        send_darquest_mail($email, $subject, $body);
+
+        profile_set_flash('success', "Profil mis a jour. Un courriel de verification a ete envoye a votre nouvelle adresse.");
+    } else {
+        profile_set_flash('success', "Profil mis a jour avec succes.");
+    }
 } catch (PDOException $e) {
     if ($pdo->inTransaction()) {
         $pdo->rollBack();

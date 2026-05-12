@@ -14,7 +14,7 @@ $userId = (int)$_SESSION['user']['id'];
 $pdo = get_pdo();
 
 try {
-    $stmt = $pdo->prepare("SELECT HP, MaxHP, Gold, Silver, Bronze FROM Users WHERE UserId = :uid");
+    $stmt = $pdo->prepare("SELECT CurrentHP, MaxHP, Gold, Silver, Bronze FROM Users WHERE UserId = :uid");
     $stmt->execute([':uid' => $userId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -25,7 +25,7 @@ try {
 
     echo json_encode([
         'success' => true,
-    'hp' => (int)$row['hp'],
+        'hp' => (int)$row['currenthp'],
     'max_hp' => (int)$row['maxhp'],
     'gold' => (int)$row['gold'],
     'silver' => (int)$row['silver'],
