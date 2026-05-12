@@ -178,11 +178,16 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
     </section>
 
 <div class="stats-hp-row">
-    <section class="profile-stats-section">
-    <h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
-    <div class="stats-chart-container">
-    <canvas id="riddleStatsChart"></canvas>
-    </div>
+<section class="profile-stats-section">
+<h2><i class="fa-solid fa-chart-bar"></i> Statistiques d'énigmes</h2>
+<div class="stats-chart-container" style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+<div>
+<canvas id="riddleStatsChart"></canvas>
+</div>
+<div>
+<canvas id="riddleDifficultyDoughnut"></canvas>
+</div>
+</div>
     <div class="stats-grid" style="margin-top:15px;">
     <div class="stat-card">
     <span class="stat-label">Facile</span>
@@ -265,9 +270,36 @@ if (ctx) {
             scales: {
                 x: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.06)' } },
                 y: { ticks: { color: '#ccc', stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.06)' }, beginAtZero: true }
-            }
-        }
-    });
+}
+}
+
+const dCanvas = document.getElementById('riddleDifficultyDoughnut');
+if (dCanvas) {
+new Chart(dCanvas.getContext('2d'), {
+type: 'doughnut',
+data: {
+labels: ['Facile résolues', 'Moyenne résolues', 'Difficile résolues', 'Non résolues'],
+datasets: [{
+data: [
+<?= (int)$riddleStats['facile_solved'] ?>,
+<?= (int)$riddleStats['moyenne_solved'] ?>,
+<?= (int)$riddleStats['difficile_solved'] ?>,
+<?= max(0, ($riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total']) - $riddleStats['solved_count']) ?>
+],
+backgroundColor: ['#4caf50', '#ff9800', '#f44336', 'rgba(255,255,255,0.1)'],
+borderColor: 'rgba(20,22,25,0.9)',
+borderWidth: 2
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { labels: { color: '#ccc' } },
+title: { display: true, text: 'Résolues par difficulté', color: '#ccc' }
+}
+}
+});
 }
 </script>
 <?php include __DIR__ . '/includes/footer.php'; ?>

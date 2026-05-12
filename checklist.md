@@ -1,6 +1,6 @@
 # Checklist Darquest — Sprints 1, 2 et 3
 
-## 🎮 FONCTIONNALITÉS DARQUEST (Boutique / Items / Panier / Joueur)
+## FONCTIONNALITÉS DARQUEST (Boutique / Items / Panier / Joueur)
 
 ### Sprint 1 — Priorité M (Obligatoire)
 
@@ -27,6 +27,14 @@
 ### Sprint 2 — Priorité M (Obligatoire)
 
 - [ ] Dettes du sprint 1 (corriger les remarques de la revue du sprint 1)
+- [ ] Augmenter ses points de vie en utilisant des sorts ou des potions
+  - [ ] Les points de vie repris sont en fonction du type de sort
+  - [ ] Un sort utilisé est soit supprimé de l'inventaire, soit sa quantité est réduite de 1
+  - [ ] Une potion peut donner au maximum 5 points de vie
+  - [ ] Une potion utilisée est soit supprimée de l'inventaire, soit sa quantité est réduite de 1
+
+### Sprint 2 — Priorité S (Supplémentaire)
+
 - [ ] Vendre un item (vers le magasin)
   - [ ] Items vendus à 60% de leur valeur initiale
   - [ ] Sorts vendus selon leur rareté : rareté 1 → 100%, rareté 2 → 95%, rareté 3 → 90%
@@ -54,24 +62,20 @@
 
 ---
 
-## 🧩 FONCTIONNALITÉS ENIGMA (Énigmes / Quêtes)
+## FONCTIONNALITÉS ENIGMA (Énigmes / Quêtes)
 
 ### Sprint 2 — Priorité M (Obligatoire)
 
+- [ ] Application Web adaptative (adaptée pour un cellulaire)
 - [ ] Enigma : Résoudre une énigme de manière aléatoire (énigme aléatoire, difficulté aléatoire)
 - [ ] Contrainte : 4 choix de réponses dont une seule bonne réponse
-- [ ] Énigme difficile → 10 pièces d'or
-- [ ] Énigme moyenne → 10 pièces d'argent
-- [ ] Énigme facile → 10 pièces de bronze
+  - [ ] Énigme difficile → 10 pièces d'or
+  - [ ] Énigme moyenne → 10 pièces d'argent
+  - [ ] Énigme facile → 10 pièces de bronze
 - [ ] Perte des points de vie lorsqu'un joueur donne une mauvaise réponse
   - [ ] Énigme facile → perd 3 pts de vie
   - [ ] Énigme moyenne → perd 6 pts de vie
   - [ ] Énigme difficile → perd 10 pts de vie
-- [ ] Augmenter ses points de vie en utilisant des sorts ou des potions
-  - [ ] Les points de vie repris sont en fonction du type de sort
-  - [ ] Un sort utilisé est soit supprimé de l'inventaire, soit sa quantité est réduite de 1
-  - [ ] Une potion peut donner au maximum 5 points de vie
-  - [ ] Une potion utilisée est soit supprimée de l'inventaire, soit sa quantité est réduite de 1
 - [ ] Devenir « mage » : lorsqu'un joueur a résolu 3 quêtes en rapport avec la magie (Sorts)
 
 ### Sprint 2 — Priorité S (Supplémentaire)
@@ -96,7 +100,7 @@
 
 ---
 
-## 💰 RÈGLES MÉTIER (À considérer — Sprint 1)
+## RÈGLES MÉTIER (À considérer — Sprint 1)
 
 - [ ] Prix d'un item : de 1 à 100 pièces d'or
 - [ ] Montant initial d'un joueur : 1000 pièces d'or, 1000 pièces d'argent, 1000 pièces de bronze
@@ -105,7 +109,7 @@
 
 ---
 
-## 🛠️ STORIES TECHNIQUES (Sprint 1)
+## STORIES TECHNIQUES (Sprint 1)
 
 - [ ] Vérifier la connexion au serveur PHP (chaque membre teste)
 - [ ] Chaque membre doit tester qu'il peut transférer une page sur le serveur
@@ -120,7 +124,7 @@
 
 ---
 
-## 🧪 TESTS UNITAIRES
+## TESTS UNITAIRES
 
 ### Sprint 1 — Tests sur le compte du joueur
 
@@ -175,7 +179,7 @@
 
 ---
 
-## 📋 GESTION DE PROJET / BACKLOG
+## GESTION DE PROJET / BACKLOG
 
 - [ ] Sprint 1 : Backlog du sprint 1 (modifié selon les fonctionnalités du sprint 1)
 - [ ] Sprint 2 : Backlog du sprint 2 (à remettre le jour du début du sprint 2)
@@ -185,9 +189,3 @@
   - [ ] Stories priorisées, estimées (planning poker)
   - [ ] Tests d'acceptation présents et bien écrits
 - [ ] Sprint 3 : Partager le Trello ou Jira avec le professeur
-
----
-
-## 📱 CONTRAINTE NON-FONCTIONNELLE
-
-- [ ] **Enigma est une application Web adaptative** (adaptée pour un cellulaire) — Sprint 2

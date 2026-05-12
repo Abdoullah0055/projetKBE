@@ -1,4 +1,11 @@
 <?php
+require_once __DIR__ . '/includes/session.php';
+
+if (!isset($_SESSION['user']['id'])) {
+    header('Location: login.php');
+    exit;
+}
+
 $title = 'Resultat - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css'];
 $bodyClass = 'enigmes-page resultat-page';

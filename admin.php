@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'Admin') {
     header("Location: index.php");
@@ -14,8 +15,9 @@ $message_alerte = null;
 // --- ACTIONS BACKEND ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
-// 1. Ajouter Item
-if ($_POST['action'] === 'add_item') {
+if (!csrf_validate()) {
+        $message_alerte = ["type" => "erreur", "texte" => "Token de securite invalide. Rechargez la page et reessayez."];
+    } elseif ($_POST['action'] === 'add_item') {
     $name = trim($_POST['name']); $desc = trim($_POST['description']);
     $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
     $stock = (int)$_POST['stock']; $typeId = (int)$_POST['type_id'];
@@ -274,10 +276,10 @@ elseif ($_POST['action'] === 'delete_review') {
                 $addBronze = 10; $rewardLabel = '10 pieces de bronze (3eme augmentation)';
             }
 
-            $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")
-                ->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
-            $pdo->prepare("UPDATE Demandes SET Status = 'Accepted', ProcessedAt = NOW() WHERE DemandeId = ?")
-                ->execute([$requestId]);
+        $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ? WHERE UserId = ?")
+            ->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
+        $pdo->prepare("UPDATE Demandes SET Status = 'Accepted', ProcessedAt = NOW() WHERE DemandeId = ?")
+            ->execute([$requestId]);
 
             $pdo->commit();
             $message_alerte = ["type" => "succes", "texte" => "Demande acceptee. Capital ajoute: {$rewardLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
@@ -341,6 +343,9 @@ $reviews = [];
 try {
     $reviews = $pdo->query("SELECT r.ReviewId, r.Rating, r.Comment, r.CreatedAt, u.Alias, i.Name AS ItemName FROM Reviews r JOIN Users u ON u.UserId = r.UserId JOIN Items i ON i.ItemId = r.ItemId ORDER BY r.CreatedAt DESC LIMIT 200")->fetchAll();
 } catch (Exception $e) {}
+
+$riddleStats = get_admin_riddle_aggregate_stats();
+$topPlayers = get_top_players_by_solved(10);
 
 $title = "Administration - L'Arsenal";
 $currentTheme = $_COOKIE['theme'] ?? 'light';
@@ -493,6 +498,7 @@ include __DIR__ . '/templates/head.php';
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'users')"><i class="fa-solid fa-users"></i> Registre Joueurs</button>
                 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'requests')"><i class="fa-solid fa-coins"></i> Demandes Capital</button>
 <button type="button" class="admin-tab-btn" onclick="switchTab(event, 'reviews')"><i class="fa-solid fa-star"></i> Évaluations</button>
+<button type="button" class="admin-tab-btn" onclick="switchTab(event, 'stats')"><i class="fa-solid fa-chart-pie"></i> Statistiques</button>
             </div>
 
             <div class="admin-content">
@@ -500,9 +506,10 @@ include __DIR__ . '/templates/head.php';
                 <div id="tab-items" class="admin-section active details-glass-card">
                     <h3><i class="fa-solid fa-plus-circle"></i> Forger un nouvel artefact</h3>
                     
-                    <form method="POST" action="admin.php">
-                        <input type="hidden" name="action" value="add_item">
-                        <div class="admin-form-grid">
+<form method="POST" action="admin.php">
+<input type="hidden" name="action" value="add_item">
+<?= csrf_field() ?>
+<div class="admin-form-grid">
                             <div class="admin-form-group">
                                 <label>Nom de l'objet</label>
                                 <input type="text" name="name" class="admin-input" required>
@@ -568,9 +575,10 @@ include __DIR__ . '/templates/head.php';
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                         
-                                        <form style="display:inline;" method="POST" action="admin.php">
-                                            <input type="hidden" name="action" value="toggle_item">
+<form style="display:inline;" method="POST" action="admin.php">
+<input type="hidden" name="action" value="toggle_item">
 <input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
+<?= csrf_field() ?>
             <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $it['isactive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $it['isactive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $it['isactive'] ? 'Désactiver' : 'Activer' ?>">
             <i class="fa-solid <?= $it['isactive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                             </button>
@@ -579,6 +587,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-form">
 <input type="hidden" name="action" value="delete_item">
 <input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
+<?= csrf_field() ?>
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
 </form>
                                     </td>
@@ -592,9 +601,10 @@ include __DIR__ . '/templates/head.php';
                 <div id="tab-riddles" class="admin-section details-glass-card">
                     <h3><i class="fa-solid fa-plus-circle"></i> Créer une nouvelle Quête</h3>
                     
-                    <form method="POST" action="admin.php">
-                        <input type="hidden" name="action" value="add_riddle">
-                        <div class="admin-form-group" style="margin-bottom: 15px;">
+<form method="POST" action="admin.php">
+<input type="hidden" name="action" value="add_riddle">
+<?= csrf_field() ?>
+<div class="admin-form-group" style="margin-bottom: 15px;">
                             <label>L'énigme / La question</label>
                             <textarea name="question" class="admin-input" rows="2" required></textarea>
                         </div>
@@ -705,9 +715,10 @@ include __DIR__ . '/templates/head.php';
         <td><?= $r['rewardgold'] ?> / <?= $r['rewardsilver'] ?> / <?= $r['rewardbronze'] ?></td>
         <td><?= $r['isactive'] ? '<span style="color:#2ECC71;">Actif</span>' : '<span style="color:#E67E22;">Désactivé</span>' ?></td>
                                     <td>
-                                        <form style="display:inline;" method="POST" action="admin.php">
-                                            <input type="hidden" name="action" value="toggle_riddle">
+<form style="display:inline;" method="POST" action="admin.php">
+<input type="hidden" name="action" value="toggle_riddle">
 <input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
+<?= csrf_field() ?>
             <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $r['isactive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $r['isactive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $r['isactive'] ? 'Désactiver' : 'Activer' ?>">
             <i class="fa-solid <?= $r['isactive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                             </button>
@@ -716,6 +727,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-riddle-form">
 <input type="hidden" name="action" value="delete_riddle">
 <input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
+<?= csrf_field() ?>
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
 </form>
                                     </td>
@@ -730,9 +742,10 @@ include __DIR__ . '/templates/head.php';
     <h3><i class="fa-solid fa-coins"></i> Renflouer un Joueur</h3>
     <p style="color:var(--text-silver); font-size:0.85rem; margin-bottom:12px;">Les augmentations de capital suivent un palier fixe : 1ere = 10 or, 2eme = 10 argent, 3eme = 10 bronze. Le total combine (direct + demandes) est plafonne a 3.</p>
 
-    <form method="POST" action="admin.php">
-    <input type="hidden" name="action" value="add_funds">
-    <div class="admin-form-grid">
+<form method="POST" action="admin.php">
+<input type="hidden" name="action" value="add_funds">
+<?= csrf_field() ?>
+<div class="admin-form-grid">
     <div class="admin-form-group">
     <label>Selectionner le joueur</label>
     <select name="user_id" id="add-funds-user-select" class="admin-input" required>
@@ -794,9 +807,10 @@ include __DIR__ . '/templates/head.php';
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <form style="display:inline;" method="POST" action="admin.php">
-                                            <input type="hidden" name="action" value="toggle_ban">
+<form style="display:inline;" method="POST" action="admin.php">
+<input type="hidden" name="action" value="toggle_ban">
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
+<?= csrf_field() ?>
         <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                                 <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#2ECC71; color:#2ECC71;" title="Débloquer l'accès"><i class="fa-solid fa-unlock"></i></button>
                                             <?php else: ?>
@@ -807,6 +821,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-user-form">
 <input type="hidden" name="action" value="delete_user">
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
+<?= csrf_field() ?>
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
 </form>
                                     </td>
@@ -900,14 +915,16 @@ include __DIR__ . '/templates/head.php';
                                             </td>
                                             <td>
                                                 <?php if (($request['status'] ?? '') === 'Pending'): ?>
-                                                    <form style="display:inline;" method="POST" action="admin.php">
-                                                        <input type="hidden" name="action" value="accept_request">
-                                                        <input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
-                                                        <button type="submit" class="btn-outline-custom" style="padding:6px 10px; border-color:#2ECC71; color:#2ECC71;" title="Accepter">Accepter</button>
-                                                    </form>
-                                                    <form style="display:inline;" method="POST" action="admin.php">
-                                                        <input type="hidden" name="action" value="reject_request">
-                                                        <input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
+<form style="display:inline;" method="POST" action="admin.php">
+<input type="hidden" name="action" value="accept_request">
+<input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
+<?= csrf_field() ?>
+<button type="submit" class="btn-outline-custom" style="padding:6px 10px; border-color:#2ECC71; color:#2ECC71;" title="Accepter">Accepter</button>
+</form>
+<form style="display:inline;" method="POST" action="admin.php">
+<input type="hidden" name="action" value="reject_request">
+<input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
+<?= csrf_field() ?>
                                                         <button type="submit" class="btn-danger" style="padding:6px 10px;" title="Refuser">Refuser</button>
                                                     </form>
                                                 <?php else: ?>
@@ -956,9 +973,10 @@ include __DIR__ . '/templates/head.php';
 <td style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?= htmlspecialchars($rev['comment'] ?? '') ?>"><?= htmlspecialchars($rev['comment'] ?? '-') ?></td>
 					<td><?= htmlspecialchars((string)$rev['createdat']) ?></td>
  <td>
- <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-review-form">
- <input type="hidden" name="action" value="delete_review">
- <input type="hidden" name="review_id" value="<?= (int)$rev['reviewid'] ?>">
+<form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-review-form">
+<input type="hidden" name="action" value="delete_review">
+<input type="hidden" name="review_id" value="<?= (int)$rev['reviewid'] ?>">
+<?= csrf_field() ?>
  <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer l'evaluation"><i class="fa-solid fa-trash"></i></button>
  </form>
  </td>
@@ -967,22 +985,57 @@ include __DIR__ . '/templates/head.php';
  <?php endif; ?>
  </tbody>
  </table>
- </div>
- </div>
+</div>
+</div>
 
- </div>
- </div>
+<div id="tab-stats" class="admin-section details-glass-card">
+<h3><i class="fa-solid fa-chart-pie"></i> Statistiques Globales</h3>
+
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:20px;">
+<div>
+<h4 style="color:var(--accent); margin-bottom:10px;">Énigmes par difficulté</h4>
+<canvas id="statsDifficultyDoughnut" width="320" height="320"></canvas>
+</div>
+<div>
+<h4 style="color:var(--accent); margin-bottom:10px;">Top 10 Joueurs (Énigmes résolues)</h4>
+<canvas id="statsTopPlayersBar" width="500" height="320"></canvas>
+</div>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:15px; margin-top:30px;">
+<div style="background:rgba(25,133,161,0.15); border:1px solid rgba(25,133,161,0.4); border-radius:8px; padding:15px; text-align:center;">
+<div style="font-size:1.8rem; font-weight:bold; color:#4fc3f7;"><?= $riddleStats['total_solved'] ?></div>
+<div style="color:#aaa; font-size:0.85rem; margin-top:5px;">Résolues (total)</div>
+</div>
+<div style="background:rgba(244,67,54,0.15); border:1px solid rgba(244,67,54,0.4); border-radius:8px; padding:15px; text-align:center;">
+<div style="font-size:1.8rem; font-weight:bold; color:#ef5350;"><?= $riddleStats['total_failed'] ?></div>
+<div style="color:#aaa; font-size:0.85rem; margin-top:5px;">Échouées (total)</div>
+</div>
+<div style="background:rgba(76,175,80,0.15); border:1px solid rgba(76,175,80,0.4); border-radius:8px; padding:15px; text-align:center;">
+<div style="font-size:1.8rem; font-weight:bold; color:#66bb6a;"><?= $riddleStats['facile_total'] + $riddleStats['moyenne_total'] + $riddleStats['difficile_total'] ?></div>
+<div style="color:#aaa; font-size:0.85rem; margin-top:5px;">Énigmes actives</div>
+</div>
+<div style="background:rgba(255,193,7,0.15); border:1px solid rgba(255,193,7,0.4); border-radius:8px; padding:15px; text-align:center;">
+<div style="font-size:1.8rem; font-weight:bold; color:#ffd54f;"><?= $riddleStats['total_solved'] + $riddleStats['total_failed'] > 0 ? round($riddleStats['total_solved'] / ($riddleStats['total_solved'] + $riddleStats['total_failed']) * 100) : 0 ?>%</div>
+<div style="color:#aaa; font-size:0.85rem; margin-top:5px;">Taux de réussite</div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
     </main>
 </div>
 
 <div id="editModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
     <div class="modal-content details-glass-card" style="background:#1a1b1e; padding:30px; border-radius:8px; width:600px; max-width:90%; border: 1px solid var(--accent);">
         <h3 style="margin-top:0; color:var(--accent);"><i class="fa-solid fa-hammer"></i> Modifier l'Artefact</h3>
-        <form method="POST" action="admin.php">
-            <input type="hidden" name="action" value="edit_item">
-            <input type="hidden" name="item_id" id="edit_id">
-            
-            <div class="admin-form-group">
+<form method="POST" action="admin.php">
+<input type="hidden" name="action" value="edit_item">
+<input type="hidden" name="item_id" id="edit_id">
+<?= csrf_field() ?>
+
+<div class="admin-form-group">
                 <label>Nom de l'objet</label>
                 <input type="text" name="name" id="edit_name" class="admin-input" required>
             </div>
@@ -1184,10 +1237,70 @@ invResult.innerHTML = '<p style="color:#e74c3c;">Erreur lors du chargement.</p>'
                 if (addFundsBronze) addFundsBronze.value = 10;
             }
         });
-    }
+}
 </script>
 
-<?php 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>
+(function() {
+    var doughnutCanvas = document.getElementById('statsDifficultyDoughnut');
+    var barCanvas = document.getElementById('statsTopPlayersBar');
+    if (!doughnutCanvas || !barCanvas) return;
+
+    var rStats = <?= json_encode($riddleStats, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+    new Chart(doughnutCanvas.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Facile', 'Moyenne', 'Difficile'],
+            datasets: [{
+                data: [rStats.facile_total, rStats.moyenne_total, rStats.difficile_total],
+                backgroundColor: ['#4caf50', '#ff9800', '#f44336'],
+                borderColor: 'rgba(20,22,25,0.9)',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: '#ccc' } },
+                title: { display: true, text: 'Répartition des énigmes actives', color: '#ccc' }
+            }
+        }
+    });
+
+    var topPlayers = <?= json_encode($topPlayers, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    var aliases = topPlayers.map(function(p) { return p.Alias || '?'; });
+    var solvedCounts = topPlayers.map(function(p) { return parseInt(p.SolvedCount) || 0; });
+
+    new Chart(barCanvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: aliases,
+            datasets: [{
+                label: 'Énigmes résolues',
+                data: solvedCounts,
+                backgroundColor: 'rgba(25,133,161,0.7)',
+                borderColor: 'rgba(25,133,161,1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            scales: {
+                x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                y: { ticks: { color: '#ccc' }, grid: { color: 'rgba(255,255,255,0.06)' } }
+            },
+            plugins: {
+                legend: { labels: { color: '#ccc' } }
+            }
+        }
+    });
+})();
+</script>
+
+<?php
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php'; 
 ?>

@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/csrf.php';
 
 if (ob_get_level() === 0) {
     ob_start();
@@ -52,6 +53,13 @@ if (!isset($_SESSION['user']['id'])) {
         'success' => false,
         'message' => 'Veuillez vous connecter pour noter un item.',
     ], '../login.php', $isAjax, 401);
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_validate()) {
+    review_response([
+        'success' => false,
+        'message' => 'Token de securite invalide. Rechargez la page.',
+    ], '../inventory.php', $isAjax, 403);
 }
 
 $userId = (int)$_SESSION['user']['id'];

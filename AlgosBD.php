@@ -693,3 +693,70 @@ function get_user_healing_items(int $userId): array
     }
     return $normalized;
 }
+
+function get_admin_riddle_aggregate_stats(): array
+{
+    $pdo = get_pdo();
+
+    $stats = [
+        'total_solved' => 0,
+        'total_failed' => 0,
+        'facile_solved' => 0,
+        'moyenne_solved' => 0,
+        'difficile_solved' => 0,
+        'facile_total' => 0,
+        'moyenne_total' => 0,
+        'difficile_total' => 0,
+    ];
+
+    try {
+        $aggStmt = $pdo->query("SELECT IFNULL(SUM(SolvedCount), 0) AS total_solved, IFNULL(SUM(FailedCount), 0) AS total_failed FROM UserRiddleStats");
+        $aggRow = $aggStmt->fetch();
+        $stats['total_solved'] = (int)$aggRow['total_solved'];
+        $stats['total_failed'] = (int)$aggRow['total_failed'];
+
+        $totalStmt = $pdo->query("SELECT Difficulty, COUNT(*) AS cnt FROM Riddles WHERE IsActive = 1 GROUP BY Difficulty");
+        while ($tRow = $totalStmt->fetch()) {
+            $key = strtolower($tRow['difficulty']) . '_total';
+            if (isset($stats[$key])) {
+                $stats[$key] = (int)$tRow['cnt'];
+            }
+        }
+
+        $solvedStmt = $pdo->query("
+            SELECT r.Difficulty, COUNT(*) AS cnt
+            FROM UserRiddles ur
+            JOIN Riddles r ON r.RiddleId = ur.RiddleId
+            WHERE ur.IsSuccess = 1
+            GROUP BY r.Difficulty
+        ");
+        while ($sRow = $solvedStmt->fetch()) {
+            $key = strtolower($sRow['difficulty']) . '_solved';
+            if (isset($stats[$key])) {
+                $stats[$key] = (int)$sRow['cnt'];
+            }
+        }
+    } catch (Throwable $e) {}
+
+    return $stats;
+}
+
+function get_top_players_by_solved(int $limit = 10): array
+{
+    $pdo = get_pdo();
+
+    try {
+        $stmt = $pdo->prepare("
+            SELECT u.Alias, COALESCE(s.SolvedCount, 0) AS SolvedCount, COALESCE(s.FailedCount, 0) AS FailedCount, COALESCE(s.MagicSolvedCount, 0) AS MagicSolvedCount
+            FROM Users u
+            LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId
+            WHERE u.Role IN ('Player', 'Mage')
+            ORDER BY COALESCE(s.SolvedCount, 0) DESC
+            LIMIT ?
+        ");
+        $stmt->execute([$limit]);
+        return $stmt->fetchAll();
+    } catch (Throwable $e) {
+        return [];
+    }
+}
