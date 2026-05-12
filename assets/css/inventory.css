@@ -1,16 +1,7 @@
 /* --- SIDEBAR HEIGHT FIX (override style.css) --- */
 .wrapper,
 main {
-  min-height: 0;
-}
-
-aside#sidebar {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-
-aside#sidebar .sidebar-content {
-  overflow-y: auto !important;
+min-height: 0;
 }
 
 .inventory-side-box {

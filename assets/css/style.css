@@ -280,24 +280,24 @@ main {
 }
 
 aside {
-  overflow-y: visible;
-  -webkit-overflow-scrolling: auto;
+overflow-y: hidden;
+-webkit-overflow-scrolling: auto;
 }
 
 /* --- SIDEBAR (GLASSMORPHISM) --- */
 aside {
-  width: var(--sidebar-width);
-  background: rgba(20, 22, 25, 0.4) !important;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
-  transition: width var(--transition);
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  z-index: 100;
-  overflow: visible;
+width: var(--sidebar-width);
+background: rgba(20, 22, 25, 0.4) !important;
+backdrop-filter: blur(15px);
+-webkit-backdrop-filter: blur(15px);
+border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+transition: width var(--transition);
+position: relative;
+display: flex;
+flex-direction: column;
+flex-shrink: 0;
+z-index: 100;
+overflow: hidden;
 }
 
 aside.collapsed {
@@ -325,11 +325,11 @@ aside.collapsed {
 }
 
 .sidebar-content {
-  padding: 25px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow-y: visible;
+padding: 25px;
+display: flex;
+flex-direction: column;
+height: 100%;
+overflow-y: hidden;
 }
 
 .filter-toggle-header button {
