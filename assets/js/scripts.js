@@ -571,3 +571,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+(function initFilterToggle() {
+  var btn = document.getElementById('filter-toggle-btn');
+  var body = document.getElementById('filter-body');
+  var header = btn ? btn.closest('.filter-toggle-header') : null;
+  if (!btn || !body || !header) return;
+
+  var saved = localStorage.getItem('sidebar_filters_open');
+  if (saved === 'false') {
+    body.classList.remove('open');
+    header.classList.remove('open');
+  }
+
+  btn.addEventListener('click', function () {
+    var isOpen = body.classList.toggle('open');
+    header.classList.toggle('open');
+    localStorage.setItem('sidebar_filters_open', isOpen);
+  });
+})();

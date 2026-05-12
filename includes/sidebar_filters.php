@@ -16,61 +16,69 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
         </div>
         <?php endif; ?>
 
-        <form class="filter-section" onsubmit="return false;">
-            <div class="filter-group">
-                <label>Recherche</label>
-                <input type="text" id="search-filter" class="filter-input" placeholder="Nom de l'objet...">
-            </div>
-
-            <div class="filter-group" style="margin-top:15px;">
-                <label>Catégorie</label>
-                <select id="type-filter" class="filter-select">
-                    <option value="all">Tous les items</option>
-                    <option value="weapon">Armes</option>
-                    <option value="armor">Armures</option>
-                    <option value="potion">Potions</option>
-                    <option value="magicspell">Sorts</option>
-                </select>
-            </div>
-
-            <div class="filter-group" style="margin-top:15px;">
-                <label>Trier par</label>
-                <select id="sort-filter" class="filter-select">
-                    <option value="name-asc">Nom (A-Z)</option>
-                    <option value="name-desc">Nom (Z-A)</option>
-                    <option value="price-asc">Prix (croissant)</option>
-                    <option value="price-desc">Prix (decroissant)</option>
-                    <option value="rating-desc">Note (meilleure)</option>
-                    <option value="rating-asc">Note (moins bonne)</option>
-                    <option value="rarity-asc">Rarrete (Commun -> Mythique)</option>
-                    <option value="rarity-desc">Rarrete (Mythique -> Commun)</option>
-                </select>
-            </div>
-
-            <div class="filter-group" style="margin-top:15px;">
-                <label>Rarrete</label>
-                <select id="rarity-filter" class="filter-select">
-                    <option value="all">Toutes</option>
-                    <option value="rarity-commun">Commun</option>
-                    <option value="rarity-rare">Rare</option>
-                    <option value="rarity-epique">Epique</option>
-                    <option value="rarity-legendaire">Legendaire</option>
-                    <option value="rarity-mythique">Mythique</option>
-                </select>
-            </div>
-
-            <div class="filter-group" style="margin-top:15px;">
-                <label>Prix max (or)</label>
-                <input type="number" id="price-filter" class="filter-input" placeholder="Ex: 50" min="0" step="1">
-            </div>
-
-            <button
-                type="button"
-                id="reset-filters"
-                style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
-                Réinitialiser
+        <div class="filter-toggle-header open">
+            <button type="button" id="filter-toggle-btn">
+                <span>Filtres</span>
+                <i class="fa-solid fa-chevron-down" id="filter-chevron"></i>
             </button>
-        </form>
+        </div>
+        <div id="filter-body" class="filter-body open">
+            <form class="filter-section" onsubmit="return false;">
+                <div class="filter-group">
+                    <label>Recherche</label>
+                    <input type="text" id="search-filter" class="filter-input" placeholder="Nom de l'objet...">
+                </div>
+
+                <div class="filter-group" style="margin-top:15px;">
+                    <label>Catégorie</label>
+                    <select id="type-filter" class="filter-select">
+                        <option value="all">Tous les items</option>
+                        <option value="weapon">Armes</option>
+                        <option value="armor">Armures</option>
+                        <option value="potion">Potions</option>
+                        <option value="magicspell">Sorts</option>
+                    </select>
+                </div>
+
+                <div class="filter-group" style="margin-top:15px;">
+                    <label>Trier par</label>
+                    <select id="sort-filter" class="filter-select">
+                        <option value="name-asc">Nom (A-Z)</option>
+                        <option value="name-desc">Nom (Z-A)</option>
+                        <option value="price-asc">Prix (croissant)</option>
+                        <option value="price-desc">Prix (decroissant)</option>
+                        <option value="rating-desc">Note (meilleure)</option>
+                        <option value="rating-asc">Note (moins bonne)</option>
+                        <option value="rarity-asc">Rarrete (Commun -> Mythique)</option>
+                        <option value="rarity-desc">Rarrete (Mythique -> Commun)</option>
+                    </select>
+                </div>
+
+                <div class="filter-group" style="margin-top:15px;">
+                    <label>Rarrete</label>
+                    <select id="rarity-filter" class="filter-select">
+                        <option value="all">Toutes</option>
+                        <option value="rarity-commun">Commun</option>
+                        <option value="rarity-rare">Rare</option>
+                        <option value="rarity-epique">Epique</option>
+                        <option value="rarity-legendaire">Legendaire</option>
+                        <option value="rarity-mythique">Mythique</option>
+                    </select>
+                </div>
+
+                <div class="filter-group" style="margin-top:15px;">
+                    <label>Prix max (or)</label>
+                    <input type="number" id="price-filter" class="filter-input" placeholder="Ex: 50" min="0" step="1">
+                </div>
+
+                <button
+                    type="button"
+                    id="reset-filters"
+                    style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+                    Réinitialiser
+                </button>
+            </form>
+        </div>
 
         <?php if ($showDoorBtn): ?>
         <a href="<?= isset($user) && $user['isConnected'] ? 'roadmap.php' : 'login.php' ?>" class="enigme-door-button" aria-label="Acceder aux enigmes">

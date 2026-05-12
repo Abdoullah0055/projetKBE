@@ -332,6 +332,42 @@ aside.collapsed {
   overflow-y: visible;
 }
 
+.filter-toggle-header button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 12px 0;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-light);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+#filter-chevron {
+  transition: transform 0.3s ease;
+}
+
+.filter-toggle-header.open #filter-chevron {
+  transform: rotate(180deg);
+}
+
+.filter-body {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.3s ease, opacity 0.25s ease;
+}
+
+.filter-body.open {
+  max-height: 600px;
+  opacity: 1;
+}
+
 .filter-group label {
   display: block;
   font-size: 0.75rem;
