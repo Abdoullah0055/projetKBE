@@ -228,12 +228,6 @@ $rightImages = [
   <button class="btn-buy-large btn-out" disabled>Stock Epuise</button>
   <?php endif; ?>
 
-  <?php if ($user['isConnected']): ?>
-  <button type="button" class="btn-buy-large" id="capital-request-btn" style="margin-top:10px;">
-    Demander une augmentation de capital
-  </button>
-  <?php endif; ?>
-
   <a href="index.php" class="back-link">Retour au catalogue</a>
   </div>
         </div>
@@ -473,37 +467,6 @@ $rightImages = [
         }
     });
 
-    document.getElementById('capital-request-btn')?.addEventListener('click', async function() {
-        const button = this;
-        button.disabled = true;
-
-        try {
-            const response = await fetch('demande_capital.php', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            let data = null;
-            try {
-                data = await response.json();
-            } catch (_error) {
-                data = null;
-            }
-
-            if (response.ok && data && data.success) {
-                showToast(data.message || "Demande envoyee.", 'succes');
-            } else {
-                showToast((data && data.message) ? data.message : "Echec de la demande.", 'erreur');
-            }
-        } catch (error) {
-            showToast("Erreur reseau pendant l'envoi de la demande.", 'erreur');
-        } finally {
-            button.disabled = false;
-        }
-    });
 </script>
 
 <?php

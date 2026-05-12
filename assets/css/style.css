@@ -365,6 +365,7 @@ aside.collapsed {
 
 .filter-body.open {
   max-height: 600px;
+  overflow-y: auto;
   opacity: 1;
 }
 
@@ -377,7 +378,9 @@ aside.collapsed {
   margin-bottom: 8px;
 }
 
-.filter-group select {
+.filter-group select,
+.filter-group input[type="text"],
+.filter-group input[type="number"] {
   width: 100%;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -390,7 +393,8 @@ aside.collapsed {
   display: flex;
   justify-content: center;
   width: 100%;
-  margin-top: 14px;
+  margin-top: auto;
+  padding-top: 14px;
   text-decoration: none;
 }
 
@@ -637,6 +641,10 @@ footer {
 
 /* --- LOGIQUE DE REPLI (RETOURS VISUELS) --- */
 .hide-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
   transition: opacity 0.3s;
 }
 
@@ -712,7 +720,9 @@ aside.collapsed .show-icon {
     border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
-[data-theme="light"] .filter-group select {
+[data-theme="light"] .filter-group select,
+[data-theme="light"] .filter-group input[type="text"],
+[data-theme="light"] .filter-group input[type="number"] {
     border: 1px solid rgba(0, 0, 0, 0.15);
     color: #333;
 }
