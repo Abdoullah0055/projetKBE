@@ -2,7 +2,6 @@
 
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../includes/session.php';
-require_once __DIR__ . '/../includes/csrf.php';
 
 header('Content-Type: application/json');
 
@@ -30,14 +29,6 @@ if (!isset($_SESSION['user']['id'])) {
         'success' => false,
         'message' => 'Session utilisateur invalide.',
         'code' => 'session',
-    ]);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_validate()) {
-    respond_json([
-        'success' => false,
-        'message' => 'Token de securite invalide. Rechargez la page.',
-        'code' => 'csrf',
     ]);
 }
 

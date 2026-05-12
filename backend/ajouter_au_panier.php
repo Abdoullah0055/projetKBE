@@ -6,7 +6,6 @@ if (ob_get_level() === 0) {
 
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../includes/session.php';
-require_once __DIR__ . '/../includes/csrf.php';
 
 $response = ['success' => false, 'message' => 'Une erreur inconnue est survenue.'];
 $isAjaxRequest = is_ajax_request();
@@ -20,11 +19,6 @@ if ($isAjaxRequest && isset($_SESSION['alerte'])) {
 if (!isset($_SESSION['user'])) {
     $response['message'] = "Veuillez vous connecter pour remplir votre besace.";
     handle_response($response, "../login.php", $isAjaxRequest);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_validate()) {
-    $response['message'] = "Token de securite invalide. Rechargez la page.";
-    handle_response($response, "../index.php", $isAjaxRequest);
 }
 
 $userId = $_SESSION['user']['id'] ?? null;

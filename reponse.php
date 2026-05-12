@@ -12,7 +12,6 @@ $bodyClass = 'enigmes-page reponse-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
 require_once __DIR__ . '/AlgosBD.php';
-require_once __DIR__ . '/includes/csrf.php';
 
 $context = resolve_enigme_request('reponse.php');
 
@@ -65,17 +64,6 @@ if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_validate()) {
-        set_enigmes_flash_dialogues([
-            [
-                'text' => 'Une erreur de securite est survenue. Reessaie.',
-                'frame' => 'assets/img/Magicien/furieux.png',
-            ],
-        ]);
-        header('Location: ' . build_enigmes_page_url('enigme.php', $context['query']));
-        exit;
-    }
-
     $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
 
     if ($riddleType === 'ShortAnswer') {
@@ -283,7 +271,6 @@ $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
 
 <?php if ($riddleType === 'ShortAnswer'): ?>
 <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
-<?= csrf_field() ?>
 <div class="enigmes-short-answer">
 <input type="text" name="short_answer" class="enigmes-short-input" placeholder="Votre reponse..." autocomplete="off" required>
                     <button type="submit" class="enigmes-choice-btn">Valider</button>
@@ -292,7 +279,6 @@ $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
 
 <?php elseif ($riddleType === 'TrueFalse'): ?>
 <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
-<?= csrf_field() ?>
 <div class="enigmes-choices enigmes-choices-tf" id="enigmesChoices">
                     <button type="submit" name="choice_index" value="0" class="enigmes-choice-btn enigmes-tf-btn">Vrai</button>
                     <button type="submit" name="choice_index" value="1" class="enigmes-choice-btn enigmes-tf-btn">Faux</button>
@@ -301,7 +287,6 @@ $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
 
 <?php else: ?>
 <form class="enigmes-form" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>" method="post">
-<?= csrf_field() ?>
 <div class="enigmes-choices" id="enigmesChoices">
                     <?php foreach ($context['choices'] as $i => $choice): ?>
                     <button type="submit" name="choice_index" value="<?= $i ?>" class="enigmes-choice-btn"><?= htmlspecialchars($choice, ENT_QUOTES, 'UTF-8') ?></button>

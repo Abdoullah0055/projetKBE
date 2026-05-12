@@ -2,28 +2,6 @@
 
 require_once __DIR__ . '/session.php';
 
-function profile_csrf_token(): string
-{
-    if (empty($_SESSION['profile_csrf']) || !is_string($_SESSION['profile_csrf'])) {
-        $_SESSION['profile_csrf'] = bin2hex(random_bytes(32));
-    }
-
-    return $_SESSION['profile_csrf'];
-}
-
-function profile_is_valid_csrf(?string $token): bool
-{
-    if (!isset($_SESSION['profile_csrf']) || !is_string($_SESSION['profile_csrf'])) {
-        return false;
-    }
-
-    if (!is_string($token) || $token === '') {
-        return false;
-    }
-
-    return hash_equals($_SESSION['profile_csrf'], $token);
-}
-
 function profile_set_flash(string $type, string $message): void
 {
     $_SESSION['profile_flash'] = [

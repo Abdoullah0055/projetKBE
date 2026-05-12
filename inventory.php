@@ -383,7 +383,6 @@ $title = "L'Arsenal - Inventory";
                                 </div>
 
                                 <form class="pending-review-form" action="backend/soumettre_review.php" method="post">
-                                    <?= csrf_field() ?>
                                     <input type="hidden" name="item_id" value="<?= $reviewItemId ?>">
                                     <input type="hidden" name="rating" id="<?= $ratingInputId ?>" value="5.0">
 

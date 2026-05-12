@@ -13,12 +13,6 @@ if (!isset($_SESSION['user']['id'])) {
     exit();
 }
 
-if (!profile_is_valid_csrf($_POST['csrf_token'] ?? null)) {
-    profile_set_flash('error', "Session invalide. Rechargez la page puis recommencez.");
-    header('Location: ../profile.php');
-    exit();
-}
-
 $confirmationText = trim((string)($_POST['confirmation_text'] ?? ''));
 $checkboxConfirmed = isset($_POST['confirm_delete_account']) && $_POST['confirm_delete_account'] === '1';
 $password = (string)($_POST['password'] ?? '');

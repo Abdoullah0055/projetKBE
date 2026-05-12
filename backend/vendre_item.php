@@ -1,17 +1,11 @@
 <?php
 require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../AlgosBD.php';
-require_once __DIR__ . '/../includes/csrf.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 if (!isset($_SESSION['user'])) {
     echo json_encode(['success' => false, 'message' => 'Non connecte']);
-    exit;
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !csrf_validate()) {
-    echo json_encode(['success' => false, 'message' => 'Token de securite invalide.']);
     exit;
 }
 

@@ -62,7 +62,6 @@ $user['balance'] = [
 ];
 
 $flash = profile_take_flash();
-$csrfToken = profile_csrf_token();
 $riddleStats = get_user_riddle_stats($_SESSION['user']['id']);
 
 $title = "L'Arsenal - Mon Profil";
@@ -118,8 +117,6 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
     <section class="profile-card">
       <h2>Modifier mon profil</h2>
       <form method="POST" action="backend/profile_update.php" autocomplete="off">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
-
         <label for="alias">Alias</label>
         <input id="alias" name="alias" type="text" required minlength="3" maxlength="30"
           value="<?= htmlspecialchars((string)($dbUser['alias'] ?? '')) ?>">
@@ -157,7 +154,6 @@ $avatarInitial = strtoupper(mb_substr((string)$dbUser['alias'], 0, 1, 'UTF-8'));
       <p class="danger-intro">Cette action est irreversible. Une confirmation explicite est obligatoire.</p>
 
       <form method="POST" action="backend/profile_delete_account.php" class="danger-form confirm-form" data-confirm-text="SUPPRIMER MON COMPTE" data-final-confirm="Derniere confirmation: supprimer definitivement ce compte ?">
-        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
         <h3>Supprimer mon compte</h3>
         <p>Votre compte et son historique seront supprimes definitivement.</p>

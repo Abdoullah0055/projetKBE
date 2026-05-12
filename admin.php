@@ -1,7 +1,6 @@
 <?php
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/includes/csrf.php';
 
 if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'Admin') {
     header("Location: index.php");
@@ -15,9 +14,7 @@ $message_alerte = null;
 // --- ACTIONS BACKEND ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 
-if (!csrf_validate()) {
-        $message_alerte = ["type" => "erreur", "texte" => "Token de securite invalide. Rechargez la page et reessayez."];
-    } elseif ($_POST['action'] === 'add_item') {
+if ($_POST['action'] === 'add_item') {
     $name = trim($_POST['name']); $desc = trim($_POST['description']);
     $gold = (int)$_POST['gold']; $silver = (int)$_POST['silver']; $bronze = (int)$_POST['bronze'];
     $stock = (int)$_POST['stock']; $typeId = (int)$_POST['type_id'];
@@ -508,7 +505,7 @@ include __DIR__ . '/templates/head.php';
                     
 <form method="POST" action="admin.php">
 <input type="hidden" name="action" value="add_item">
-<?= csrf_field() ?>
+
 <div class="admin-form-grid">
                             <div class="admin-form-group">
                                 <label>Nom de l'objet</label>
@@ -578,7 +575,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php">
 <input type="hidden" name="action" value="toggle_item">
 <input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
-<?= csrf_field() ?>
+
             <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $it['isactive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $it['isactive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $it['isactive'] ? 'Désactiver' : 'Activer' ?>">
             <i class="fa-solid <?= $it['isactive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                             </button>
@@ -587,7 +584,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-form">
 <input type="hidden" name="action" value="delete_item">
 <input type="hidden" name="item_id" value="<?= $it['itemid'] ?>">
-<?= csrf_field() ?>
+
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
 </form>
                                     </td>
@@ -603,7 +600,7 @@ include __DIR__ . '/templates/head.php';
                     
 <form method="POST" action="admin.php">
 <input type="hidden" name="action" value="add_riddle">
-<?= csrf_field() ?>
+
 <div class="admin-form-group" style="margin-bottom: 15px;">
                             <label>L'énigme / La question</label>
                             <textarea name="question" class="admin-input" rows="2" required></textarea>
@@ -718,7 +715,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php">
 <input type="hidden" name="action" value="toggle_riddle">
 <input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
-<?= csrf_field() ?>
+
             <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:<?= $r['isactive'] ? '#E67E22' : '#2ECC71' ?>; color:<?= $r['isactive'] ? '#E67E22' : '#2ECC71' ?>;" title="<?= $r['isactive'] ? 'Désactiver' : 'Activer' ?>">
             <i class="fa-solid <?= $r['isactive'] ? 'fa-eye-slash' : 'fa-eye' ?>"></i>
                                             </button>
@@ -727,7 +724,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-riddle-form">
 <input type="hidden" name="action" value="delete_riddle">
 <input type="hidden" name="riddle_id" value="<?= $r['riddleid'] ?>">
-<?= csrf_field() ?>
+
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer Définitivement"><i class="fa-solid fa-trash"></i></button>
 </form>
                                     </td>
@@ -744,7 +741,7 @@ include __DIR__ . '/templates/head.php';
 
 <form method="POST" action="admin.php">
 <input type="hidden" name="action" value="add_funds">
-<?= csrf_field() ?>
+
 <div class="admin-form-grid">
     <div class="admin-form-group">
     <label>Selectionner le joueur</label>
@@ -810,7 +807,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php">
 <input type="hidden" name="action" value="toggle_ban">
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
-<?= csrf_field() ?>
+
         <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                                 <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#2ECC71; color:#2ECC71;" title="Débloquer l'accès"><i class="fa-solid fa-unlock"></i></button>
                                             <?php else: ?>
@@ -821,7 +818,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-user-form">
 <input type="hidden" name="action" value="delete_user">
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
-<?= csrf_field() ?>
+
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
 </form>
                                     </td>
@@ -918,13 +915,13 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php">
 <input type="hidden" name="action" value="accept_request">
 <input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
-<?= csrf_field() ?>
+
 <button type="submit" class="btn-outline-custom" style="padding:6px 10px; border-color:#2ECC71; color:#2ECC71;" title="Accepter">Accepter</button>
 </form>
 <form style="display:inline;" method="POST" action="admin.php">
 <input type="hidden" name="action" value="reject_request">
 <input type="hidden" name="request_id" value="<?= (int) $request['demandeid'] ?>">
-<?= csrf_field() ?>
+
                                                         <button type="submit" class="btn-danger" style="padding:6px 10px;" title="Refuser">Refuser</button>
                                                     </form>
                                                 <?php else: ?>
@@ -976,7 +973,7 @@ include __DIR__ . '/templates/head.php';
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-review-form">
 <input type="hidden" name="action" value="delete_review">
 <input type="hidden" name="review_id" value="<?= (int)$rev['reviewid'] ?>">
-<?= csrf_field() ?>
+
  <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer l'evaluation"><i class="fa-solid fa-trash"></i></button>
  </form>
  </td>
@@ -1033,7 +1030,7 @@ include __DIR__ . '/templates/head.php';
 <form method="POST" action="admin.php">
 <input type="hidden" name="action" value="edit_item">
 <input type="hidden" name="item_id" id="edit_id">
-<?= csrf_field() ?>
+
 
 <div class="admin-form-group">
                 <label>Nom de l'objet</label>

@@ -13,12 +13,6 @@ if (!isset($_SESSION['user']['id'])) {
     exit();
 }
 
-if (!profile_is_valid_csrf($_POST['csrf_token'] ?? null)) {
-    profile_set_flash('error', "Session invalide. Rechargez la page puis recommencez.");
-    header('Location: ../profile.php');
-    exit();
-}
-
 $userId = (int)$_SESSION['user']['id'];
 $pdo = get_pdo();
 

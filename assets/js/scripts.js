@@ -2,30 +2,6 @@
 let currentImgNum = parseInt(getCookie("bgNumber"), 10) || 1;
 const SIDEBAR_STATE_KEY = "arsenal.sidebar.collapsed";
 
-(function initCsrfFetchInterceptor() {
-    const nativeFetch = window.fetch;
-    window.fetch = function(input, init) {
-        init = init || {};
-        const method = (init.method || "GET").toUpperCase();
-
-        if (method === "POST") {
-            const metaTag = document.querySelector('meta[name="csrf-token"]');
-            const token = metaTag ? metaTag.getAttribute("content") : null;
-
-            if (token) {
-                init.headers = init.headers || {};
-                if (typeof init.headers === "object" && !(init.headers instanceof Headers)) {
-                    init.headers["X-CSRF-Token"] = token;
-                } else if (init.headers instanceof Headers) {
-                    init.headers.set("X-CSRF-Token", token);
-                }
-            }
-        }
-
-        return nativeFetch.call(this, input, init);
-    };
-})();
-
 function getCookie(name) {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);

@@ -230,7 +230,6 @@ $rightImages = [
     </button>
   <?php elseif ((int) $item['stock'] > 0): ?>
   <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
-    <?= csrf_field() ?>
     <input type="hidden" name="item_id" value="<?= (int) $item['id'] ?>">
 
     <div class="purchase-controls">
@@ -314,7 +313,6 @@ document.querySelectorAll('.btn-delete-review').forEach(btn => {
         const formData = new FormData();
         formData.append('action', 'delete_review');
         formData.append('review_id', reviewId);
-        formData.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
         try {
             const resp = await fetch('backend/soumettre_review.php', {
                 method: 'POST',
@@ -581,8 +579,6 @@ document.querySelectorAll('.btn-delete-review').forEach(btn => {
         button.disabled = true;
 
         try {
-            const body = new FormData();
-            body.append('_csrf', document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '');
             const response = await fetch('demande_capital.php', {
                 method: 'POST',
                 headers: {
