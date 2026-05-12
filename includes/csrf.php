@@ -50,9 +50,8 @@ function csrf_validate(): bool
     $now = time();
     $meta = $_SESSION['csrf_tokens'][$token];
 
-    unset($_SESSION['csrf_tokens'][$token]);
-
     if (($now - ($meta['ts'] ?? 0)) > CSRF_TTL) {
+        unset($_SESSION['csrf_tokens'][$token]);
         return false;
     }
 

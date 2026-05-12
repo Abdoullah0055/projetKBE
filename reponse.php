@@ -12,6 +12,7 @@ $bodyClass = 'enigmes-page reponse-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
 require_once __DIR__ . '/AlgosBD.php';
+require_once __DIR__ . '/includes/csrf.php';
 
 $context = resolve_enigme_request('reponse.php');
 

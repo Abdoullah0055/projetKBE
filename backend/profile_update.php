@@ -218,7 +218,7 @@ try {
 
         $verifyLink = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https" : "http")
             . "://" . $_SERVER['HTTP_HOST']
-            . dirname($_SERVER['PHP_SELF'])
+            . dirname(dirname($_SERVER['PHP_SELF']))
             . "/verify_email.php?token=" . urlencode($token);
 
         $subject = "Verification de votre nouveau courriel Darquest";
