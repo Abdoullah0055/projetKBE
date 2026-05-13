@@ -208,13 +208,7 @@ $rightImages = [
                 <?= renderItemProperties($item, $properties) ?>
             </div>
 
-            <div class="spec-grid">
-                <div class="spec-item"><span>Categorie</span><strong><?= htmlspecialchars(ucfirst($item['type'])) ?></strong></div>
-                <div class="spec-item"><span>Authenticite</span><strong>Certifiee</strong></div>
-                <div class="spec-item"><span>Origine</span><strong>Inconnue</strong></div>
-            </div>
-
-  <div class="purchase-section">
+            <div class="purchase-section">
   <?php
     $isSpell = (mb_strtolower($item['type'], 'UTF-8') === 'magicspell');
     $isRestrictedMage = $isSpell && !$user['isMage'];

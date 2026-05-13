@@ -1,4 +1,5 @@
 # Rapport d'audit — Checklist Darquest (Sprints 1, 2 et 3)
+
 **Date : 13 mai 2026 — Généré à 09:37**
 
 ---
@@ -105,7 +106,7 @@
   - [✅] 1ère fois : 10 pièces d'or (quand totalIncreases === 0)
   - [✅] 2ème fois : 10 pièces d'argent (quand totalIncreases === 1)
   - [✅] 3ème fois : 10 pièces de bronze (quand totalIncreases === 2)
-  Le compteur combine les augmentations directes (FundsGivenCount) + les demandes acceptées. Plafonné à 3 maximum.
+    Le compteur combine les augmentations directes (FundsGivenCount) + les demandes acceptées. Plafonné à 3 maximum.
 
 - [✅] **Voir l'inventaire des joueurs (Admin)**
   Implémenté : `admin.php` avec sélecteur de joueur, requête AJAX vers `backend/admin_get_inventory.php`, affichage d'un tableau.
@@ -290,26 +291,27 @@
 
 ## RÉSUMÉ STATISTIQUE
 
-| Catégorie | ✅ | ⬜ | Total |
-|-----------|---|---|-------|
-| Darquest Sprint 1 (M) | 11 | 0 | 11 |
-| Darquest Sprint 1 (S) | 1 | 0 | 1 |
-| Darquest Sprint 2 (M) | 1 | 1 (dettes) | 2 |
-| Darquest Sprint 2 (S) | 1 | 0 | 1 |
-| Darquest Sprint 3 | 14 | 1 (dettes) | 15 |
-| Enigma Sprint 2 (M) | 6 | 0 | 6 |
-| Enigma Sprint 2 (S) | 2 | 0 | 2 |
-| Enigma Sprint 2 (C) | 2 | 0 | 2 |
-| Enigma Sprint 3 | 2 | 0 | 2 |
-| Règles Métier | 4 | 0 | 4 |
-| Stories Techniques | 2 | 8 | 10 |
-| Tests Unitaires Sprint 1 | 0 | 11 | 11 |
-| Tests Unitaires Sprint 2 | 0 | 2 | 2 |
-| Tests Unitaires Sprint 3 | 0 | 1 | 1 |
-| Gestion de Projet | 0 | 5 | 5 |
-| **Total** | **46** | **29** | **75** |
+| Catégorie                | ✅     | ⬜        | Total  |
+| ------------------------ | ------ | ---------- | ------ |
+| Darquest Sprint 1 (M)    | 11     | 0          | 11     |
+| Darquest Sprint 1 (S)    | 1      | 0          | 1      |
+| Darquest Sprint 2 (M)    | 1      | 1 (dettes) | 2      |
+| Darquest Sprint 2 (S)    | 1      | 0          | 1      |
+| Darquest Sprint 3        | 14     | 1 (dettes) | 15     |
+| Enigma Sprint 2 (M)      | 6      | 0          | 6      |
+| Enigma Sprint 2 (S)      | 2      | 0          | 2      |
+| Enigma Sprint 2 (C)      | 2      | 0          | 2      |
+| Enigma Sprint 3          | 2      | 0          | 2      |
+| Règles Métier            | 4      | 0          | 4      |
+| Stories Techniques       | 2      | 8          | 10     |
+| Tests Unitaires Sprint 1 | 0      | 11         | 11     |
+| Tests Unitaires Sprint 2 | 0      | 2          | 2      |
+| Tests Unitaires Sprint 3 | 0      | 1          | 1      |
+| Gestion de Projet        | 0      | 5          | 5      |
+| **Total**                | **46** | **29**     | **75** |
 
 **Conclusion :** Le codebase implémente correctement la quasi-totalité des fonctionnalités fonctionnelles demandées (46/46 items fonctionnels). Les points en ⬜ concernent principalement :
+
 1. **Les tests unitaires automatisés** — totalement absents du codebase (0 test trouvé)
 2. **Les "dettes" des sprints précédents** — impossible à vérifier sans les retours de revue
 3. **Les stories techniques/processus** (GitHub, Trello, backlog) — relèvent de la gestion de projet, pas du code
