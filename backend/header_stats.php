@@ -32,6 +32,5 @@ try {
     'bronze' => (int)$row['bronze']
     ]);
 } catch (Throwable $e) {
-    error_log('header_stats error: ' . $e->getMessage());
     echo json_encode(['success' => false]);
 }

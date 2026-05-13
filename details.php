@@ -63,7 +63,7 @@ $detailAlert = null;
 if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
     $candidate = $_SESSION['alerte'];
     $alertTypeRaw = (string) ($candidate['type'] ?? '');
-    $alertType = in_array($alertTypeRaw, ['succes', 'erreur'], true) ? $alertTypeRaw : '';
+    $alertType = in_array($alertTypeRaw, ['success', 'erreur'], true) ? $alertTypeRaw : '';
     $alertMessage = trim((string) ($candidate['message'] ?? ''));
 
     $isExpectedSource = (($candidate['source'] ?? '') === 'add_to_cart');
@@ -137,7 +137,7 @@ $rightImages = [
 
 <?php if ($detailAlert !== null): ?>
     <div class="alert-box <?= $detailAlert['type'] ?>">
-        <i class="fa-solid <?= $detailAlert['type'] === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
+        <i class="fa-solid <?= $detailAlert['type'] === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
         <?= htmlspecialchars($detailAlert['message']) ?>
     </div>
 <?php endif; ?>
@@ -317,7 +317,7 @@ document.querySelectorAll('.btn-delete-review').forEach(btn => {
             if (data.success) {
                 const card = btn.closest('.review-card');
                 if (card) card.remove();
-                if (typeof showToast === 'function') showToast(data.message, 'succes');
+                if (typeof showToast === 'function') showToast(data.message, 'success');
             } else {
                 if (typeof showToast === 'function') showToast(data.message || 'Erreur lors de la suppression.', 'erreur');
             }
@@ -548,14 +548,11 @@ document.querySelectorAll('.btn-delete-review').forEach(btn => {
                 rawText = await response.text();
                 data = JSON.parse(rawText);
             } catch (_error) {
-                console.log("[ajouter-panier] Response is not JSON. Raw:", rawText.substring(0, 200));
                 data = null;
             }
 
-            console.log("[ajouter-panier] response.ok:", response.ok, "data:", data);
-
             if (response.ok && data && data.success) {
-                showToast(data.message || "Objet ajoute au panier.", 'succes');
+                showToast(data.message || "Objet ajoute au panier.", 'success');
             } else {
                 const errorMessage = data && data.message ?
                     data.message :

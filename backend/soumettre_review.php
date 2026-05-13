@@ -235,8 +235,6 @@ $insertStmt->execute([
         $pdo->rollBack();
     }
 
-    error_log('[soumettre_review] Exception: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ':' . $e->getLine());
-
     review_response([
         'success' => false,
         'message' => 'Impossible d\'enregistrer votre note pour le moment.',

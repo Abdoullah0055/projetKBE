@@ -517,13 +517,12 @@ async function deleteItemFromCart(itemId, button) {
         confirmBtn.innerText = 'Traitement...';
 
         try {
-            const response = await fetch('backend/confirmer_achat.php', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json'
-                },
-                body: purchaseBody
-            });
+        const response = await fetch('backend/confirmer_achat.php', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
             const data = await response.json();
 
             if (!response.ok || !data.success) {

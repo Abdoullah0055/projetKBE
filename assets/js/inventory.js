@@ -1,12 +1,10 @@
 function updateRecommendations(newHp, maxHp) {
 var missingHP = Math.max(0, maxHp - newHp);
 var allBtns = document.querySelectorAll('.btn-use-item');
-console.log('[reco] updateRecommendations called, newHp=' + newHp + ', maxHp=' + maxHp + ', missingHP=' + missingHP + ', btns=' + allBtns.length);
 
 allBtns.forEach(function (b) {
 var oldBadge = b.querySelector('.recommended-badge');
 if (oldBadge) {
-console.log('[reco] removing old badge from item ' + b.dataset.itemId);
 oldBadge.remove();
 }
 b.removeAttribute('data-is-recommended');
@@ -25,7 +23,6 @@ var waste = hv > effectiveHeal;
 b.dataset.wouldWaste = waste ? '1' : '0';
 
 var score = waste ? -hv : hv;
-console.log('[reco] item ' + b.dataset.itemId + ' heal=' + hv + ' waste=' + waste + ' score=' + score);
 if (score > bestScore) {
 bestScore = score;
 bestBtn = b;
@@ -46,9 +43,6 @@ badge.dataset.tooltip = bestReason;
 badge.innerHTML = '<i class="fa-solid fa-star"></i> Recommande';
 bestBtn.appendChild(document.createTextNode(' '));
 bestBtn.appendChild(badge);
-console.log('[reco] new badge on item ' + bestBtn.dataset.itemId + ': ' + bestReason);
-} else {
-console.log('[reco] no recommendation (missingHP=' + missingHP + ', bestBtn=' + !!bestBtn + ')');
 }
 }
 
@@ -83,7 +77,7 @@ body: formData
 .then(function (r) { return r.json(); })
 .then(function (data) {
 if (data.success) {
-showToast(data.message, 'succes');
+showToast(data.message, 'success');
 
 var hpValue = document.querySelector('.hp-value');
 var hpFill = document.querySelector('.hp-bar-fill');
@@ -157,7 +151,7 @@ body: formData
 .then(function (r) { return r.json(); })
 .then(function (data) {
 if (data.success) {
-showToast(data.message, 'succes');
+showToast(data.message, 'success');
 
 var walletSpans = document.querySelectorAll('.user-wallet span');
 if (data.new_balance && walletSpans.length >= 3) {

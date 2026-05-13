@@ -28,13 +28,13 @@ function showCustomConfirm(message, title) {
 }
 
 function showToast(message, type) {
-    type = type || 'succes';
+    type = type || 'success';
     var oldAlert = document.querySelector('.alert-box');
     if (oldAlert) oldAlert.remove();
 
     var box = document.createElement('div');
     box.className = 'alert-box ' + type;
-    var iconClass = type === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    var iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
     box.innerHTML = '<i class="fa-solid ' + iconClass + '"></i> ' + message;
     document.body.appendChild(box);
 

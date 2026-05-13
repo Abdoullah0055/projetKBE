@@ -45,7 +45,7 @@ if ($_POST['action'] === 'add_item') {
             elseif ($typeName === 'magicspell') $pdo->prepare("INSERT INTO MagicSpellProperties (ItemId, SpellDamage, ManaCost, ElementType) VALUES (?, 30, 15, 'Magic')")->execute([$newItemId]);
 
             $pdo->commit();
-            $message_alerte = ["type" => "succes", "texte" => "L'artefact '$name' a été ajouté avec succès."];
+            $message_alerte = ["type" => "success", "texte" => "L'artefact '$name' a été ajouté avec succès."];
         } catch (Exception $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -68,7 +68,7 @@ elseif ($_POST['action'] === 'edit_item') {
     } else {
     $stmt = $pdo->prepare("UPDATE Items SET Name=?, Description=?, PriceGold=?, PriceSilver=?, PriceBronze=?, Stock=? WHERE ItemId=?");
     $stmt->execute([$name, $desc, $gold, $silver, $bronze, $stock, $itemId]);
-    $message_alerte = ["type" => "succes", "texte" => "L'artefact a été modifié avec succès."];
+    $message_alerte = ["type" => "success", "texte" => "L'artefact a été modifié avec succès."];
     }
 }
 
@@ -77,7 +77,7 @@ elseif ($_POST['action'] === 'edit_item') {
         $itemId = (int)$_POST['item_id'];
         $stmt = $pdo->prepare("UPDATE Items SET IsActive = NOT IsActive WHERE ItemId=?");
         $stmt->execute([$itemId]);
-        $message_alerte = ["type" => "succes", "texte" => "Le statut de disponibilité de l'artefact a été mis à jour."];
+        $message_alerte = ["type" => "success", "texte" => "Le statut de disponibilité de l'artefact a été mis à jour."];
     }
 
     // 4. Supprimer Item définitivement
@@ -85,10 +85,10 @@ elseif ($_POST['action'] === 'edit_item') {
         $itemId = (int)$_POST['item_id'];
         try {
             $pdo->prepare("DELETE FROM Items WHERE ItemId = ?")->execute([$itemId]);
-            $message_alerte = ["type" => "succes", "texte" => "L'artefact a été détruit définitivement."];
+            $message_alerte = ["type" => "success", "texte" => "L'artefact a été détruit définitivement."];
         } catch (Exception $e) {
             $pdo->prepare("UPDATE Items SET IsActive = 0 WHERE ItemId = ?")->execute([$itemId]);
-            $message_alerte = ["type" => "succes", "texte" => "L'objet est lié à des achats passés, il a été désactivé (caché) au lieu d'être supprimé."];
+            $message_alerte = ["type" => "success", "texte" => "L'objet est lié à des achats passés, il a été désactivé (caché) au lieu d'être supprimé."];
         }
     }
 
@@ -124,7 +124,7 @@ elseif ($_POST['action'] === 'edit_item') {
       try {
           $stmt = $pdo->prepare("INSERT INTO Riddles (QuestionText, AnswerText, WrongAnswer1, WrongAnswer2, WrongAnswer3, HintText, Difficulty, RiddleCategoryId, RewardGold, RewardSilver, RewardBronze, RiddleType, IsActive) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
           $stmt->execute([$question, $answer, $wrongAnswer1, $wrongAnswer2, $wrongAnswer3, $hint, $difficulty, $categoryId, $rewardGold, $rewardSilver, $rewardBronze, $riddleType]);
-          $message_alerte = ["type" => "succes", "texte" => "La nouvelle quête a été ajoutée aux archives."];
+          $message_alerte = ["type" => "success", "texte" => "La nouvelle quête a été ajoutée aux archives."];
  } catch (Exception $e) {
     error_log($e->getMessage());
     $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de l'ajout de l'énigme."];
@@ -136,7 +136,7 @@ elseif ($_POST['action'] === 'edit_item') {
         $riddleId = (int)$_POST['riddle_id'];
         $stmt = $pdo->prepare("UPDATE Riddles SET IsActive = NOT IsActive WHERE RiddleId=?");
         $stmt->execute([$riddleId]);
-        $message_alerte = ["type" => "succes", "texte" => "Le statut de la quête a été mis à jour."];
+        $message_alerte = ["type" => "success", "texte" => "Le statut de la quête a été mis à jour."];
     }
 
     // 7. Supprimer Énigme
@@ -144,10 +144,10 @@ elseif ($_POST['action'] === 'edit_item') {
         $riddleId = (int)$_POST['riddle_id'];
         try {
             $pdo->prepare("DELETE FROM Riddles WHERE RiddleId = ?")->execute([$riddleId]);
-            $message_alerte = ["type" => "succes", "texte" => "La quête a été définitivement effacée."];
+            $message_alerte = ["type" => "success", "texte" => "La quête a été définitivement effacée."];
         } catch (Exception $e) {
             $pdo->prepare("UPDATE Riddles SET IsActive = 0 WHERE RiddleId = ?")->execute([$riddleId]);
-            $message_alerte = ["type" => "succes", "texte" => "Des joueurs ont déjà répondu à cette quête. Elle a été désactivée au lieu d'être supprimée."];
+            $message_alerte = ["type" => "success", "texte" => "Des joueurs ont déjà répondu à cette quête. Elle a été désactivée au lieu d'être supprimée."];
         }
     }
 
@@ -190,7 +190,7 @@ elseif ($_POST['action'] === 'edit_item') {
 
                     $pdo->prepare("UPDATE Users SET Gold = Gold + ?, Silver = Silver + ?, Bronze = Bronze + ?, FundsGivenCount = FundsGivenCount + 1 WHERE UserId = ?")->execute([$addGold, $addSilver, $addBronze, $targetUserId]);
                     $pdo->commit();
-                    $message_alerte = ["type" => "succes", "texte" => "Capital augmente : {$palierLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
+                    $message_alerte = ["type" => "success", "texte" => "Capital augmente : {$palierLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
                 }
             }
         } catch (Exception $e) {
@@ -204,7 +204,7 @@ elseif ($_POST['action'] === 'edit_item') {
         $targetUserId = (int)$_POST['user_id'];
         try {
             $pdo->prepare("UPDATE Users SET IsBanned = NOT IsBanned WHERE UserId = ?")->execute([$targetUserId]);
-            $message_alerte = ["type" => "succes", "texte" => "Le droit de connexion du joueur a été modifié."];
+            $message_alerte = ["type" => "success", "texte" => "Le droit de connexion du joueur a été modifié."];
         } catch (Exception $e) {
             $message_alerte = ["type" => "erreur", "texte" => "Impossible de modifier le blocage de ce joueur."];
         }
@@ -215,18 +215,36 @@ elseif ($_POST['action'] === 'delete_user') {
     $targetUserId = (int)$_POST['user_id'];
     try {
         $pdo->prepare("CALL sp_DeleteUserAccount(?)")->execute([$targetUserId]);
-        $message_alerte = ["type" => "succes", "texte" => "Le joueur a été supprimé des archives."];
+        $message_alerte = ["type" => "success", "texte" => "Le joueur a été supprimé des archives."];
     } catch(Exception $e) {
         $message_alerte = ["type" => "erreur", "texte" => "Erreur inattendue lors de la suppression. " . $e->getMessage()];
     }
 }
 
-// 11. Supprimer une evaluation
+// 11. Fixer le MaxHP d'un joueur
+elseif ($_POST['action'] === 'set_maxhp') {
+    $targetUserId = (int)$_POST['user_id'];
+    $newMaxHP = max(1, min(9999, (int)$_POST['max_hp']));
+
+    try {
+        $pdo->prepare("UPDATE Users SET MaxHP = ? WHERE UserId = ?")->execute([$newMaxHP, $targetUserId]);
+
+        if ($targetUserId === (int)$_SESSION['user']['id']) {
+            $_SESSION['user']['max_hp'] = $newMaxHP;
+        }
+
+        $message_alerte = ["type" => "success", "texte" => "PV max fixé à {$newMaxHP} pour le joueur."];
+    } catch (Exception $e) {
+        $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de la mise à jour des PV max."];
+    }
+}
+
+// 12. Supprimer une evaluation
 elseif ($_POST['action'] === 'delete_review') {
     $reviewId = (int)$_POST['review_id'];
     try {
         $pdo->prepare("DELETE FROM Reviews WHERE ReviewId = ?")->execute([$reviewId]);
-        $message_alerte = ["type" => "succes", "texte" => "L'evaluation a ete supprimee."];
+        $message_alerte = ["type" => "success", "texte" => "L'evaluation a ete supprimee."];
     } catch (Exception $e) {
         $message_alerte = ["type" => "erreur", "texte" => "Erreur lors de la suppression de l'evaluation."];
     }
@@ -279,7 +297,7 @@ elseif ($_POST['action'] === 'delete_review') {
             ->execute([$requestId]);
 
             $pdo->commit();
-            $message_alerte = ["type" => "succes", "texte" => "Demande acceptee. Capital ajoute: {$rewardLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
+            $message_alerte = ["type" => "success", "texte" => "Demande acceptee. Capital ajoute: {$rewardLabel}. (Total: " . ($totalIncreases + 1) . "/3)"];
         } catch (Exception $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
@@ -293,7 +311,7 @@ elseif ($_POST['action'] === 'delete_review') {
             $stmt = $pdo->prepare("UPDATE Demandes SET Status = 'Refused', ProcessedAt = NOW() WHERE DemandeId = ? AND Status = 'Pending'");
             $stmt->execute([$requestId]);
             $message_alerte = $stmt->rowCount() > 0
-                ? ["type" => "succes", "texte" => "Demande refusee."]
+                ? ["type" => "success", "texte" => "Demande refusee."]
                 : ["type" => "erreur", "texte" => "Demande introuvable ou deja traitee."];
         } catch (Exception $e) {
             $message_alerte = ["type" => "erreur", "texte" => "Echec du refus: " . $e->getMessage()];
@@ -322,7 +340,7 @@ try {
 $hasBannedCol = false;
 try { $pdo->query("SELECT IsBanned FROM Users LIMIT 1"); $hasBannedCol = true; } catch (Exception $e) {}
 
-$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze, u.FundsGivenCount" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
+$query = "SELECT u.UserId, u.Alias, u.Role, u.Gold, u.Silver, u.Bronze, u.CurrentHP, u.MaxHP, u.FundsGivenCount" . ($hasBannedCol ? ", u.IsBanned" : "") . ", COALESCE(s.MagicSolvedCount, 0) as MagicSolvedCount FROM Users u LEFT JOIN UserRiddleStats s ON s.UserId = u.UserId WHERE u.Role IN ('Player', 'Mage') ORDER BY u.Alias ASC";
 $players = $pdo->query($query)->fetchAll();
 $capitalRequestsByPlayer = [];
 $capitalRequests = [];
@@ -451,7 +469,7 @@ include __DIR__ . '/templates/head.php';
         transition: opacity 0.5s ease;
     }
 
-    .alert-box.succes {
+    .alert-box.success {
         color: #2ecc71;
         border-left: 5px solid #2ecc71;
     }
@@ -483,7 +501,7 @@ include __DIR__ . '/templates/head.php';
 
         <?php if ($message_alerte): ?>
             <div class="alert-box <?= $message_alerte['type'] ?>" style="margin-top:20px;">
-                <i class="fa-solid <?= $message_alerte['type'] === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
+                <i class="fa-solid <?= $message_alerte['type'] === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle' ?>"></i>
                 <?= htmlspecialchars($message_alerte['texte']) ?>
             </div>
         <?php endif; ?>
@@ -782,7 +800,8 @@ include __DIR__ . '/templates/head.php';
 <th>ID</th>
 <th>Alias</th>
 <th>Capital</th>
-    <th>Capital Total</th>
+<th>Capital Total</th>
+<th>PV</th>
 <th>Magie</th>
 <th>Statut</th>
 <th>Actions</th>
@@ -794,8 +813,9 @@ include __DIR__ . '/templates/head.php';
 <td>#<?= $p['userid'] ?></td>
                 <td><strong><?= htmlspecialchars($p['alias']) ?></strong><br><small><?= $p['role'] ?></small></td>
                 <td><span style="color: gold;"><?= $p['gold'] ?></span> / <span style="color: silver;"><?= $p['silver'] ?></span> / <span style="color: #cd7f32;"><?= $p['bronze'] ?></span></td>
-    <td><?= (int)($p['fundsgivencount'] ?? 0) + (int)($capitalRequestsByPlayer_lookup[$p['userid']] ?? 0) ?>/3</td>
-                <td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
+<td><?= (int)($p['fundsgivencount'] ?? 0) + (int)($capitalRequestsByPlayer_lookup[$p['userid']] ?? 0) ?>/3</td>
+<td><?= (int)$p['currenthp'] ?> / <?= (int)$p['maxhp'] ?></td>
+<td><?php if ((int)$p['magicsolvedcount'] >= 3): ?><span style="color: #9b59b6; font-weight:bold;"><i class="fa-solid fa-hat-wizard"></i> Mage</span><?php else: ?><span style="color: var(--text-silver);"><?= (int)$p['magicsolvedcount'] ?>/3</span><?php endif; ?></td>
         <td>
         <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
                                             <span style="color: #E74C3C; font-weight:bold;">Bloqué</span>
@@ -805,15 +825,22 @@ include __DIR__ . '/templates/head.php';
                                     </td>
                                     <td>
 <form style="display:inline;" method="POST" action="admin.php">
+<input type="hidden" name="action" value="set_maxhp">
+<input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
+<input type="number" name="max_hp" value="<?= (int)$p['maxhp'] ?>" min="1" max="9999" style="width:55px; padding:2px 4px; border-radius:4px; border:1px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white;">
+<button type="submit" class="btn-outline-custom" style="padding:3px 6px;" title="Fixer les PV max"><i class="fa-solid fa-heart" style="color:#e74c3c;"></i></button>
+</form>
+
+<form style="display:inline;" method="POST" action="admin.php">
 <input type="hidden" name="action" value="toggle_ban">
 <input type="hidden" name="user_id" value="<?= $p['userid'] ?>">
 
-        <?php if(isset($p['isbanned']) && $p['isbanned']): ?>
-                                                <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#2ECC71; color:#2ECC71;" title="Débloquer l'accès"><i class="fa-solid fa-unlock"></i></button>
-                                            <?php else: ?>
-                                                <button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#E67E22; color:#E67E22;" title="Bloquer la connexion"><i class="fa-solid fa-ban"></i></button>
-                                            <?php endif; ?>
-                                        </form>
+<?php if(isset($p['isbanned']) && $p['isbanned']): ?>
+<button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#2ECC71; color:#2ECC71;" title="Débloquer l'accès"><i class="fa-solid fa-unlock"></i></button>
+<?php else: ?>
+<button type="submit" class="btn-outline-custom" style="padding:5px; border-color:#E67E22; color:#E67E22;" title="Bloquer la connexion"><i class="fa-solid fa-ban"></i></button>
+<?php endif; ?>
+</form>
 
 <form style="display:inline;" method="POST" action="admin.php" class="confirm-delete-user-form">
 <input type="hidden" name="action" value="delete_user">
@@ -821,7 +848,7 @@ include __DIR__ . '/templates/head.php';
 
 <button type="submit" class="btn-danger" style="padding:5px;" title="Supprimer le joueur"><i class="fa-solid fa-user-slash"></i></button>
 </form>
-                                    </td>
+</td>
                                 </tr>
                                 <?php endforeach; ?>
 </tbody>

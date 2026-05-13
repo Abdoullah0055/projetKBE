@@ -10,8 +10,6 @@ require_once __DIR__ . '/../includes/session.php';
 $response = ['success' => false, 'message' => 'Une erreur inconnue est survenue.'];
 $isAjaxRequest = is_ajax_request();
 
-error_log("[ajouter_au_panier] isAjaxRequest=" . ($isAjaxRequest ? 'true' : 'false') . " X-Requested-With=" . ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? 'missing') . " Accept=" . ($_SERVER['HTTP_ACCEPT'] ?? 'missing'));
-
 if ($isAjaxRequest && isset($_SESSION['alerte'])) {
     unset($_SESSION['alerte']);
 }
@@ -25,10 +23,7 @@ $userId = $_SESSION['user']['id'] ?? null;
 $itemId = isset($_POST['item_id']) ? intval($_POST['item_id']) : 0;
 $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 0;
 
-error_log("[ajouter_au_panier] POST: item_id=$itemId, quantity=$quantity, userId=" . ($userId ?? 'null') . ", SESSION_user=" . json_encode($_SESSION['user'] ?? null));
-
 if (!$userId) {
-    error_log("[ajouter_au_panier] userId manquant dans la session");
     $response['message'] = "Session utilisateur invalide.";
     handle_response($response, "../login.php", $isAjaxRequest);
 }
@@ -54,15 +49,13 @@ if ($itemTypeName === 'magicspell' && !$isMage) {
 
 $success = add_to_cart($userId, $itemId, $quantity);
 
-error_log("[ajouter_au_panier] add_to_cart result: " . ($success ? 'true' : 'false'));
-
 if ($success) {
     $response['success'] = true;
     $response['message'] = "L'objet a ete ajoute a votre panier.";
 
     if (!$isAjaxRequest) {
         $_SESSION['alerte'] = [
-            'type' => 'succes',
+            'type' => 'success',
             'message' => $response['message'],
             'source' => 'add_to_cart',
             'item_id' => $itemId,
@@ -106,8 +99,6 @@ function is_ajax_request(): bool
 
     $acceptHeader = (string)($_SERVER['HTTP_ACCEPT'] ?? '');
     $wantsJson = strpos($acceptHeader, 'application/json') !== false;
-
-    error_log("[is_ajax_request] isXmlHttpRequest=" . var_export($isXmlHttpRequest, true) . " wantsJson=" . var_export($wantsJson, true));
 
     return $isXmlHttpRequest || $wantsJson;
 }

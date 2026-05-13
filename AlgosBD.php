@@ -553,7 +553,7 @@ function is_riddle_magic_category(int $riddle_id): bool
 function calculate_sell_price(int $item_id): array
 {
     $pdo = get_pdo();
-    $stmt = $pdo->prepare("SELECT i.ItemTypeId, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Rarity FROM Items i WHERE i.ItemId = ?");
+    $stmt = $pdo->prepare("SELECT i.ItemTypeId, t.Name AS TypeName, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Rarity FROM Items i JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId WHERE i.ItemId = ?");
     $stmt->execute([$item_id]);
     $item = $stmt->fetch();
 
@@ -565,7 +565,8 @@ function calculate_sell_price(int $item_id): array
     $priceSilver = (int)$item['pricesilver'];
     $priceBronze = (int)$item['pricebronze'];
 
-    if ((int)$item['itemtypeid'] === 4) {
+    $typeName = mb_strtolower(trim($item['typename'] ?? ''), 'UTF-8');
+    if ($typeName === 'magicspell') {
         $rarity = mb_strtolower(trim($item['rarity'] ?? 'commun'), 'UTF-8');
         $multiplier = match($rarity) {
             'commun' => 1.0,
