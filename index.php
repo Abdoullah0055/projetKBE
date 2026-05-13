@@ -587,6 +587,12 @@ document.addEventListener("DOMContentLoaded", function() {
   const rarityFilter = document.getElementById("rarity-filter");
   const priceFilter = document.getElementById("price-filter");
   const resetBtn = document.getElementById("reset-filters");
+  const mobileTypeFilter = document.getElementById("mobile-type-filter");
+  const mobileSearchFilter = document.getElementById("mobile-search-filter");
+  const mobileSortFilter = document.getElementById("mobile-sort-filter");
+  const mobileRarityFilter = document.getElementById("mobile-rarity-filter");
+  const mobilePriceFilter = document.getElementById("mobile-price-filter");
+  const mobileResetBtn = document.getElementById("mobile-reset-filters");
   const items = document.querySelectorAll(".item-row");
   const noResults = document.getElementById("no-results-message");
   const pagination = document.getElementById("catalog-pagination");
@@ -673,10 +679,42 @@ document.addEventListener("DOMContentLoaded", function() {
     applyFilters();
   });
 
-        const capitalRequestBtn = document.getElementById("capital-request-sidebar-btn");
-        if (capitalRequestBtn) {
-            capitalRequestBtn.addEventListener("click", async function() {
-                capitalRequestBtn.disabled = true;
+  function syncDesktopToMobileFilters() {
+    if (mobileTypeFilter) mobileTypeFilter.value = typeFilter.value;
+    if (mobileSearchFilter) mobileSearchFilter.value = searchFilter.value;
+    if (mobileSortFilter) mobileSortFilter.value = sortFilter.value;
+    if (mobileRarityFilter) mobileRarityFilter.value = rarityFilter.value;
+    if (mobilePriceFilter) mobilePriceFilter.value = priceFilter.value;
+  }
+
+  function bindMobileFilter(mobileEl, desktopEl, eventName) {
+    if (!mobileEl || !desktopEl) return;
+    mobileEl.addEventListener(eventName, () => {
+      desktopEl.value = mobileEl.value;
+      applyFilters();
+    });
+  }
+
+  bindMobileFilter(mobileTypeFilter, typeFilter, "change");
+  bindMobileFilter(mobileSearchFilter, searchFilter, "input");
+  bindMobileFilter(mobileSortFilter, sortFilter, "change");
+  bindMobileFilter(mobileRarityFilter, rarityFilter, "change");
+  bindMobileFilter(mobilePriceFilter, priceFilter, "input");
+
+  if (mobileResetBtn) {
+    mobileResetBtn.addEventListener("click", () => {
+      typeFilter.value = "all";
+      searchFilter.value = "";
+      sortFilter.value = "name-asc";
+      rarityFilter.value = "all";
+      priceFilter.value = "";
+      applyFilters();
+      syncDesktopToMobileFilters();
+    });
+  }
+
+        async function handleCapitalRequest(button) {
+                button.disabled = true;
                 try {
                     const response = await fetch("demande_capital.php", {
                         method: "POST",
@@ -701,12 +739,26 @@ document.addEventListener("DOMContentLoaded", function() {
                 } catch (_error) {
                     showToast("Erreur reseau pendant l'envoi de la demande.", "erreur");
                 } finally {
-                    capitalRequestBtn.disabled = false;
+                    button.disabled = false;
                 }
-            });
+        }
+
+        const capitalRequestButtons = [
+            document.getElementById("capital-request-sidebar-btn"),
+            document.getElementById("capital-request-drawer-btn")
+        ];
+
+        capitalRequestButtons.forEach((btn) => {
+            if (!btn) return;
+            btn.addEventListener("click", () => handleCapitalRequest(btn));
+        });
+
+        if (resetBtn) {
+            resetBtn.addEventListener("click", syncDesktopToMobileFilters);
         }
 
         applyFilters();
+        syncDesktopToMobileFilters();
     });
 </script>
 

@@ -2,6 +2,8 @@
 $headerTheme = $_COOKIE['theme'] ?? 'light';
 $headerIconClass = ($headerTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Admin';
+$currentPageName = basename($_SERVER['PHP_SELF'] ?? '');
+$isCatalogPage = ($currentPageName === 'index.php');
 ?>
 
 <header>
@@ -27,7 +29,7 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
         </div>
     </form>
 
-<div class="header-actions">
+<div class="header-actions<?= $user['isConnected'] ? ' is-authenticated' : '' ?>">
     <?php if ($user['isConnected']): ?>
     <?php if ($user['isMage']): ?>
     <span class="mage-badge" title="Mage"><i class="fa-solid fa-hat-wizard"></i></span>
@@ -95,6 +97,64 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
             </div>
         </form>
 
+        <?php if ($isCatalogPage): ?>
+        <section class="mobile-drawer-filters" aria-label="Filtres du catalogue">
+            <h3 class="mobile-drawer-section-title">Filtres du Catalogue</h3>
+            <form class="mobile-filter-form" onsubmit="return false;">
+                <div class="mobile-filter-group">
+                    <label for="mobile-search-filter">Recherche</label>
+                    <input type="text" id="mobile-search-filter" class="filter-input" placeholder="Nom de l'objet...">
+                </div>
+
+                <div class="mobile-filter-group">
+                    <label for="mobile-type-filter">Categorie</label>
+                    <select id="mobile-type-filter" class="filter-select">
+                        <option value="all">Tous les items</option>
+                        <option value="weapon">Armes</option>
+                        <option value="armor">Armures</option>
+                        <option value="potion">Potions</option>
+                        <option value="magicspell">Sorts</option>
+                    </select>
+                </div>
+
+                <div class="mobile-filter-group">
+                    <label for="mobile-sort-filter">Trier par</label>
+                    <select id="mobile-sort-filter" class="filter-select">
+                        <option value="name-asc">Nom (A-Z)</option>
+                        <option value="name-desc">Nom (Z-A)</option>
+                        <option value="price-asc">Prix (croissant)</option>
+                        <option value="price-desc">Prix (decroissant)</option>
+                        <option value="rating-desc">Note (meilleure)</option>
+                        <option value="rating-asc">Note (moins bonne)</option>
+                        <option value="rarity-asc">Rarrete (Commun -> Mythique)</option>
+                        <option value="rarity-desc">Rarrete (Mythique -> Commun)</option>
+                    </select>
+                </div>
+
+                <div class="mobile-filter-group">
+                    <label for="mobile-rarity-filter">Rarrete</label>
+                    <select id="mobile-rarity-filter" class="filter-select">
+                        <option value="all">Toutes</option>
+                        <option value="rarity-commun">Commun</option>
+                        <option value="rarity-rare">Rare</option>
+                        <option value="rarity-epique">Epique</option>
+                        <option value="rarity-legendaire">Legendaire</option>
+                        <option value="rarity-mythique">Mythique</option>
+                    </select>
+                </div>
+
+                <div class="mobile-filter-group">
+                    <label for="mobile-price-filter">Prix max (or)</label>
+                    <input type="number" id="mobile-price-filter" class="filter-input" placeholder="Ex: 50" min="0" step="1">
+                </div>
+
+                <button type="button" id="mobile-reset-filters" class="drawer-action mobile-reset-filters-btn">
+                    <i class="fa-solid fa-rotate-left"></i> Reinitialiser les filtres
+                </button>
+            </form>
+        </section>
+        <?php endif; ?>
+
         <!-- Wallet info in drawer (mobile only) -->
     <?php if ($user['isConnected']): ?>
     <?php if ($user['isMage']): ?>
@@ -115,6 +175,15 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
         <!-- Main actions -->
         <div class="mobile-drawer-actions">
             <?php if ($user['isConnected']): ?>
+                <button onclick="window.location.href='roadmap.php'" class="drawer-action">
+                    <i class="fa-solid fa-door-open"></i> Enigmes
+                </button>
+                <button onclick="window.location.href='inventory.php'" class="drawer-action">
+                    <i class="fa-solid fa-box-open"></i> Inventaire
+                </button>
+                <button type="button" id="capital-request-drawer-btn" class="drawer-action">
+                    <i class="fa-solid fa-sack-dollar"></i> Demande capital
+                </button>
                 <button onclick="window.location.href='profile.php'" class="drawer-action">
                     <i class="fa-solid fa-user-gear"></i> Mon Profil
                 </button>
