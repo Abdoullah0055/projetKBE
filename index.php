@@ -127,6 +127,7 @@ function buildPageUrl(int $targetPage): string
         display: grid !important;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)) !important;
         gap: 14px !important;
+        grid-auto-rows: minmax(260px, auto);
     }
 
 .product-list .item-row {
@@ -342,7 +343,7 @@ function buildPageUrl(int $targetPage): string
     }
 
     .item-rating {
-        margin-top: auto;
+        margin-top: 8px;
         display: flex;
         align-items: center;
         gap: 6px;
