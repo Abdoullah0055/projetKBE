@@ -44,6 +44,7 @@ $mainDialoguesJson = htmlspecialchars(
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
+<?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="enigmes-main">
     <section

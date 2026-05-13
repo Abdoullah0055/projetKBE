@@ -12,6 +12,7 @@ $randomCategories = [
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
+<?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="random-main">
     <section class="random-stage is-intro-active random-stage--pages-focus" aria-label="Selection magique aleatoire">

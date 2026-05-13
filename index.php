@@ -628,6 +628,17 @@ aside.collapsed .sidebar-inventory-btn .btn-label {
         const sidebar = document.getElementById('sidebar');
         const productList = document.getElementById('product-list');
 
+        const queryParams = new URLSearchParams(window.location.search);
+        const initialSearch = (queryParams.get("search") || "").trim();
+        const initialTypeRaw = (queryParams.get("type") || "all").toLowerCase();
+        const allowedTypes = new Set(["all", "weapon", "armor", "potion", "magicspell"]);
+        const initialType = allowedTypes.has(initialTypeRaw) ? initialTypeRaw : "all";
+
+        if (initialSearch !== "") {
+            searchFilter.value = initialSearch;
+        }
+        typeFilter.value = initialType;
+
         function applyFilters() {
             const selectedType = typeFilter.value;
             const searchValue = searchFilter.value.toLowerCase().trim();

@@ -83,7 +83,6 @@ body {
   .logo-area h1 {
     font-size: var(--font-size-h2);
     margin: 0;
-    white-space: nowrap;
   }
 
   .logo-circle {
@@ -101,8 +100,6 @@ body {
     gap: var(--spacing-xs);
     flex: 1;
     justify-content: flex-end;
-    min-width: 0;
-    flex-wrap: nowrap;
   }
 
   .header-actions button {
@@ -112,19 +109,10 @@ body {
   }
 
   /* Keep mobile header compact so the hamburger always stays visible */
-  .header-actions > * {
-    flex-shrink: 0;
-  }
-
   .header-actions .user-hp-bar,
   .header-actions .mage-badge,
   .header-actions > button:not(#theme-toggle):not(.mobile-menu-toggle) {
-    display: none !important;
-  }
-
-  .header-actions #theme-toggle,
-  .header-actions .mobile-menu-toggle {
-    display: flex !important;
+    display: none;
   }
 
   .admin-header-link {
@@ -226,40 +214,6 @@ body {
     background: rgba(0, 0, 0, 0.4);
     color: white;
     font-size: var(--font-size-button);
-  }
-
-  .mobile-drawer-filters {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) 0 var(--spacing-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .mobile-drawer-filters-title {
-    margin: 0;
-    color: var(--text-silver);
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 700;
-  }
-
-  .mobile-drawer-filters input,
-  .mobile-drawer-filters select {
-    width: 100%;
-    padding: 10px var(--spacing-md);
-    border-radius: 25px;
-    border: 1px solid rgba(25, 133, 161, 0.3);
-    background: rgba(0, 0, 0, 0.4);
-    color: white;
-    font-size: var(--font-size-button);
-  }
-
-  .mobile-drawer-filters-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
   }
 
   .mobile-search-suggestions {
@@ -494,7 +448,6 @@ gap: var(--spacing-md);
   .logo-area h1 {
     font-size: var(--font-size-h2);
     margin: 0;
-    white-space: nowrap;
   }
 
   .logo-circle {
@@ -504,31 +457,8 @@ gap: var(--spacing-md);
 
   /* Reduced search on tablet */
   .search-container {
-    display: none;
-  }
-
-  .header-actions {
-    flex: 1;
-    min-width: 0;
-    gap: var(--spacing-xs);
-    justify-content: flex-end;
-    flex-wrap: nowrap;
-  }
-
-  .header-actions > * {
-    flex-shrink: 0;
-  }
-
-  .header-actions .user-hp-bar,
-  .header-actions .user-wallet,
-  .header-actions .mage-badge,
-  .header-actions > button:not(#theme-toggle):not(.mobile-menu-toggle) {
-    display: none !important;
-  }
-
-  .header-actions #theme-toggle,
-  .header-actions .mobile-menu-toggle {
-    display: flex !important;
+    flex: 0 1 300px;
+    margin: 0 var(--spacing-md);
   }
 
   /* Show mobile menu toggle on tablet too */
@@ -549,6 +479,14 @@ gap: var(--spacing-md);
     padding: 0;
     margin: 0;
     transition: all 0.3s ease;
+  }
+
+  /* Wallet visible but compact on tablet */
+  .user-wallet {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-right: var(--spacing-md);
+    font-size: 0.85rem;
   }
 
   /* --- TABLET DRAWER (same as mobile) --- */
@@ -594,40 +532,6 @@ gap: var(--spacing-md);
 
   .mobile-drawer-search {
     position: relative;
-  }
-
-  .mobile-drawer-filters {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) 0 var(--spacing-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .mobile-drawer-filters-title {
-    margin: 0;
-    color: var(--text-silver);
-    font-size: 0.82rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 700;
-  }
-
-  .mobile-drawer-filters input,
-  .mobile-drawer-filters select {
-    width: 100%;
-    padding: 10px var(--spacing-md);
-    border-radius: 25px;
-    border: 1px solid rgba(25, 133, 161, 0.3);
-    background: rgba(0, 0, 0, 0.4);
-    color: white;
-    font-size: var(--font-size-button);
-  }
-
-  .mobile-drawer-filters-actions {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
   }
 
   .mobile-search-suggestions {
@@ -889,10 +793,6 @@ font-size: 0.75rem;
 .item-price {
 font-size: 0.8rem;
 }
-
-  .logo-area h1 {
-    display: none;
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {

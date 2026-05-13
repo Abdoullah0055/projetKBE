@@ -1,4 +1,8 @@
 <?php
+if (!isset($user) || !is_array($user) || !array_key_exists('isConnected', $user)) {
+    require_once __DIR__ . '/../config/config.php';
+}
+
 $headerTheme = $_COOKIE['theme'] ?? 'light';
 $headerIconClass = ($headerTheme === 'dark') ? 'fa-sun' : 'fa-moon';
 $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] === 'Admin';
@@ -92,6 +96,47 @@ $isAdminUser = isset($_SESSION['user']['role']) && $_SESSION['user']['role'] ===
                 aria-controls="drawer-search-suggestions-list">
             <div class="search-suggestions mobile-search-suggestions" id="drawer-search-suggestions" hidden>
                 <ul id="drawer-search-suggestions-list" class="search-suggestion-list"></ul>
+            </div>
+        </form>
+
+        <div class="mobile-drawer-actions">
+            <button onclick="window.location.href='index.php'" class="drawer-action">
+                <i class="fa-solid fa-store"></i> Boutique
+            </button>
+            <?php if ($user['isConnected']): ?>
+                <button onclick="window.location.href='inventory.php'" class="drawer-action">
+                    <i class="fa-solid fa-box-open"></i> Inventaire
+                </button>
+                <button onclick="window.location.href='demande_capital.php'" class="drawer-action">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> Demande de capital
+                </button>
+            <?php endif; ?>
+            <button onclick="window.location.href='<?= $user['isConnected'] ? 'roadmap.php' : 'login.php' ?>'" class="drawer-action">
+                <i class="fa-solid fa-scroll"></i> Enigmes
+            </button>
+        </div>
+
+        <form class="mobile-drawer-filters" action="index.php" method="get">
+            <p class="mobile-drawer-filters-title">Recherche avec filtres</p>
+            <input
+                type="text"
+                name="search"
+                placeholder="Nom de l'objet..."
+                aria-label="Recherche item">
+            <select name="type" aria-label="Categorie item">
+                <option value="all">Tous les items</option>
+                <option value="weapon">Armes</option>
+                <option value="armor">Armures</option>
+                <option value="potion">Potions</option>
+                <option value="magicspell">Sorts</option>
+            </select>
+            <div class="mobile-drawer-filters-actions">
+                <button type="submit" class="drawer-action">
+                    <i class="fa-solid fa-filter"></i> Appliquer
+                </button>
+                <button type="button" onclick="window.location.href='index.php'" class="drawer-action">
+                    <i class="fa-solid fa-rotate-left"></i> Reinitialiser
+                </button>
             </div>
         </form>
 

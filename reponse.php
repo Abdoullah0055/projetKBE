@@ -177,6 +177,7 @@ $abandonUrl = build_enigmes_page_url('reponse.php', array_merge($context['query'
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
+<?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="enigmes-main">
     <section

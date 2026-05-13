@@ -98,6 +98,7 @@ $hpPercent = $maxHp > 0 ? round(($currentHp / $maxHp) * 100) : 0;
 ?>
 
 <?php include __DIR__ . '/templates/head.php'; ?>
+<?php include __DIR__ . '/includes/header.php'; ?>
 
 <main class="enigmes-main">
     <section
