@@ -2,10 +2,6 @@
 require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 if (!isset($_SESSION['user'])) {
     header("Location: login.php");
     exit();
@@ -13,21 +9,9 @@ if (!isset($_SESSION['user'])) {
 
 $pdo = get_pdo();
 
-$user = [
-    'isConnected' => true,
-    'id'          => $_SESSION['user']['id'],
-    'alias'       => $_SESSION['user']['alias'],
-    'isMage'      => ($_SESSION['user']['role'] === 'Mage'),
-    'balance'     => [
-        'gold'    => $_SESSION['user']['gold'],
-        'silver'  => $_SESSION['user']['silver'],
-        'bronze'  => $_SESSION['user']['bronze']
-    ]
-];
-
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 $inventoryItems = [];
 $pendingReviewItems = [];
@@ -46,55 +30,89 @@ try {
             inv.ItemId AS item_id,
             inv.Quantity AS quantity,
             i.Name AS item_name,
+            i.ImageUrl AS ImageUrl,
             i.Description AS item_description,
-            i.PriceGold AS item_price_gold,
-            t.Name AS item_type
+        i.PriceGold AS item_price_gold,
+        i.PriceSilver AS item_price_silver,
+        i.PriceBronze AS item_price_bronze,
+        i.ItemTypeId AS item_type_id,
+        i.Rarity AS item_rarity,
+        t.Name AS item_type,
+            IFNULL(rating_agg.rating, 0) AS rating,
+            IFNULL(rating_agg.review_count, 0) AS review_count,
+            CASE WHEN user_review.review_id IS NULL THEN 0 ELSE 1 END AS is_rated_by_user
          FROM Inventory inv
          LEFT JOIN Items i ON inv.ItemId = i.ItemId
          LEFT JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
+         LEFT JOIN (
+            SELECT
+                ItemId,
+                AVG(Rating) AS rating,
+                COUNT(ReviewId) AS review_count
+            FROM Reviews
+            GROUP BY ItemId
+         ) rating_agg ON rating_agg.ItemId = inv.ItemId
+         LEFT JOIN (
+            SELECT
+                ItemId,
+                MAX(ReviewId) AS review_id
+            FROM Reviews
+            WHERE UserId = ?
+            GROUP BY ItemId
+         ) user_review ON user_review.ItemId = inv.ItemId
          WHERE inv.UserId = ?
          ORDER BY inv.InventoryId DESC"
     );
-    $stmt->execute([$user['id']]);
+    $stmt->execute([$user['id'], $user['id']]);
     $inventoryItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     $inventoryError = "Impossible de charger votre inventaire pour le moment.";
 }
 
 if ($inventoryError === '') {
-    try {
-        $reviewStmt = $pdo->prepare(
-            "SELECT
-                inv.ItemId AS item_id,
-                inv.Quantity AS quantity_owned,
-                i.Name AS item_name,
-                t.Name AS item_type,
-                IFNULL(AVG(all_reviews.Rating), 0) AS rating,
-                COUNT(all_reviews.ReviewId) AS review_count
-             FROM Inventory inv
-             JOIN Items i ON inv.ItemId = i.ItemId
-             JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
-             LEFT JOIN Reviews user_review
-                ON user_review.ItemId = inv.ItemId
-               AND user_review.UserId = :user_id_for_review
-             LEFT JOIN Reviews all_reviews
-                ON all_reviews.ItemId = inv.ItemId
-             WHERE inv.UserId = :user_id_for_inventory
-               AND inv.Quantity > 0
-               AND user_review.ReviewId IS NULL
-             GROUP BY inv.ItemId, inv.Quantity, i.Name, t.Name
-             ORDER BY i.Name ASC"
-        );
+try {
+$reviewStmt = $pdo->prepare(
+"SELECT
+purchased.ItemId AS item_id,
+purchased.QuantityOwned AS quantity_owned,
+i.Name AS item_name,
+i.ImageUrl AS ImageUrl,
+t.Name AS item_type,
+IFNULL(AVG(all_reviews.Rating), 0) AS rating,
+COUNT(all_reviews.ReviewId) AS review_count
+FROM (
+SELECT inv.ItemId, inv.Quantity AS QuantityOwned
+FROM Inventory inv
+WHERE inv.UserId = :user_id_for_inventory
+AND inv.Quantity > 0
+UNION
+SELECT oi.ItemId, oi.Quantity AS QuantityOwned
+FROM OrderItems oi
+JOIN Orders o ON o.OrderId = oi.OrderId
+WHERE o.UserId = :user_id_for_orders
+) purchased
+JOIN Items i ON i.ItemId = purchased.ItemId
+JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
+LEFT JOIN Reviews user_review
+ON user_review.ItemId = purchased.ItemId
+AND user_review.UserId = :user_id_for_review
+LEFT JOIN Reviews all_reviews
+ON all_reviews.ItemId = purchased.ItemId
+WHERE user_review.ReviewId IS NULL
+GROUP BY purchased.ItemId, purchased.QuantityOwned, i.Name, i.ImageUrl, t.Name
+ORDER BY i.Name ASC"
+);
 
-        $reviewStmt->execute([
-            ':user_id_for_review' => $user['id'],
-            ':user_id_for_inventory' => $user['id'],
-        ]);
+$reviewStmt->execute([
+':user_id_for_review' => $user['id'],
+':user_id_for_inventory' => $user['id'],
+':user_id_for_orders' => $user['id'],
+]);
 
-        $pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        $pendingReviewItems = [];
-    }
+$pendingReviewItems = $reviewStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+$pendingReviewItems = [];
+}
 }
 
 $title = "L'Arsenal - Inventory";
@@ -152,11 +170,11 @@ $title = "L'Arsenal - Inventory";
     </aside>
 
     <main>
-        <div class="catalog-banner">
-            <h2 style="margin:0; text-transform:uppercase; letter-spacing:2px; font-size:1.3rem;">
-                Inventory de <?= htmlspecialchars($user['alias']) ?>
-            </h2>
-        </div>
+  <div class="catalog-banner">
+    <h2>
+      Inventory de <?= htmlspecialchars($user['alias']) ?>
+    </h2>
+  </div>
 
         <?php if (is_array($reviewFlash) && !empty($reviewFlash['message'])): ?>
             <?php $flashType = ($reviewFlash['type'] ?? '') === 'success' ? 'success-state' : 'error-state'; ?>
@@ -165,139 +183,203 @@ $title = "L'Arsenal - Inventory";
             </div>
         <?php endif; ?>
 
-        <?php if (!empty($pendingReviewItems)): ?>
-            <section class="pending-reviews-panel" id="pending-reviews-panel" aria-label="Items à évaluer">
-                <div class="pending-reviews-header">
-                    <h3>Items achetés à évaluer</h3>
-                    <p>Attribuez une note de 1 à 5, avec demi-étoiles, pour améliorer les suggestions du marché.</p>
+        <div class="inventory-layout<?= !empty($pendingReviewItems) ? ' has-review-panel' : '' ?>">
+            <section class="inventory-main-column">
+                <div id="inventory-loading" class="inventory-state loading-state">
+                    Chargement de votre inventaire...
                 </div>
 
-                <div class="pending-reviews-list" id="pending-reviews-list">
-                    <?php foreach ($pendingReviewItems as $reviewItem): ?>
-                        <?php
-                        $reviewItemId = (int) $reviewItem['item_id'];
-                        $reviewItemType = (string) ($reviewItem['item_type'] ?? 'Inconnu');
-                        $reviewItemName = (string) ($reviewItem['item_name'] ?? ('Item #' . $reviewItemId));
-                        $ratingInputId = 'rating-input-' . $reviewItemId;
-                        $ratingPreviewId = 'rating-preview-' . $reviewItemId;
-                        ?>
+                <?php if (!empty($inventoryError)): ?>
+                    <div class="inventory-state error-state">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <span><?= htmlspecialchars($inventoryError) ?></span>
+                    </div>
+                <?php elseif (empty($inventoryItems)): ?>
+                    <div class="inventory-state empty-state">
+                        Aucun item trouve dans votre inventaire.
+                    </div>
+                <?php else: ?>
+                    <div class="inventory-grid" id="inventory-list">
+                        <?php foreach ($inventoryItems as $entry): ?>
+<?php
+$itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
+$itemDescription = trim((string) ($entry['item_description'] ?? ''));
+if ($itemDescription === '') {
+$itemDescription = "Aucune description disponible.";
+}
+$itemType = $entry['item_type'] ?? 'Inconnu';
+$ratingValue = (float) ($entry['rating'] ?? 0);
+$reviewCount = (int) ($entry['review_count'] ?? 0);
+$isRatedByUser = ((int) ($entry['is_rated_by_user'] ?? 0)) === 1;
+$statusClass = $isRatedByUser ? 'is-rated' : 'is-unrated';
+$statusLabel = $isRatedByUser ? 'Evalue' : 'Non evalue';
+$itemImagePath = getItemImagePathForItem($entry);
+$sellPrice = calculate_sell_price((int)$entry['item_id']);
+?>
 
-                        <article class="pending-review-card" data-pending-item-id="<?= $reviewItemId ?>">
-                            <div class="pending-review-item-meta">
-                                <div class="pending-review-thumb" aria-hidden="true">
-                                    <?= getItemImage($reviewItemType) ?>
-                                </div>
+                            <article class="inventory-slot"
+                                data-item-name="<?= htmlspecialchars($itemName) ?>"
+                                data-item-description="<?= htmlspecialchars($itemDescription) ?>"
+                                data-item-quantity="<?= (int) $entry['quantity'] ?>"
+                                data-item-type="<?= htmlspecialchars($itemType) ?>"
+                                data-item-id="<?= (int) $entry['item_id'] ?>"
+                                data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>">
 
-                                <div>
-                                    <h4><?= htmlspecialchars($reviewItemName) ?></h4>
-                                    <p>
-                                        Type: <?= htmlspecialchars($reviewItemType) ?>
-                                        • Quantité: <?= (int) $reviewItem['quantity_owned'] ?>
-                                    </p>
+                                <div class="slot-top-row">
+                                    <div class="slot-thumb" aria-hidden="true">
+                                        <?php if ($itemImagePath !== null): ?>
+                                            <img
+                                                class="slot-image"
+                                                src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                                alt="">
+                                        <?php else: ?>
+                                            <span class="slot-icon"><?= getItemImage($itemType) ?></span>
+                                        <?php endif; ?>
+                                    </div>
 
-                                    <div class="pending-review-current-rating">
-                                        <?= renderRatingStars((float) $reviewItem['rating']) ?>
-                                        <span class="rating-value-inline">
-                                            <?= formatRatingValue((float) $reviewItem['rating']) ?>/5 (<?= (int) $reviewItem['review_count'] ?> avis)
-                                        </span>
+                                    <div class="slot-main-info">
+                                        <h3 class="slot-label"><?= htmlspecialchars($itemName) ?></h3>
+                                        <p class="slot-type">Type: <?= htmlspecialchars($itemType) ?></p>
+                                        <p class="slot-owned">Quantite possedee: <?= (int) $entry['quantity'] ?></p>
+                                    </div>
+
+                                    <div class="slot-qty-badge">
+                                        x<?= (int) $entry['quantity'] ?>
                                     </div>
                                 </div>
-                            </div>
 
-                            <form class="pending-review-form" action="backend/soumettre_review.php" method="post">
-                                <input type="hidden" name="item_id" value="<?= $reviewItemId ?>">
-                                <input type="hidden" name="rating" id="<?= $ratingInputId ?>" value="5.0">
+                                <p class="slot-description-text"><?= htmlspecialchars($itemDescription) ?></p>
 
-                                <div class="rating-picker" data-input-id="<?= $ratingInputId ?>" data-preview-id="<?= $ratingPreviewId ?>">
-                                    <?php for ($step = 2; $step <= 10; $step++): ?>
-                                        <?php
-                                        $stepValue = $step / 2;
-                                        $isHalf = ($step % 2) !== 0;
-                                        $valueLabel = number_format((float) $stepValue, 1, '.', '');
-                                        ?>
-                                        <button
-                                            type="button"
-                                            class="rating-step-btn<?= ($stepValue === 5.0) ? ' is-selected' : '' ?>"
-                                            data-value="<?= $valueLabel ?>"
-                                            aria-label="Noter <?= $valueLabel ?> sur 5">
-                                            <i class="fa-solid <?= $isHalf ? 'fa-star-half-stroke' : 'fa-star' ?>" aria-hidden="true"></i>
-                                            <span class="step-value"><?= $valueLabel ?></span>
-                                        </button>
-                                    <?php endfor; ?>
+                                <div class="slot-rating-line">
+                                    <?= renderRatingStars($ratingValue) ?>
+                                    <span class="rating-value-inline slot-rating-value"><?= formatRatingValue($ratingValue) ?>/5</span>
                                 </div>
 
-                                <div class="rating-picker-preview" id="<?= $ratingPreviewId ?>">
-                                    <?= renderRatingStars(5.0) ?>
-                                    <span class="rating-value-inline">5.0/5</span>
-                                </div>
-
-                                <button type="submit" class="btn-submit-rating">Envoyer ma note</button>
-                            </form>
-
-                            <p class="pending-review-message" aria-live="polite"></p>
-                        </article>
-                    <?php endforeach; ?>
-                </div>
-            </section>
+                                <div class="slot-stats">
+                                    <div class="slot-stat-row">
+                                        <span>Prix</span>
+                                        <strong><?= (int) ($entry['item_price_gold'] ?? 0) ?> GP</strong>
+                                    </div>
+                                    <div class="slot-stat-row">
+                                        <span>Evaluations</span>
+                                        <strong class="slot-review-count"><?= $reviewCount ?></strong>
+                                    </div>
+                                    <div class="slot-stat-row">
+                                        <span>Statut</span>
+                                        <strong class="slot-status <?= $statusClass ?>"><?= $statusLabel ?></strong>
+                                    </div>
+		</div>
+        <div class="slot-actions">
+        <?php if (strtolower($entry['item_type']) === 'potion' || strtolower($entry['item_type']) === 'magicspell'): ?>
+        <button type="button" class="btn-use-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>">
+        <i class="fa-solid fa-hand-sparkles"></i> Utiliser
+        </button>
         <?php endif; ?>
-
-        <div id="inventory-loading" class="inventory-state loading-state">
-            Chargement de votre inventaire...
+        <button type="button" class="btn-sell-item" data-item-id="<?= (int)$entry['item_id'] ?>" data-item-name="<?= htmlspecialchars($entry['item_name'], ENT_QUOTES, 'UTF-8') ?>" data-sell-gold="<?= $sellPrice['gold'] ?>" data-sell-silver="<?= $sellPrice['silver'] ?>" data-sell-bronze="<?= $sellPrice['bronze'] ?>" data-original-gold="<?= $sellPrice['original_gold'] ?>" data-original-silver="<?= $sellPrice['original_silver'] ?>" data-original-bronze="<?= $sellPrice['original_bronze'] ?>" data-multiplier="<?= $sellPrice['multiplier'] ?>">
+        <i class="fa-solid fa-coins"></i> Vendre
+        </button>
         </div>
-
-        <?php if (!empty($inventoryError)): ?>
-            <div class="inventory-state error-state">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <span><?= htmlspecialchars($inventoryError) ?></span>
-            </div>
-        <?php elseif (empty($inventoryItems)): ?>
-            <div class="inventory-state empty-state">
-                Aucun item trouve dans votre inventaire.
-            </div>
-        <?php else: ?>
-            <div class="inventory-grid" id="inventory-list">
-                <?php foreach ($inventoryItems as $entry): ?>
-                    <?php
-                    $itemName = $entry['item_name'] ?? ('Item #' . $entry['item_id']);
-                    $itemDescription = trim((string) ($entry['item_description'] ?? ''));
-                    if ($itemDescription === '') {
-                        $itemDescription = "Aucune description disponible.";
-                    }
-                    $itemType = $entry['item_type'] ?? 'Inconnu';
-                    ?>
-
-                    <div class="inventory-slot"
-                        data-item-name="<?= htmlspecialchars($itemName) ?>"
-                        data-item-description="<?= htmlspecialchars($itemDescription) ?>"
-                        data-item-quantity="<?= (int) $entry['quantity'] ?>"
-                        data-item-type="<?= htmlspecialchars($itemType) ?>"
-                        data-item-id="<?= (int) $entry['item_id'] ?>"
-                        data-item-price="<?= (int) ($entry['item_price_gold'] ?? 0) ?>">
-
-                        <div class="slot-thumb" aria-hidden="true">
-                            <span class="slot-icon"><?= getItemImage($itemType) ?></span>
-                        </div>
-
-                        <div class="slot-qty-badge">
-                            <?= (int) $entry['quantity'] ?>
-                        </div>
-
-                        <div class="slot-label"><?= htmlspecialchars($itemName) ?></div>
+	</article>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
-            </div>
 
-            <div id="inventory-tooltip" class="inventory-tooltip" role="tooltip" aria-hidden="true">
-                <div class="tooltip-title" id="tooltip-title"></div>
-                <div class="tooltip-description" id="tooltip-description"></div>
-                <div class="tooltip-meta">
-                    <span id="tooltip-quantity"></span>
-                    <span id="tooltip-type"></span>
-                    <span id="tooltip-item-id"></span>
-                    <span id="tooltip-price"></span>
-                </div>
-            </div>
-        <?php endif; ?>
+                    <div id="inventory-tooltip" class="inventory-tooltip" role="tooltip" aria-hidden="true">
+                        <div class="tooltip-title" id="tooltip-title"></div>
+                        <div class="tooltip-description" id="tooltip-description"></div>
+                        <div class="tooltip-meta">
+                            <span id="tooltip-quantity"></span>
+                            <span id="tooltip-type"></span>
+                            <span id="tooltip-item-id"></span>
+                            <span id="tooltip-price"></span>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </section>
+
+            <?php if (!empty($pendingReviewItems)): ?>
+                <aside class="pending-reviews-panel" id="pending-reviews-panel" aria-label="Items a evaluer">
+                    <div class="pending-reviews-header">
+                        <h3>Items achetes a evaluer</h3>
+                        <p>Attribuez une note de 1 a 5, avec demi-etoiles, pour ameliorer les suggestions du marche.</p>
+                    </div>
+
+                    <div class="pending-reviews-list" id="pending-reviews-list">
+                        <?php foreach ($pendingReviewItems as $reviewItem): ?>
+                            <?php
+                            $reviewItemId = (int) $reviewItem['item_id'];
+                            $reviewItemType = (string) ($reviewItem['item_type'] ?? 'Inconnu');
+                            $reviewItemName = (string) ($reviewItem['item_name'] ?? ('Item #' . $reviewItemId));
+                            $reviewItemImagePath = getItemImagePathForItem($reviewItem);
+                            $ratingInputId = 'rating-input-' . $reviewItemId;
+                            $ratingPreviewId = 'rating-preview-' . $reviewItemId;
+                            ?>
+
+                            <article class="pending-review-card" data-pending-item-id="<?= $reviewItemId ?>">
+                                <div class="pending-review-item-meta">
+                                    <div class="pending-review-thumb" aria-hidden="true">
+                                        <?php if ($reviewItemImagePath !== null): ?>
+                                            <img
+                                                class="pending-review-image"
+                                                src="<?= htmlspecialchars($reviewItemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                                alt="">
+                                        <?php else: ?>
+                                            <?= getItemImage($reviewItemType) ?>
+                                        <?php endif; ?>
+                                    </div>
+
+                                    <div>
+                                        <h4><?= htmlspecialchars($reviewItemName) ?></h4>
+                                        <p>
+                                            Type: <?= htmlspecialchars($reviewItemType) ?>
+                                            • Quantite: <?= (int) $reviewItem['quantity_owned'] ?>
+                                        </p>
+
+                                        <div class="pending-review-current-rating">
+                                            <?= renderRatingStars((float) $reviewItem['rating']) ?>
+                                            <span class="rating-value-inline">
+                                                <?= formatRatingValue((float) $reviewItem['rating']) ?>/5 (<?= (int) $reviewItem['review_count'] ?> avis)
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <form class="pending-review-form" action="backend/soumettre_review.php" method="post">
+                                    <input type="hidden" name="item_id" value="<?= $reviewItemId ?>">
+                                    <input type="hidden" name="rating" id="<?= $ratingInputId ?>" value="5.0">
+
+                                    <div class="rating-picker" data-input-id="<?= $ratingInputId ?>" data-preview-id="<?= $ratingPreviewId ?>">
+                                        <?php for ($step = 2; $step <= 10; $step++): ?>
+                                            <?php
+                                            $stepValue = $step / 2;
+                                            $isHalf = ($step % 2) !== 0;
+                                            $valueLabel = number_format((float) $stepValue, 1, '.', '');
+                                            ?>
+                                            <button
+                                                type="button"
+                                                class="rating-step-btn<?= ($stepValue === 5.0) ? ' is-selected' : '' ?>"
+                                                data-value="<?= $valueLabel ?>"
+                                                aria-label="Noter <?= $valueLabel ?> sur 5">
+                                                <i class="fa-solid <?= $isHalf ? 'fa-star-half-stroke' : 'fa-star' ?>" aria-hidden="true"></i>
+                                                <span class="step-value"><?= $valueLabel ?></span>
+                                            </button>
+                                        <?php endfor; ?>
+                                    </div>
+
+                                    <div class="rating-picker-preview" id="<?= $ratingPreviewId ?>">
+                                        <?= renderRatingStars(5.0) ?>
+                                        <span class="rating-value-inline">5.0/5</span>
+                                    </div>
+
+                                    <button type="submit" class="btn-submit-rating">Envoyer ma note</button>
+                                </form>
+
+                                <p class="pending-review-message" aria-live="polite"></p>
+                            </article>
+                        <?php endforeach; ?>
+                    </div>
+                </aside>
+            <?php endif; ?>
+        </div>
     </main>
 </div>
 
@@ -457,11 +539,23 @@ $title = "L'Arsenal - Inventory";
                         body: new FormData(form)
                     });
 
+                    const responseText = await response.text();
                     let data = null;
+
+                    // Be resilient to accidental PHP warnings around JSON payload.
                     try {
-                        data = await response.json();
+                        data = JSON.parse(responseText);
                     } catch (_error) {
-                        data = null;
+                        const jsonStart = responseText.indexOf('{');
+                        const jsonEnd = responseText.lastIndexOf('}');
+
+                        if (jsonStart !== -1 && jsonEnd > jsonStart) {
+                            try {
+                                data = JSON.parse(responseText.slice(jsonStart, jsonEnd + 1));
+                            } catch (_nestedError) {
+                                data = null;
+                            }
+                        }
                     }
 
                     if (!response.ok || !data || data.success !== true) {
@@ -477,11 +571,46 @@ $title = "L'Arsenal - Inventory";
                     messageBox.classList.add('is-success');
                     submitButton.textContent = 'Note enregistrée';
 
+                    const itemIdInput = form.querySelector('input[name="item_id"]');
+                    const reviewedItemId = itemIdInput ? String(itemIdInput.value || '').trim() : '';
+                    const linkedSlot = reviewedItemId ?
+                        document.querySelector('.inventory-slot[data-item-id="' + reviewedItemId + '"]') :
+                        null;
+
+                    if (linkedSlot) {
+                        const statusNode = linkedSlot.querySelector('.slot-status');
+                        const reviewCountNode = linkedSlot.querySelector('.slot-review-count');
+                        const ratingValueNode = linkedSlot.querySelector('.slot-rating-value');
+                        const ratingLineNode = linkedSlot.querySelector('.slot-rating-line');
+
+                        if (statusNode) {
+                            statusNode.textContent = 'Evalue';
+                            statusNode.classList.remove('is-unrated');
+                            statusNode.classList.add('is-rated');
+                        }
+
+                        if (reviewCountNode && Number.isFinite(Number(data.reviewCount))) {
+                            reviewCountNode.textContent = String(Number(data.reviewCount));
+                        }
+
+                        const parsedRating = Number.parseFloat(String(data.rating || '').replace(',', '.'));
+                        if (ratingLineNode && ratingValueNode && Number.isFinite(parsedRating)) {
+                            ratingLineNode.innerHTML =
+                                renderStarsMarkup(parsedRating) +
+                                '<span class="rating-value-inline slot-rating-value">' + parsedRating.toFixed(1) + '/5</span>';
+                        }
+                    }
+
                     setTimeout(function() {
                         card.remove();
                         const remainingCards = document.querySelectorAll('.pending-review-card').length;
                         if (remainingCards === 0) {
                             pendingPanel.remove();
+
+                            const inventoryLayout = document.querySelector('.inventory-layout');
+                            if (inventoryLayout) {
+                                inventoryLayout.classList.remove('has-review-panel');
+                            }
                         }
                     }, 900);
                 } catch (_error) {
@@ -495,5 +624,6 @@ $title = "L'Arsenal - Inventory";
     });
 </script>
 
+<script src="assets/js/inventory.js"></script>
 <?php include __DIR__ . '/includes/footer.php'; ?>
 <?php include __DIR__ . '/templates/end.php'; ?>

@@ -165,6 +165,13 @@ header {
   flex-shrink: 0;
 }
 
+.search-suggestion-thumb img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .search-suggestion-text {
   display: flex;
   flex-direction: column;
@@ -216,6 +223,7 @@ header {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
 }
 
 .header-actions button {
@@ -272,8 +280,8 @@ main {
 }
 
 aside {
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: auto;
 }
 
 /* --- SIDEBAR (GLASSMORPHISM) --- */
@@ -289,6 +297,7 @@ aside {
   flex-direction: column;
   flex-shrink: 0;
   z-index: 100;
+  overflow: visible;
 }
 
 aside.collapsed {
@@ -297,9 +306,9 @@ aside.collapsed {
 
 #toggle-btn {
   position: absolute;
-  right: -22px;
+  right: 0px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(50%, -50%);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -320,7 +329,7 @@ aside.collapsed {
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow-y: auto;
+  overflow-y: visible;
 }
 
 .filter-group label {
@@ -341,6 +350,41 @@ aside.collapsed {
   border-radius: 5px;
 }
 
+.enigme-door-button {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-top: 14px;
+  text-decoration: none;
+}
+
+.enigme-door-button__frame {
+  position: relative;
+  display: block;
+  width: min(100%, 132px);
+  transition:
+    transform 0.25s ease,
+    filter 0.25s ease;
+}
+
+.enigme-door-button:hover .enigme-door-button__frame,
+.enigme-door-button:focus-visible .enigme-door-button__frame {
+  transform: translateY(-4px) scale(1.02);
+  filter: drop-shadow(0 0 22px rgba(171, 106, 255, 0.28));
+}
+
+.enigme-door-button:focus-visible {
+  outline: none;
+}
+
+.enigme-door-button__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.38));
+}
+
 /* --- MAIN CONTENT & ITEMS --- */
 main {
   flex: 1;
@@ -351,16 +395,111 @@ main {
 }
 
 .catalog-banner {
-  background: linear-gradient(90deg, var(--accent), transparent);
-  padding: 20px 30px;
-  border-radius: 6px;
-  margin-bottom: 30px;
+  padding: 18px 28px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  background:
+    linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(245, 230, 180, 0.14)),
+    rgba(245, 230, 180, 0.35);
+  box-shadow:
+    0 4px 16px rgba(212, 175, 55, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.catalog-banner::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, #d4af37, #b8860b);
+  border-radius: 4px 0 0 4px;
+}
+
+.catalog-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      rgba(212, 175, 55, 0.03) 40px,
+      rgba(212, 175, 55, 0.03) 41px
+    );
+  pointer-events: none;
+}
+
+.catalog-banner h2 {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #3a2510;
+  position: relative;
+  z-index: 1;
+}
+
+[data-theme="dark"] .catalog-banner {
+  background:
+    linear-gradient(135deg, rgba(25, 133, 161, 0.15), rgba(15, 50, 70, 0.25)),
+    rgba(10, 18, 26, 0.7);
+  border-color: rgba(25, 133, 161, 0.3);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .catalog-banner::before {
+  background: linear-gradient(180deg, #1985a1, #0d4f5e);
+}
+
+[data-theme="dark"] .catalog-banner::after {
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      rgba(25, 133, 161, 0.04) 40px,
+      rgba(25, 133, 161, 0.04) 41px
+    );
+}
+
+[data-theme="dark"] .catalog-banner h2 {
+  color: #e8d5a3;
+}
+
+.catalog-banner--admin h2 {
+  font-size: 1.5rem;
+}
+
+.catalog-banner--admin::before {
+  background: linear-gradient(180deg, #c0392b, #922b21);
+}
+
+[data-theme="dark"] .catalog-banner--admin::before {
+  background: linear-gradient(180deg, #e74c3c, #a93226);
+}
+
+[data-theme="dark"] .catalog-banner--admin {
+  border-color: rgba(231, 76, 60, 0.3);
+  background:
+    linear-gradient(135deg, rgba(231, 76, 60, 0.12), rgba(120, 30, 20, 0.2)),
+    rgba(15, 10, 10, 0.7);
 }
 
 .product-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  min-height: 0;
 }
 
 .item-row {
@@ -408,24 +547,24 @@ main {
   font-size: 1.4rem;
 }
 
-/* --- ÉTAT ÉPUISÉ (BOURGOGNE) --- */
+/* --- Ã‰TAT Ã‰PUISÃ‰ (BOURGOGNE) --- */
 .item-out-of-stock {
-  /* Fond bourgogne foncé avec transparence pour garder l'effet glassmorphism */
+  /* Fond bourgogne foncÃ© avec transparence pour garder l'effet glassmorphism */
   background: rgba(74, 4, 4, 0.5) !important;
 
-  /* Bordure assortie pour bien marquer l'état épuisé */
+  /* Bordure assortie pour bien marquer l'Ã©tat Ã©puisÃ© */
   border-color: rgba(139, 0, 0, 0.3) !important;
 
-  /* On garde une légère transparence globale */
+  /* On garde une lÃ©gÃ¨re transparence globale */
   opacity: 0.8;
 }
 
-/* Optionnel : changer la couleur du texte du prix quand c'est épuisé */
+/* Optionnel : changer la couleur du texte du prix quand c'est Ã©puisÃ© */
 .item-out-of-stock .item-price {
   color: var(--text-silver);
 }
 
-/* Désactiver l'effet de translation au survol pour les items épuisés */
+/* DÃ©sactiver l'effet de translation au survol pour les items Ã©puisÃ©s */
 .item-out-of-stock:hover {
   transform: none;
   box-shadow: none;
@@ -476,5 +615,58 @@ aside.collapsed .show-icon {
 }
 
 .show-icon {
-  display: none;
+    display: none;
 }
+
+.user-hp-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+}
+
+.hp-icon {
+    font-size: 1rem;
+}
+
+.hp-bar-track {
+    width: 80px;
+    height: 10px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hp-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #e74c3c, #2ecc71);
+    border-radius: 5px;
+    transition: width 0.4s ease;
+}
+
+.hp-value {
+  color: var(--text-light);
+  font-weight: 600;
+  min-width: 45px;
+}
+
+.mage-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8e44ad, #9b59b6);
+  color: #f1c40f;
+  font-size: 0.85rem;
+  box-shadow: 0 0 8px rgba(142, 68, 173, 0.5);
+  animation: mage-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes mage-glow {
+  from { box-shadow: 0 0 6px rgba(142, 68, 173, 0.4); }
+  to { box-shadow: 0 0 14px rgba(142, 68, 173, 0.7); }
+}
+

@@ -1,8 +1,6 @@
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/session.php';
 
 function profile_csrf_token(): string
 {
@@ -59,3 +57,5 @@ function profile_nullable_trimmed(?string $value, int $maxLen): ?string
 
     return $clean;
 }
+
+

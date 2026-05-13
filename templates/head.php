@@ -10,7 +10,24 @@
     <link rel="stylesheet" href="assets/css/panier.css"> -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/css/responsive.css">
+<link rel="stylesheet" href="assets/css/modal.css">
+    <?php if (!empty($extraStylesheets) && is_array($extraStylesheets)): ?>
+        <?php foreach ($extraStylesheets as $stylesheet): ?>
+            <link rel="stylesheet" href="<?= htmlspecialchars($stylesheet, ENT_QUOTES, 'UTF-8') ?>">
+        <?php endforeach; ?>
+    <?php endif; ?>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
-<body>
+<?php
+$bodyClassAttribute = '';
+$bodyDataTheme = htmlspecialchars($_COOKIE['theme'] ?? 'light', ENT_QUOTES, 'UTF-8');
+
+if (!empty($bodyClass)) {
+    $bodyClassValue = is_array($bodyClass) ? implode(' ', $bodyClass) : (string) $bodyClass;
+    $bodyClassAttribute = ' class="' . htmlspecialchars($bodyClassValue, ENT_QUOTES, 'UTF-8') . '"';
+}
+?>
+
+<body<?= $bodyClassAttribute ?> data-theme="<?= $bodyDataTheme ?>">
+<?php include __DIR__ . '/../includes/modal.php'; ?>

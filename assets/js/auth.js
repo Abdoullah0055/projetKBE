@@ -2,6 +2,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const switchLink = document.getElementById("switch-link");
   const authForm = document.getElementById("auth-form");
   const authMode = document.getElementById("auth-mode");
+  const emailGroup = document.getElementById("email-group");
+  const emailInput = document.getElementById("email");
 
   const title = document.getElementById("form-title");
   const subtitle = document.getElementById("form-subtitle");
@@ -11,7 +13,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const switchText = document.getElementById("switch-text");
   const confirmInput = document.getElementById("confirm-password");
 
-  let isLoginMode = true;
+  if (!authForm || !authMode) {
+    return;
+  }
+
+  let isLoginMode = authMode.value !== "register";
 
   if (switchLink) {
     switchLink.addEventListener("click", function (e) {
@@ -24,25 +30,28 @@ document.addEventListener("DOMContentLoaded", function () {
         labelAlias.innerText = "Alias de l'Aventurier";
         submitBtn.innerText = "Se connecter";
         confirmGroup.style.display = "none";
+        emailGroup.style.display = "none";
         switchText.innerText = "Nouveau ici ?";
         switchLink.innerText = "Créer un compte";
         authMode.value = "login";
         confirmInput.required = false;
+        emailInput.required = false;
       } else {
         title.innerText = "Inscription";
         subtitle.innerText = "Rejoignez les rangs de l'Arsenal";
         labelAlias.innerText = "Choisir un Alias Unique";
         submitBtn.innerText = "Forger mon compte";
         confirmGroup.style.display = "block";
+        emailGroup.style.display = "block";
         switchText.innerText = "Déjà membre ?";
         switchLink.innerText = "Se connecter";
         authMode.value = "register";
         confirmInput.required = true;
+        emailInput.required = true;
       }
     });
   }
 
-  // Validation des mots de passe
   authForm.addEventListener("submit", function (e) {
     if (!isLoginMode) {
       const pass = document.getElementById("password").value;

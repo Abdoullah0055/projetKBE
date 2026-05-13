@@ -1,9 +1,12 @@
 <?php
 
+require_once __DIR__ . '/../includes/session.php';
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/../config/config.php';
 
-session_start();
+if (ob_get_level() === 0) {
+    ob_start();
+}
 
 function is_ajax_request(): bool
 {
@@ -19,10 +22,18 @@ function is_ajax_request(): bool
 function review_response(array $payload, string $redirectUrl, bool $isAjax, int $status = 200): void
 {
     if ($isAjax) {
+        if (ob_get_length() > 0) {
+            ob_clean();
+        }
+
         http_response_code($status);
         header('Content-Type: application/json; charset=utf-8');
         echo json_encode($payload, JSON_UNESCAPED_UNICODE);
         exit;
+    }
+
+    if (ob_get_length() > 0) {
+        ob_clean();
     }
 
     $_SESSION['review_feedback'] = [
@@ -74,27 +85,43 @@ $pdo = get_pdo();
 try {
     $pdo->beginTransaction();
 
-    $ownedStmt = $pdo->prepare(
-        "SELECT Quantity
-         FROM Inventory
-         WHERE UserId = :user_id
-           AND ItemId = :item_id
-         LIMIT 1
-         FOR UPDATE"
-    );
-    $ownedStmt->execute([
-        ':user_id' => $userId,
-        ':item_id' => $itemId,
-    ]);
+$ownedStmt = $pdo->prepare(
+"SELECT inv.Quantity
+FROM Inventory
+WHERE UserId = :user_id
+AND ItemId = :item_id
+LIMIT 1
+FOR UPDATE"
+);
+$ownedStmt->execute([
+':user_id' => $userId,
+':item_id' => $itemId,
+]);
 
-    $ownedRow = $ownedStmt->fetch(PDO::FETCH_ASSOC);
-    if (!$ownedRow || (int)$ownedRow['Quantity'] <= 0) {
-        $pdo->rollBack();
-        review_response([
-            'success' => false,
-            'message' => 'Seuls les items achetes peuvent etre notes.',
-        ], '../inventory.php', $isAjax, 403);
-    }
+$ownedRow = $ownedStmt->fetch();
+$inInventory = $ownedRow && (int)$ownedRow['quantity'] > 0;
+
+$purchasedStmt = $pdo->prepare(
+"SELECT 1
+FROM OrderItems oi
+JOIN Orders o ON o.OrderId = oi.OrderId
+WHERE o.UserId = :user_id
+AND oi.ItemId = :item_id
+LIMIT 1"
+);
+$purchasedStmt->execute([
+':user_id' => $userId,
+':item_id' => $itemId,
+]);
+$wasPurchased = $purchasedStmt->fetchColumn() !== false;
+
+if (!$inInventory && !$wasPurchased) {
+$pdo->rollBack();
+review_response([
+'success' => false,
+'message' => 'Seuls les items achetes peuvent etre notes.',
+], '../inventory.php', $isAjax, 403);
+}
 
     $existingStmt = $pdo->prepare(
         "SELECT ReviewId

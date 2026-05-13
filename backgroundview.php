@@ -1,30 +1,11 @@
 <?php
-require_once 'AlgosBD.php';
+require_once __DIR__ . '/AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 
 // 1. RÉCUPÉRATION DU THÈME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
-
-// Gestion de l'utilisateur pour le header
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = ['isConnected' => false];
-}
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 $title = "Vue d'Ambiance - L'Arsenal";
 ?>
@@ -44,7 +25,7 @@ $title = "Vue d'Ambiance - L'Arsenal";
         min-height: 100vh;
         margin: 0;
         overflow: hidden;
-        /* Empêche le scroll pour garder le focus sur le fond */
+        /* EmpÃªche le scroll pour garder le focus sur le fond */
     }
 
     .background-content {
@@ -76,3 +57,5 @@ $title = "Vue d'Ambiance - L'Arsenal";
 include __DIR__ . '/includes/footer.php';
 include __DIR__ . '/templates/end.php';
 ?>
+
+

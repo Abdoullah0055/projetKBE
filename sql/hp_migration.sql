@@ -1,0 +1,3 @@
+-- Add HP columns to Users table
+ALTER TABLE Users ADD CurrentHP INT NOT NULL DEFAULT 100 AFTER Bronze;
+ALTER TABLE Users ADD MaxHP INT NOT NULL DEFAULT 100 AFTER CurrentHP;

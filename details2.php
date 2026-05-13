@@ -2,31 +2,12 @@
 require_once 'AlgosBD.php';
 require_once __DIR__ . '/config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
 $pdo = get_pdo();
 
 // 1. RÉCUPÉRATION DU THÈME
 $currentTheme = $_COOKIE['theme'] ?? 'light';
 $bgNum = $_COOKIE['bgNumber'] ?? '1';
-$bgImage = "img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
-
-// Gestion de l'utilisateur
-if (isset($_SESSION['user'])) {
-    $user = [
-        'isConnected' => true,
-        'alias' => $_SESSION['user']['alias'],
-        'balance' => [
-            'gold' => $_SESSION['user']['gold'],
-            'silver' => $_SESSION['user']['silver'],
-            'bronze' => $_SESSION['user']['bronze']
-        ]
-    ];
-} else {
-    $user = ['isConnected' => false];
-}
+$bgImage = "assets/img/{$currentTheme}theme/{$currentTheme}{$bgNum}.png";
 
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     header("Location: index.php");
@@ -39,6 +20,7 @@ $stmt = $pdo->prepare("
     SELECT 
         i.ItemId AS id,
         i.Name AS nom,
+        i.ImageUrl AS ImageUrl,
         i.PriceGold AS prix_gold,
         i.PriceSilver AS prix_silver,
         i.PriceBronze AS prix_bronze,
@@ -51,7 +33,7 @@ $stmt = $pdo->prepare("
     JOIN ItemTypes t ON i.ItemTypeId = t.ItemTypeId
     LEFT JOIN Reviews r ON i.ItemId = r.ItemId
     WHERE i.ItemId = ?
-    GROUP BY i.ItemId, i.Name, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
+    GROUP BY i.ItemId, i.Name, i.ImageUrl, i.PriceGold, i.PriceSilver, i.PriceBronze, i.Description, i.Stock, t.Name
 ");
 $stmt->execute([$itemId]);
 $item = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -62,6 +44,7 @@ if (!$item) {
 }
 
 $item['image'] = getItemImage($item['type']);
+$itemImagePath = getItemImagePathForItem($item);
 $properties = getItemProperties($pdo, (int)$item['id'], $item['type']);
 $title = "Détails - " . $item['nom'];
 $itemRatingText = formatRatingValue((float)$item['rating']);
@@ -102,7 +85,7 @@ if (isset($_SESSION['alerte']) && is_array($_SESSION['alerte'])) {
     }
 </style>
 
-<link rel="stylesheet" href="assets/css/details.css">
+<link rel="stylesheet" href="assets/css/details.css?v=<?= filemtime(__DIR__ . '/assets/css/details.css') ?>">
 
 <?php include __DIR__ . '/includes/header.php'; ?>
 
@@ -157,7 +140,16 @@ $rightImages = [
                 <div class="rarity-tag"><?= htmlspecialchars($item['type']) ?></div>
 
                 <div class="floating-wrapper">
-                    <div class="main-icon" id="target-icon"><?= $item['image'] ?></div>
+                    <?php if ($itemImagePath !== null): ?>
+                        <div class="main-icon item-detail-image-frame" id="target-icon">
+                            <img
+                                class="item-detail-image"
+                                src="<?= htmlspecialchars($itemImagePath, ENT_QUOTES, 'UTF-8') ?>"
+                                alt="<?= htmlspecialchars($item['nom'], ENT_QUOTES, 'UTF-8') ?>">
+                        </div>
+                    <?php else: ?>
+                        <div class="main-icon" id="target-icon"><?= $item['image'] ?></div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="glow-shadow"></div>
@@ -243,43 +235,56 @@ $rightImages = [
                 </div>
             </div>
 
-            <div class="purchase-section upgraded-panel">
-                <?php if ((int)$item['stock'] > 0): ?>
-                    <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
-                        <input type="hidden" name="item_id" value="<?= (int)$item['id'] ?>">
+  <div class="purchase-section upgraded-panel">
+  <?php
+    $isSpell = (mb_strtolower($item['type'], 'UTF-8') === 'magicspell');
+    $isRestrictedMage = $isSpell && !$user['isMage'];
+  ?>
 
-                        <div class="purchase-controls">
-                            <div class="quantity-wrapper">
-                                <label for="qty">Quantité :</label>
-                                <select name="quantity" id="qty" class="qty-select">
-                                    <?php for ($i = 1; $i <= min((int)$item['stock'], 10); $i++): ?>
-                                        <option value="<?= $i ?>"><?= $i ?></option>
-                                    <?php endfor; ?>
-                                </select>
-                            </div>
+  <?php if ($isRestrictedMage): ?>
+    <div class="spell-restricted-notice">
+      <i class="fa-solid fa-hat-wizard"></i>
+      Seuls les mages peuvent acquérir des sorts.
+    </div>
+    <button class="btn-buy-large btn-spell-restricted" disabled>
+      <i class="fa-solid fa-lock"></i> Sort réservé aux Mages
+    </button>
+  <?php elseif ((int)$item['stock'] > 0): ?>
+  <form action="backend/ajouter_au_panier.php" method="POST" class="purchase-form">
+    <input type="hidden" name="item_id" value="<?= (int)$item['id'] ?>">
 
-                            <?php if ((int)$item['stock'] < 5): ?>
-                                <div class="urgency-badge">
-                                    <i class="fa-solid fa-bolt"></i>
-                                    Plus que <?= (int)$item['stock'] ?> restant !
-                                </div>
-                            <?php endif; ?>
-                        </div>
+    <div class="purchase-controls">
+      <div class="quantity-wrapper">
+        <label for="qty">Quantité :</label>
+        <select name="quantity" id="qty" class="qty-select">
+        <?php for ($i = 1; $i <= min((int)$item['stock'], 10); $i++): ?>
+          <option value="<?= $i ?>"><?= $i ?></option>
+        <?php endfor; ?>
+        </select>
+      </div>
 
-                        <button type="submit" class="btn-buy-large btn-buy-legendary">
-                            <i class="fa-solid fa-cart-plus"></i>
-                            Ajouter au Panier
-                        </button>
-                    </form>
-                <?php else: ?>
-                    <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
-                <?php endif; ?>
+      <?php if ((int)$item['stock'] < 5): ?>
+      <div class="urgency-badge">
+        <i class="fa-solid fa-bolt"></i>
+        Plus que <?= (int)$item['stock'] ?> restant !
+      </div>
+      <?php endif; ?>
+    </div>
 
-                <a href="index.php" class="back-link">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    Retour au catalogue
-                </a>
-            </div>
+    <button type="submit" class="btn-buy-large btn-buy-legendary">
+      <i class="fa-solid fa-cart-plus"></i>
+      Ajouter au Panier
+    </button>
+  </form>
+  <?php else: ?>
+  <button class="btn-buy-large btn-out" disabled>Stock Épuisé</button>
+  <?php endif; ?>
+
+  <a href="index.php" class="back-link">
+    <i class="fa-solid fa-arrow-left"></i>
+    Retour au catalogue
+  </a>
+  </div>
         </div>
     </main>
 </div>
@@ -438,24 +443,7 @@ $rightImages = [
         icon.classList.add('magic-shake');
     }
 
-    function showDetailAlert(message, type = 'succes') {
-        const oldAlert = document.querySelector('.alert-box');
-        if (oldAlert) {
-            oldAlert.remove();
-        }
 
-        const box = document.createElement('div');
-        box.className = `alert-box ${type}`;
-        box.innerHTML = `
-            <i class="fa-solid ${type === 'succes' ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
-            ${message}
-        `;
-        document.body.appendChild(box);
-
-        setTimeout(() => {
-            box.remove();
-        }, 2600);
-    }
 
     document.querySelector('.purchase-form')?.addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -473,13 +461,15 @@ $rightImages = [
         const cartBtn = document.getElementById('cart-btn');
         const targetIcon = document.getElementById('target-icon');
 
-        const clone = document.createElement('div');
-        clone.innerHTML = targetIcon.innerHTML;
-        clone.className = 'flying-item';
+        const clone = targetIcon.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.classList.add('flying-item');
 
         const startRect = targetIcon.getBoundingClientRect();
         clone.style.left = startRect.left + 'px';
         clone.style.top = startRect.top + 'px';
+        clone.style.width = startRect.width + 'px';
+        clone.style.height = startRect.height + 'px';
         document.body.appendChild(clone);
 
         if (cartBtn) {
@@ -519,16 +509,16 @@ $rightImages = [
             }
 
             if (response.ok && data && data.success) {
-                showDetailAlert(data.message || "Objet ajoute au panier.", 'succes');
+                showToast(data.message || "Objet ajoute au panier.", 'succes');
             } else {
                 const errorMessage = data && data.message ?
                     data.message :
                     "Echec de l'ajout au panier.";
-                showDetailAlert(errorMessage, 'erreur');
+                showToast(errorMessage, 'erreur');
             }
         } catch (error) {
             console.error("Erreur:", error);
-            showDetailAlert("Erreur reseau pendant l'ajout au panier.", 'erreur');
+            showToast("Erreur reseau pendant l'ajout au panier.", 'erreur');
         }
     });
 </script>

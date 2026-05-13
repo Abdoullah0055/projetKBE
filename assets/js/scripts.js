@@ -368,7 +368,15 @@ class LiveSearchSuggestions {
 
       const thumb = document.createElement("span");
       thumb.className = "search-suggestion-thumb";
-      thumb.textContent = item.image || "❓";
+
+      if (item.imageUrl) {
+        const thumbImage = document.createElement("img");
+        thumbImage.src = item.imageUrl;
+        thumbImage.alt = "";
+        thumb.appendChild(thumbImage);
+      } else {
+        thumb.textContent = item.image || "❓";
+      }
 
       const textWrap = document.createElement("span");
       textWrap.className = "search-suggestion-text";
@@ -387,11 +395,15 @@ class LiveSearchSuggestions {
         typeof item.ratingText === "string"
           ? item.ratingText
           : this.formatRatingValue(ratingValue);
+      const rarityText =
+        typeof item.rarity === "string" && item.rarity.trim() !== ""
+          ? item.rarity.trim()
+          : "Commun";
       const reviewCount = Number.isFinite(Number(item.reviewCount))
         ? Number(item.reviewCount)
         : 0;
 
-      meta.innerHTML = `${this.renderStars(ratingValue)}<span class="rating-value-inline">${ratingText}/5 (${reviewCount} avis)</span>`;
+      meta.innerHTML = `${this.renderStars(ratingValue)}<span class="rating-value-inline">${rarityText} · ${ratingText}/5 (${reviewCount} avis)</span>`;
 
       textWrap.appendChild(title);
       textWrap.appendChild(meta);
@@ -521,18 +533,19 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   function applyChanges(theme, num) {
-    const path = `img/${theme}theme/${theme}${num}.png`;
-    const urlValue = `url('${path}')`;
+  const path = `assets/img/${theme}theme/${theme}${num}.png`;
+  const urlValue = `url('${path}')`;
 
-    document.documentElement.style.setProperty("--main-bg", urlValue);
-    document.body.style.setProperty("background-image", urlValue, "important");
+  document.documentElement.style.setProperty("--main-bg", urlValue);
+  document.body.style.setProperty("background-image", urlValue, "important");
+  document.body.setAttribute("data-theme", theme);
 
-    const expires = "; max-age=" + 30 * 24 * 60 * 60;
-    document.cookie = `theme=${theme}${expires}; path=/`;
-    document.cookie = `bgNumber=${num}${expires}; path=/`;
+  const expires = "; max-age=" + 30 * 24 * 60 * 60;
+  document.cookie = `theme=${theme}${expires}; path=/`;
+  document.cookie = `bgNumber=${num}${expires}; path=/`;
 
-    currentImgNum = num;
-  }
+  currentImgNum = num;
+}
 
   if (themeToggle && themeIcon) {
     themeToggle.addEventListener("click", (event) => {
