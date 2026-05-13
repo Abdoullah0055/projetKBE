@@ -107,6 +107,29 @@ body {
     font-size: var(--font-size-button);
   }
 
+  /* Keep mobile header compact when user is connected:
+     actions move to drawer, preserve theme + hamburger visibility. */
+  .header-actions.is-authenticated {
+    flex: 0 0 auto;
+  }
+
+  .header-actions.is-authenticated .mage-badge,
+  .header-actions.is-authenticated .user-hp-bar,
+  .header-actions.is-authenticated .user-wallet {
+    display: none;
+  }
+
+  .header-actions.is-authenticated > button:not(#theme-toggle):not(#mobile-menu-toggle) {
+    display: none;
+  }
+
+  .header-actions.is-authenticated #theme-toggle {
+    width: var(--touch-target);
+    min-width: var(--touch-target);
+    padding: 0;
+    margin-left: 0;
+  }
+
   .admin-header-link {
     display: none;
   }
@@ -221,6 +244,59 @@ body {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-sm);
+  }
+
+  .mobile-drawer-filters {
+    padding: var(--spacing-md);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .mobile-drawer-section-title {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--accent);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+
+  .mobile-filter-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .mobile-filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mobile-filter-group label {
+    font-size: 0.74rem;
+    color: var(--text-silver);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 700;
+  }
+
+  .mobile-filter-group .filter-input,
+  .mobile-filter-group .filter-select {
+    width: 100%;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(0, 0, 0, 0.35);
+    color: var(--text-light);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 0;
+  }
+
+  .mobile-reset-filters-btn {
+    margin-top: 6px;
   }
 
   .mobile-drawer-actions button {
