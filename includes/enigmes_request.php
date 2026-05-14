@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../AlgosBD.php';
 require_once __DIR__ . '/enigmes_progression.php';
+require_once __DIR__ . '/debug_helper.php';
 
 const ENIGMES_FLASH_DIALOGUES_KEY = 'enigmes_flash_dialogues';
 const ROADMAP_FLASH_DIALOGUES_KEY = 'roadmap_flash_dialogues';
@@ -146,11 +147,14 @@ function verify_enigme_choice(int $riddleId, int $choiceIndex): array
     $data = $_SESSION[$key] ?? null;
 
     if (!is_array($data) || !isset($data['correct_index'], $data['choice_texts'])) {
+        debug_log("[verify_enigme_choice] riddleId=$riddleId choiceIndex=$choiceIndex - NO DATA IN SESSION (key=$key)");
         return ['is_correct' => false, 'chosen_text' => ''];
     }
 
     $isCorrect = $choiceIndex === (int) $data['correct_index'];
     $chosenText = $data['choice_texts'][$choiceIndex] ?? '';
+
+    debug_log("[verify_enigme_choice] riddleId=$riddleId choiceIndex=$choiceIndex correctIndex={$data['correct_index']} isCorrect=" . ($isCorrect ? 'true' : 'false') . " chosenText=$chosenText");
 
     unset($_SESSION[$key]);
 
@@ -180,6 +184,8 @@ function resolve_enigme_request(string $currentPage): array
 {
     $source = (string) ($_GET['source'] ?? 'roadmap');
 
+    debug_log("[resolve_enigme_request] currentPage=$currentPage source=$source GET=" . json_encode($_GET));
+
     if (!in_array($source, ['roadmap', 'random'], true)) {
         redirect_to_enigmes_source('roadmap');
     }
@@ -191,8 +197,10 @@ function resolve_enigme_request(string $currentPage): array
 
     if ($source === 'roadmap') {
         $roadmapNodeId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        debug_log("[resolve_enigme_request] roadmapNodeId(from INPUT_GET)=" . var_export($roadmapNodeId, true));
 
         if (!$roadmapNodeId) {
+            debug_log("[resolve_enigme_request] REDIRECT - no valid roadmapNodeId");
             redirect_to_enigmes_source('roadmap');
         }
 

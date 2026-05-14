@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/session.php';
 require_once __DIR__ . '/../AlgosBD.php';
+require_once __DIR__ . '/debug_helper.php';
 
 const ENIGMES_SESSION_KEY = 'enigmes_progression';
 
@@ -102,33 +103,32 @@ function get_enigmes_catalogue(): array
 function ensure_enigmes_progression(): void
 {
     $userId = $_SESSION['user']['id'] ?? null;
+    debug_log("[ensure_enigmes_progression] CALLED userId=" . var_export($userId, true));
 
     if ($userId === null) {
         if (!isset($_SESSION[ENIGMES_SESSION_KEY]) || !is_array($_SESSION[ENIGMES_SESSION_KEY])) {
             $_SESSION[ENIGMES_SESSION_KEY] = ['completed' => []];
         }
+        debug_log("[ensure_enigmes_progression] EARLY RETURN - no user logged in");
         return;
     }
 
-    $loadFromDb = !isset($_SESSION[ENIGMES_SESSION_KEY]['completed_from_db'])
-        || $_SESSION[ENIGMES_SESSION_KEY]['completed_from_db'] !== true;
-
-    if ($loadFromDb) {
-        try {
-            $completed = get_completed_roadmap_enigmes((int)$userId);
-        } catch (Throwable $e) {
-            $completed = $_SESSION[ENIGMES_SESSION_KEY]['completed'] ?? [];
-        }
-
-        $validIds = array_map('intval', array_keys(get_enigmes_catalogue()));
-        $completed = array_values(array_intersect($validIds, array_map('intval', $completed)));
-        sort($completed);
-
-        $_SESSION[ENIGMES_SESSION_KEY] = [
-            'completed' => $completed,
-            'completed_from_db' => true,
-        ];
+    try {
+        $completed = get_completed_roadmap_enigmes((int)$userId);
+        debug_log("[ensure_enigmes_progression] userId=$userId loaded from DB: " . json_encode($completed));
+    } catch (Throwable $e) {
+        $completed = $_SESSION[ENIGMES_SESSION_KEY]['completed'] ?? [];
+        debug_log("[ensure_enigmes_progression] userId=$userId DB load FAILED: " . $e->getMessage());
     }
+
+    $validIds = array_map('intval', array_keys(get_enigmes_catalogue()));
+    $completed = array_values(array_intersect($validIds, array_map('intval', $completed)));
+    sort($completed);
+
+    $_SESSION[ENIGMES_SESSION_KEY] = [
+        'completed' => $completed,
+    ];
+    debug_log("[ensure_enigmes_progression] set session: " . json_encode($_SESSION[ENIGMES_SESSION_KEY]));
 }
 
 function get_roadmap_node_by_id(int $enigmeId): ?array
@@ -158,9 +158,12 @@ function is_enigme_completed(int $enigmeId): bool
 function get_enigmes_states(): array
 {
     $catalogue = get_enigmes_catalogue();
-    $completedLookup = array_fill_keys(get_completed_enigmes(), true);
+    $completed = get_completed_enigmes();
+    $completedLookup = array_fill_keys($completed, true);
     $states = [];
     $nextUnlockedFound = false;
+
+    debug_log("[get_enigmes_states] completed=" . json_encode($completed));
 
     foreach ($catalogue as $enigmeId => $enigme) {
         if (isset($completedLookup[$enigmeId])) {
@@ -177,6 +180,7 @@ function get_enigmes_states(): array
         $states[$enigmeId] = 'blocked';
     }
 
+    debug_log("[get_enigmes_states] states=" . json_encode($states));
     return $states;
 }
 
@@ -190,20 +194,20 @@ function is_enigme_accessible(int $enigmeId): bool
 function mark_enigme_completed(int $userId, int $enigmeId): void
 {
     if (get_roadmap_node_by_id($enigmeId) === null) {
+        debug_log("[mark_enigme_completed] ABORT - enigmeId=$enigmeId not in catalogue");
         return;
     }
 
+    debug_log("[mark_enigme_completed] START userId=$userId enigmeId=$enigmeId");
+
     try {
         mark_roadmap_enigme_completed($userId, $enigmeId);
+        debug_log("[mark_enigme_completed] DB insert OK");
     } catch (Throwable $e) {
+        debug_log("[mark_enigme_completed] DB insert EXCEPTION: " . $e->getMessage());
     }
 
     ensure_enigmes_progression();
-
-    if (!in_array($enigmeId, $_SESSION[ENIGMES_SESSION_KEY]['completed'], true)) {
-        $_SESSION[ENIGMES_SESSION_KEY]['completed'][] = $enigmeId;
-        sort($_SESSION[ENIGMES_SESSION_KEY]['completed']);
-    }
 }
 
 function normalize_enigme_answer(string $answer): string

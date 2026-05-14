@@ -46,8 +46,10 @@ function flushProcedureResults(PDOStatement $stmt): void
     $stmt->closeCursor();
 }
 
-function first_available(array $row, array $keys, $default = null)
+function first_available(array|false $row, array $keys, $default = null)
 {
+    if ($row === false) return $default;
+
     foreach ($keys as $key) {
         if (array_key_exists($key, $row)) {
             return $row[$key];
