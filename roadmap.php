@@ -1,4 +1,11 @@
-﻿<?php
+<?php
+require_once __DIR__ . '/includes/session.php';
+
+if (!isset($_SESSION['user']['id'])) {
+    header('Location: login.php');
+    exit;
+}
+
 $title = 'Roadmap des enigmes - Marche Noir';
 $extraStylesheets = ['assets/css/enigmes.css', 'assets/css/roadmap.css'];
 $bodyClass = 'enigmes-page roadmap-page';
@@ -6,6 +13,7 @@ $bodyClass = 'enigmes-page roadmap-page';
 require_once __DIR__ . '/includes/enigmes_progression.php';
 require_once __DIR__ . '/includes/enigmes_request.php';
 require_once __DIR__ . '/AlgosBD.php';
+require_once __DIR__ . '/includes/debug_helper.php';
 $riddleStats = null;
 if (isset($_SESSION['user'])) {
     $riddleStats = get_user_riddle_stats($_SESSION['user']['id']);
@@ -13,6 +21,8 @@ if (isset($_SESSION['user'])) {
 
 $enigmes = get_enigmes_catalogue();
 $states = get_enigmes_states();
+debug_log("[roadmap.php] session_key=" . json_encode($_SESSION[ENIGMES_SESSION_KEY] ?? ['NOT_SET']));
+debug_log("[roadmap.php] states=" . json_encode($states));
 $postRoadmapDialogues = consume_roadmap_flash_dialogues();
 $postRoadmapDialoguesJson = htmlspecialchars(
     json_encode($postRoadmapDialogues, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
@@ -66,18 +76,18 @@ $postRoadmapDialoguesJson = htmlspecialchars(
                             'frame' => 'assets/img/Magicien/furieux.png',
                         ],
                         [
-                            'text' => 'Mon grimoire l’atteste : accomplis ses predecesseurs et la voie s’ouvrira devant toi.',
+                            'text' => 'Mon grimoire l\'atteste : accomplis ses predecesseurs et la voie s\'ouvrira devant toi.',
                             'frame' => 'assets/img/Magicien/mage_grimoire.png',
                         ],
                     ];
                 } elseif ($state === 'completed') {
                     $noticeDialogues = [
                         [
-                            'text' => 'Serieusement ? Tu reviens encore ici ? Cette enigme est deja pliee, meme un troll distrait l’aurait remarque.',
+                            'text' => 'Serieusement ? Tu reviens encore ici ? Cette enigme est deja pliee, meme un troll distrait l\'aurait remarque.',
                             'frame' => 'assets/img/Magicien/furieux.png',
                         ],
                         [
-                            'text' => 'Mon grimoire l’a deja consignee. Retourne sur la roadmap et poursuis ta quete vers de nouvelles enigmes.',
+                            'text' => 'Mon grimoire l\'a deja consignee. Retourne sur la roadmap et poursuis ta quete vers de nouvelles enigmes.',
                             'frame' => 'assets/img/Magicien/mage_grimoire.png',
                         ],
                     ];
@@ -164,4 +174,3 @@ $postRoadmapDialoguesJson = htmlspecialchars(
 
 <script src="assets/js/roadmap.js" defer></script>
 <?php include __DIR__ . '/templates/end.php'; ?>
-

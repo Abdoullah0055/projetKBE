@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/includes/env_loader.php';
+require_once __DIR__ . '/includes/debug_helper.php';
 
 function get_pdo()
 {
@@ -661,14 +662,19 @@ function get_completed_roadmap_enigmes(int $userId): array
     $stmt = $pdo->prepare("SELECT EnigmeId FROM UserRoadmapProgress WHERE UserId = ? ORDER BY EnigmeId");
     $stmt->execute([$userId]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    return array_map('intval', array_column($rows, 'enigmeid'));
+    $result = array_map('intval', array_column($rows, 'enigmeid'));
+    debug_log("[get_completed_roadmap_enigmes] userId=$userId count=" . count($result) . " result=" . json_encode($result));
+    return $result;
 }
 
 function mark_roadmap_enigme_completed(int $userId, int $enigmeId): void
 {
     $pdo = get_pdo();
-    $stmt = $pdo->prepare("INSERT IGNORE INTO UserRoadmapProgress (UserId, EnigmeId) VALUES (?, ?)");
-    $stmt->execute([$userId, $enigmeId]);
+    $pdo->beginTransaction();
+    $stmt = $pdo->prepare("INSERT INTO UserRoadmapProgress (UserId, EnigmeId) VALUES (:uid, :eid) ON DUPLICATE KEY UPDATE EnigmeId = EnigmeId");
+    $stmt->execute([':uid' => $userId, ':eid' => $enigmeId]);
+    $pdo->commit();
+    debug_log("[mark_roadmap_enigme_completed] userId=$userId enigmeId=$enigmeId rows=" . $stmt->rowCount());
 }
 
 function get_user_healing_items(int $userId): array

@@ -12,6 +12,7 @@ $bodyClass = 'enigmes-page reponse-page';
 
 require_once __DIR__ . '/includes/enigmes_request.php';
 require_once __DIR__ . '/AlgosBD.php';
+require_once __DIR__ . '/includes/debug_helper.php';
 
 $context = resolve_enigme_request('reponse.php');
 
@@ -65,6 +66,8 @@ if (isset($_GET['abandon']) && (string) $_GET['abandon'] === '1') {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $riddleType = $context['riddle']['riddle_type'] ?? 'MultipleChoice';
+
+    debug_log("[reponse.php POST] source={$context['source']} roadmap_node_id={$context['roadmap_node_id']} riddle_type=$riddleType user_id={$_SESSION['user']['id']}");
 
     if ($riddleType === 'ShortAnswer') {
         $userAnswer = trim((string)($_POST['short_answer'] ?? ''));
@@ -162,7 +165,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($context['source'] === 'roadmap' && $context['roadmap_node_id'] !== null) {
+            debug_log("[reponse.php] Calling mark_enigme_completed(user_id={$_SESSION['user']['id']}, enigme_id={$context['roadmap_node_id']})");
             mark_enigme_completed((int)$_SESSION['user']['id'], $context['roadmap_node_id']);
+        } else {
+            debug_log("[reponse.php] mark_enigme_completed SKIPPED - source={$context['source']} roadmap_node_id={$context['roadmap_node_id']}");
         }
 
         $streakBonus = credit_streak_bonus($_SESSION['user']['id']);
