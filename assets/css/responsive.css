@@ -149,7 +149,7 @@ body {
     min-width: var(--touch-target);
     min-height: var(--touch-target);
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(25, 133, 161, 0.4);
+    border: 1px solid var(--border-accent);
     border-radius: 4px;
     cursor: pointer;
     color: var(--accent);
@@ -162,7 +162,7 @@ body {
 
   .mobile-menu-toggle:active,
   .mobile-menu-toggle:focus {
-    background: rgba(25, 133, 161, 0.2);
+    background: var(--accent-soft);
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
@@ -175,9 +175,9 @@ body {
     width: 100%;
     max-width: 280px;
     max-height: calc(100vh - var(--header-height-mobile));
-    background: rgba(20, 22, 25, 0.95);
+    background: var(--bg-surface);
     backdrop-filter: blur(15px);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid var(--border-light);
     z-index: 999;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -224,7 +224,7 @@ body {
     width: 100%;
     padding: 10px var(--spacing-md);
     border-radius: 25px;
-    border: 1px solid rgba(25, 133, 161, 0.3);
+    border: 1px solid var(--border-accent);
     background: rgba(0, 0, 0, 0.4);
     color: white;
     font-size: var(--font-size-button);
@@ -304,7 +304,7 @@ body {
     padding: 12px var(--spacing-md);
     text-align: left;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(25, 133, 161, 0.4);
+    border: 1px solid var(--border-accent);
     border-radius: 4px;
     color: var(--text-light);
     cursor: pointer;
@@ -317,7 +317,7 @@ body {
 
   .mobile-drawer-actions button:active,
   .mobile-drawer-actions button:focus {
-    background: rgba(25, 133, 161, 0.2);
+    background: var(--accent-soft);
   }
 
   /* Prevent scroll when drawer open */
@@ -537,7 +537,7 @@ gap: var(--spacing-md);
     min-width: var(--touch-target);
     min-height: var(--touch-target);
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(25, 133, 161, 0.4);
+    border: 1px solid var(--border-accent);
     border-radius: 4px;
     cursor: pointer;
     color: var(--accent);
@@ -563,9 +563,9 @@ gap: var(--spacing-md);
     width: 100%;
     max-width: 300px;
     max-height: calc(100vh - var(--header-height));
-    background: rgba(20, 22, 25, 0.95);
+    background: var(--bg-surface);
     backdrop-filter: blur(15px);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: 1px solid var(--border-light);
     z-index: 999;
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -740,6 +740,12 @@ display: grid;
 grid-template-columns: repeat(4, 1fr);
 gap: 30px;
 }
+
+  .item-row.rarity-epique,
+  .item-row.rarity-legendaire,
+  .item-row.rarity-mythique {
+    grid-column: span 2;
+  }
 
   .desktop-only {
     display: block !important;
