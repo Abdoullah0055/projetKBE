@@ -10,7 +10,7 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
 
     <div class="hide-text">
         <?php if ($sidebarTitle || $sidebarDesc): ?>
-        <div class="inventory-side-box" style="margin-bottom:12px;">
+        <div class="inventory-side-box">
             <?php if ($sidebarTitle): ?><h3><?= htmlspecialchars($sidebarTitle) ?></h3><?php endif; ?>
             <?php if ($sidebarDesc): ?><p><?= htmlspecialchars($sidebarDesc) ?></p><?php endif; ?>
         </div>
@@ -29,7 +29,7 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
                     <input type="text" id="search-filter" class="filter-input" placeholder="Nom de l'objet...">
                 </div>
 
-                <div class="filter-group" style="margin-top:15px;">
+                <div class="filter-group">
                     <label>Catégorie</label>
                     <select id="type-filter" class="filter-select">
                         <option value="all">Tous les items</option>
@@ -40,7 +40,7 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
                     </select>
                 </div>
 
-                <div class="filter-group" style="margin-top:15px;">
+                <div class="filter-group">
                     <label>Trier par</label>
                     <select id="sort-filter" class="filter-select">
                         <option value="name-asc">Nom (A-Z)</option>
@@ -54,7 +54,7 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
                     </select>
                 </div>
 
-                <div class="filter-group" style="margin-top:15px;">
+                <div class="filter-group">
                     <label>Rarrete</label>
                     <select id="rarity-filter" class="filter-select">
                         <option value="all">Toutes</option>
@@ -66,17 +66,12 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
                     </select>
                 </div>
 
-                <div class="filter-group" style="margin-top:15px;">
+                <div class="filter-group">
                     <label>Prix max (or)</label>
                     <input type="number" id="price-filter" class="filter-input" placeholder="Ex: 50" min="0" step="1">
                 </div>
 
-                <button
-                    type="button"
-                    id="reset-filters"
-                    style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
-                    Réinitialiser
-                </button>
+                <button type="button" id="reset-filters" class="sidebar-btn sidebar-btn--reset">Réinitialiser</button>
             </form>
         </div>
 
@@ -91,11 +86,11 @@ $sidebarExtraBottom = $sidebarExtraBottom ?? '';
 
     <div class="sidebar-bottom-actions">
         <?php if (isset($user) && $user['isConnected']): ?>
-        <button type="button" id="capital-request-sidebar-btn" title="Demander une augmentation de capital" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+        <button type="button" id="capital-request-sidebar-btn" title="Demander une augmentation de capital" class="sidebar-btn sidebar-btn--capital">
             <i class="fa-solid fa-sack-dollar"></i>
             <span class="btn-label">Demande capital</span>
         </button>
-        <button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" class="sidebar-inventory-btn" style="width:100%; margin-top:20px; background:transparent; border:1px solid var(--accent); color:var(--accent); padding:10px; cursor:pointer; border-radius:4px; font-weight:bold;">
+        <button type="button" onclick="location.href='inventory.php'" title="Ouvrir mon inventaire" class="sidebar-btn sidebar-btn--inventory">
             <i class="fa-solid fa-box-open"></i>
             <span class="btn-label">Inventaire</span>
         </button>

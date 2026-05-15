@@ -27,6 +27,7 @@ function setSidebarState(sidebar, arrow, toggleButton, collapsed) {
   }
 
   if (toggleButton) {
+    toggleButton.style.left = collapsed ? "12px" : "calc(var(--sidebar-width) - 22px)";
     toggleButton.setAttribute("aria-expanded", collapsed ? "false" : "true");
     toggleButton.setAttribute(
       "aria-label",
@@ -570,6 +571,47 @@ document.addEventListener("DOMContentLoaded", () => {
       applyChanges(currentTheme, nextNum);
     });
   }
+
+  /* ScrollReveal */
+  class ScrollReveal {
+    constructor() {
+      var self = this;
+      self.observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            self.observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -60px 0px' });
+      document.querySelectorAll('.item-row').forEach(function(el) {
+        self.observer.observe(el);
+      });
+    }
+  }
+
+  if (document.querySelector('.product-list')) {
+    new ScrollReveal();
+  }
+
+  /* Hero spotlight */
+  (function initHeroSpotlight() {
+    var spot = document.querySelector('.hero-spotlight');
+    if (!spot) return;
+    var items = Array.from(document.querySelectorAll('.item-row'));
+    var order = { 'rarity-mythique': 5, 'rarity-legendaire': 4, 'rarity-epique': 3, 'rarity-rare': 2, 'rarity-commun': 1 };
+    items.sort(function(a, b) {
+      return (order[b.dataset.rarity] || 0) - (order[a.dataset.rarity] || 0);
+    });
+    items.slice(0, 3).forEach(function(item) {
+      var clone = item.cloneNode(true);
+      clone.classList.remove('reveal-on-scroll');
+      (function(orig) {
+        clone.addEventListener('click', function() { orig.click(); });
+      })(item);
+      spot.appendChild(clone);
+    });
+  })();
 });
 
 (function initFilterToggle() {
